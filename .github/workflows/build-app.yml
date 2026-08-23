@@ -9,7 +9,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 jobs:
@@ -30,6 +30,7 @@ jobs:
 
       - name: Install Android API 36
         run: |
+          set -euo pipefail
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
 
@@ -38,26 +39,42 @@ jobs:
         with:
           gradle-version: '9.5.0'
 
-      - name: Fetch build manifest
+      - name: Fetch build manifest and source chunks
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          mkdir -p build-inputs/${BUILD_ID}
-          gh api repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/manifest.json --jq .content | tr -d '\n' | base64 -d > build-inputs/${BUILD_ID}/manifest.json
-          if gh api repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/source.bin >/tmp/source.json 2>/dev/null; then
-            jq -r .content /tmp/source.json | tr -d '\n' | base64 -d > build-inputs/${BUILD_ID}/source.bin
+          mkdir -p "build-inputs/${BUILD_ID}"
+          gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/manifest.json?ref=main" --jq .content | tr -d '\n' | base64 -d > "build-inputs/${BUILD_ID}/manifest.json"
+          chunk_count=$(jq -r '.sourceChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
+          : > "build-inputs/${BUILD_ID}/source.bin"
+          if [ "$chunk_count" -gt 0 ]; then
+            for ((i=0; i<chunk_count; i++)); do
+              name=$(printf 'source-%04d.bin' "$i")
+              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/source.bin"
+            done
           fi
+
+      - name: Mark build running
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"running",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
 
       - name: Generate Android project
         env:
           BUILD_ID: ${{ inputs.build_id }}
           BUILD_MANIFEST: build-inputs/${{ inputs.build_id }}/manifest.json
+          BUILD_OUTPUT: generated-app
           SOURCE_BASE64: ''
         run: |
           set -euo pipefail
-          if test -f "build-inputs/${BUILD_ID}/source.bin"; then
+          if test -s "build-inputs/${BUILD_ID}/source.bin"; then
             export SOURCE_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/source.bin")"
           fi
           python3 scripts/generate-app.py
@@ -69,7 +86,14 @@ jobs:
           test -f generated-app/app/build.gradle
           test -f generated-app/app/src/main/AndroidManifest.xml
           find generated-app/app/src/main/java -name MainActivity.java -print -quit | grep -q MainActivity.java
-          if ! grep -R 'com.castel.generatedapp' generated-app/app/src/main/java; then true; else echo 'Template package leaked into generated source'; exit 1; fi
+          if grep -R -n 'com.castel.generatedapp' generated-app/app/src/main/java; then
+            echo 'Template package leaked into generated source'
+            exit 1
+          fi
+          if ! grep -R -n "applicationId '$(jq -r .packageName build-inputs/${BUILD_ID}/manifest.json)'" generated-app/app/build.gradle; then
+            echo 'Generated applicationId does not match manifest'
+            exit 1
+          fi
 
       - name: Lint and build debug APK + release AAB
         run: |
@@ -85,7 +109,30 @@ jobs:
           unzip -t generated-app/app/build/outputs/bundle/release/app-release.aab >/dev/null
           echo 'Generated APK and AAB passed artifact integrity checks.'
 
+      - name: Mark build successful
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"success",apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
+
+      - name: Mark build failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"failed",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null || true
+
       - name: Upload generated artifacts
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-${{ inputs.build_id }}
