@@ -1,6 +1,7 @@
 package com.castel.generatedapp;
 
 import android.app.Activity;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Window;
 import android.webkit.WebResourceRequest;
@@ -47,7 +48,7 @@ public class MainActivity extends Activity {
 
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-                return assetLoader.shouldInterceptRequest(url);
+                return assetLoader.shouldInterceptRequest(Uri.parse(url));
             }
         });
 
