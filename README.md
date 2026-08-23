@@ -37,3 +37,7 @@ Never commit a keystore, private signing key, or signing password. Release signi
 ## Verification rule
 
 A project is **not** considered build-verified because source generation succeeded. It is build-verified only when a clean CI run successfully produces the expected APK/AAB artifacts and the validation job passes.
+
+## Robust CI gate
+
+The verification workflow also exercises the project generator in HTML, ZIP, and HTTPS website modes before compiling the Android template. Production generated-app builds separately verify generated package identity, source handling, APK/AAB integrity, and write an explicit build status record.
