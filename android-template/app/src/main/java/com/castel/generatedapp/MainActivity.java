@@ -1,6 +1,5 @@
 package com.castel.generatedapp;
 
-import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Window;
@@ -9,11 +8,13 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.Nullable;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
 
-public class MainActivity extends Activity {
+public class MainActivity extends ComponentActivity {
     private WebView webView;
     private WebViewAssetLoader assetLoader;
 
@@ -52,15 +53,18 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
-    }
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
 
-    @Override
-    public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
     }
 }
