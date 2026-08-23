@@ -1,0 +1,57 @@
+name: Verify Android Template
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK platform and build tools
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null || true
+
+      - name: Set up Gradle 9.6.0
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.6.0'
+
+      - name: Validate and build debug APK + release AAB
+        run: |
+          gradle --version
+          gradle -p android-template lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+
+      - name: Verify expected artifacts exist
+        run: |
+          test -f android-template/app/build/outputs/apk/debug/app-debug.apk
+          test -f android-template/app/build/outputs/bundle/release/app-release.aab
+          echo "APK and AAB artifacts verified."
+
+      - name: Upload verification artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: castel-template-verification
+          if-no-files-found: error
+          path: |
+            android-template/app/build/outputs/apk/debug/app-debug.apk
+            android-template/app/build/outputs/bundle/release/app-release.aab
+            android-template/app/build/reports/lint-results-debug.html
