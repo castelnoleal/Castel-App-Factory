@@ -63,7 +63,7 @@ jobs:
         run: |
           set -euo pipefail
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
-          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"running",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"running",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
 
       - name: Generate Android project
@@ -117,7 +117,7 @@ jobs:
         run: |
           set -euo pipefail
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
-          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"success",apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
 
       - name: Mark build failed
@@ -127,9 +127,11 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
-          payload=$(jq -n --arg id "$BUILD_ID" '{buildId:$id,status:"failed",updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null || true
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha || true)
+          if [ -n "$sha" ]; then
+            payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"failed",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null || true
+          fi
 
       - name: Upload generated artifacts
         if: success()
