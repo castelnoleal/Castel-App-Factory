@@ -36,6 +36,11 @@ jobs:
         with:
           gradle-version: '9.5.0'
 
+      - name: Run generator smoke tests
+        run: |
+          set -euo pipefail
+          python3 scripts/smoke-test-generator.py
+
       - name: Validate and build debug APK + release AAB
         run: |
           set -euo pipefail
