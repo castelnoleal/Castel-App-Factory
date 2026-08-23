@@ -4,7 +4,8 @@ export default {
   async fetch(request, env) {
     if (request.method === 'OPTIONS') return json({ok:true});
     const url = new URL(request.url);
-    if (url.pathname !== '/api/build' || !['POST','GET'].includes(request.method)) return json({error:'Not found'},404);
+    const allowedPaths = new Set(['/','/build','/api/build']);
+    if (!allowedPaths.has(url.pathname) || !['POST','GET'].includes(request.method)) return json({error:'Not found'},404);
 
     try {
       const token = env.GITHUB_TOKEN;
