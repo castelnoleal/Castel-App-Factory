@@ -1,39 +1,48 @@
 # Castel App Factory
 
-Commercial-grade HTML/website → Android app factory.
+Commercial HTML/website → Android application factory.
 
-## Goals
+## Pipeline
 
-- Generate Android apps from uploaded HTML/ZIP projects or HTTPS websites.
-- Produce reproducible Android projects.
-- Build a debug APK for testing.
-- Build a release AAB for Google Play distribution.
-- Validate package name, version code, target API, manifest, icons, and source layout before building.
-- Keep signing credentials outside source control.
-- Support a growing catalogue of separately versioned customer apps.
+1. Validate source HTML/ZIP/URL.
+2. Generate an isolated Android project.
+3. Build and lint on a clean GitHub runner.
+4. Produce a debug APK for testing.
+5. Produce a release AAB for Play distribution.
+6. Record build metadata and artifacts.
 
-## Current platform baseline
+## Security
 
-- Target API: 36 (Google Play requirement for new mobile apps and updates beginning August 31, 2026).
-- Android Gradle Plugin: 9.4.0.
-- Gradle: 9.6.0.
-- JDK: 17.
-- AndroidX WebKit: 1.17.0.
+- Never commit Android keystores or signing passwords.
+- Release credentials must be supplied through repository/environment secrets.
+- Generated apps use AndroidX WebKit `WebViewAssetLoader` for bundled content.
+- Network permissions are opt-in for online apps.
+- Build success is only reported after the expected artifacts exist and are non-empty.
 
-The exact versions are centralized so the build template can be upgraded deliberately after compatibility testing.
+## Current baseline
 
-## Repository layout
+- Android API 36 target/compile SDK
+- JDK 17
+- Android Gradle Plugin 9.4.0
+- Gradle 9.6.0
+- AndroidX WebKit 1.17.0
 
-- `factory/` — browser control panel and project-generation logic.
-- `android-template/` — clean Android WebView application template.
-- `scripts/` — validation utilities.
-- `.github/workflows/` — clean-build and release pipelines.
-- `docs/` — architecture and operating procedures.
+The toolchain is pinned rather than using dynamic dependency versions. Update the baseline only through a tested template change.
 
-## Signing
+## Commercial roadmap
 
-Never commit a keystore, private signing key, or signing password. Release signing must be injected through GitHub Actions secrets or another secure secret manager.
+- [ ] Web factory UI
+- [ ] HTML/ZIP importer
+- [ ] Website wrapper mode
+- [ ] Project validation engine
+- [ ] App/project database
+- [ ] Per-app build records
+- [ ] Secure release signing via GitHub Actions secrets
+- [ ] AAB artifact delivery
+- [ ] APK test artifact delivery
+- [ ] Play publishing preparation checks
+- [ ] Domain deployment
 
 ## Verification rule
 
-A project is **not** considered build-verified because source generation succeeded. It is build-verified only when a clean CI run successfully produces the expected APK/AAB artifacts and the validation job passes.
+A project is **not** considered build-verified because source generation succeeded. It is build-verified only when a clean CI run successfully produces the expected APK/AAB artifacts and validation passes.
