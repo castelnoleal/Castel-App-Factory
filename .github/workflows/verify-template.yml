@@ -37,13 +37,17 @@ jobs:
 
       - name: Validate and build debug APK + release AAB
         run: |
+          set -euxo pipefail
           gradle --version
           gradle -p android-template lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
 
-      - name: Verify expected artifacts exist
+      - name: Verify expected artifacts exist and are non-empty
         run: |
-          test -f android-template/app/build/outputs/apk/debug/app-debug.apk
-          test -f android-template/app/build/outputs/bundle/release/app-release.aab
+          set -euxo pipefail
+          test -s android-template/app/build/outputs/apk/debug/app-debug.apk
+          test -s android-template/app/build/outputs/bundle/release/app-release.aab
+          file android-template/app/build/outputs/apk/debug/app-debug.apk
+          file android-template/app/build/outputs/bundle/release/app-release.aab
           echo "APK and AAB artifacts verified."
 
       - name: Upload verification artifacts
