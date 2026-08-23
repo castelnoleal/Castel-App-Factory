@@ -73,7 +73,9 @@
 <footer class="footer">Castel App Factory • Commercial Android app generation platform</footer>
 </main>
 <script>
-const BUILD_API_URL=window.CASTEL_BUILD_API||'';
+const BUILD_API_URL =
+  window.CASTEL_BUILD_API ||
+  'https://api.castelmei.com';
 let mode='html',source=null,previewUrl=null;
 const $=id=>document.getElementById(id);
 const setStatus=(el,msg,kind='')=>{el.className='status show '+kind;el.innerHTML=msg};
