@@ -18,27 +18,22 @@ jobs:
     steps:
       - name: Checkout factory
         uses: actions/checkout@v4
-
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-
       - name: Install Android API 36
         run: |
           set -euo pipefail
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.5.0'
-
       - name: Fetch build manifest and source chunks
         env:
           GH_TOKEN: ${{ github.token }}
@@ -55,7 +50,6 @@ jobs:
               gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/source.bin"
             done
           fi
-
       - name: Mark build running
         env:
           GH_TOKEN: ${{ github.token }}
@@ -65,7 +59,6 @@ jobs:
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"running",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
-
       - name: Generate Android project
         env:
           BUILD_ID: ${{ inputs.build_id }}
@@ -78,7 +71,6 @@ jobs:
             export SOURCE_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/source.bin")"
           fi
           python3 scripts/generate-app.py
-
       - name: Validate generated project
         run: |
           set -euo pipefail
@@ -94,12 +86,10 @@ jobs:
             echo 'Generated applicationId does not match manifest'
             exit 1
           fi
-
       - name: Lint and build debug APK + release AAB
         run: |
           set -euo pipefail
           gradle -p generated-app lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
-
       - name: Verify artifacts
         run: |
           set -euo pipefail
@@ -108,7 +98,6 @@ jobs:
           unzip -t generated-app/app/build/outputs/apk/debug/app-debug.apk >/dev/null
           unzip -t generated-app/app/build/outputs/bundle/release/app-release.aab >/dev/null
           echo 'Generated APK and AAB passed artifact integrity checks.'
-
       - name: Upload generated artifacts
         if: success()
         uses: actions/upload-artifact@v4
@@ -119,7 +108,6 @@ jobs:
             generated-app/app/build/outputs/apk/debug/app-debug.apk
             generated-app/app/build/outputs/bundle/release/app-release.aab
             generated-app/app/build/reports/lint-results-debug.html
-
       - name: Mark build successful with artifact metadata
         if: success()
         env:
@@ -127,13 +115,14 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts | map(select(.name == "app-'"$BUILD_ID"'")) | .[0]')
+          artifact_name="app-${BUILD_ID}"
+          artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq --arg name "$artifact_name" '.artifacts | map(select(.name == $name)) | .[0]')
           artifact_id=$(echo "$artifact" | jq -r '.id')
+          test "$artifact_id" != "null"
           artifact_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${artifact_id}"
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --argjson artifactId "$artifact_id" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
-
       - name: Mark build failed
         if: failure()
         env:
