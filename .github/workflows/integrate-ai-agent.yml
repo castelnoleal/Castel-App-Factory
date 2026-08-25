@@ -1,0 +1,50 @@
+name: Integrate AI Build Supervisor
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare-worker/ai-supervisor.js'
+      - '.github/workflows/integrate-ai-agent.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Integrate AI supervisor into Worker
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('cloudflare-worker/worker.js')
+          s = p.read_text()
+          imp = 'import { superviseBuild } from "./ai-supervisor.js";\n'
+          if not s.startswith('import { superviseBuild }'):
+              s = imp + s
+          marker = '        const buildId = crypto.randomUUID();'
+          if 'superviseBuild(env' not in s:
+              replacement = '''        const ai = await superviseBuild(env, {\n          sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),\n          sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode,\n          orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation),\n          zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)\n        });\n        const buildId = crypto.randomUUID();'''
+              if marker not in s:
+                  raise SystemExit('Build ID marker not found; refusing unsafe patch.')
+              s = s.replace(marker, replacement, 1)
+          s = s.replace('message:"Build queued in GitHub Actions."},202)', 'message:"Build queued in GitHub Actions.", aiSupervisor: ai.enabled ? {enabled:true, model:ai.model, reason:ai.reason} : {enabled:false, reason:ai.reason}},202)', 1)
+          p.write_text(s)
+          PY
+
+      - name: Commit integration
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add cloudflare-worker/worker.js
+          if git diff --cached --quiet; then
+            echo 'AI supervisor already integrated.'
+          else
+            git commit -m 'feat: connect AI build supervisor to Worker'
+            git push
+          fi
