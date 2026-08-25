@@ -1,0 +1,38 @@
+name: Repair Factory API Endpoint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'factory/index.html'
+      - '.github/workflows/repair-factory-api.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fix build endpoint and add status polling
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('factory/index.html')
+          s=p.read_text()
+          old="fetch(BUILD_API_URL,{method:'POST'"
+          new="fetch(BUILD_API_URL.replace(/\\/$/,'')+'/build',{method:'POST'"
+          if old in s:
+              s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add factory/index.html
+          git diff --cached --quiet || git commit -m 'fix: connect factory UI to build endpoint'
+          git diff --cached --quiet || git push
