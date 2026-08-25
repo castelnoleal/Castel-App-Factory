@@ -1,0 +1,4 @@
+name = "castel-app-factory-api"
+main = "worker.js"
+compatibility_date = "2026-08-25"
+workers_dev = true
