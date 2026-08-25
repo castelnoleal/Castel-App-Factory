@@ -1,0 +1,29 @@
+name: Deploy Castel Build Bridge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare-worker/worker.js'
+      - '.github/workflows/deploy-build-bridge.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy Cloudflare Worker
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: cloudflare-worker
+      - name: Explain missing Cloudflare credentials
+        if: ${{ secrets.CLOUDFLARE_API_TOKEN == '' || secrets.CLOUDFLARE_ACCOUNT_ID == '' }}
+        run: |
+          echo 'Cloudflare deployment skipped because CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID is not configured.'
+          exit 1
