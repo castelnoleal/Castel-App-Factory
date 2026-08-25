@@ -1,7 +1,9 @@
+import { superviseBuild } from "./ai-supervisor.js";
+
 const ORIGIN = "https://factory.castelmei.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
-const CHUNK_CHARS = 800_000; // divisible by 4; each chunk is independently valid base64
+const CHUNK_CHARS = 800_000;
 
 function headers() {
   return {
@@ -49,7 +51,13 @@ export default {
     const u = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null,{status:204,headers:headers()});
     if (u.pathname === "/health" && request.method === "GET") {
-      return reply({ok:true,service:"Castel App Factory API",status:"online",repo:`${env.GITHUB_OWNER || ""}/${env.GITHUB_REPO || ""}`});
+      return reply({
+        ok:true,
+        service:"Castel App Factory API",
+        status:"online",
+        repo:`${env.GITHUB_OWNER || ""}/${env.GITHUB_REPO || ""}`,
+        aiSupervisor: Boolean(env.OPENAI_API_KEY)
+      });
     }
     if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) return reply({ok:false,error:"Build bridge is not configured."},503);
 
@@ -64,6 +72,7 @@ export default {
         const websiteUrl = String(b.sourceUrl || b.websiteUrl || "").trim();
         const sourceFileName = String(b.sourceFileName || "").trim();
         const sourceBase64 = String(b.sourceBase64 || "");
+
         if (!appName || appName.length > 40) return reply({ok:false,error:"Invalid app name."},400);
         if (!validPkg(packageName)) return reply({ok:false,error:"Invalid Android package ID."},400);
         if (!/^\d+(\.\d+){0,2}$/.test(versionName)) return reply({ok:false,error:"Invalid version name."},400);
@@ -72,6 +81,21 @@ export default {
         if (sourceType === "html" && !sourceBase64) return reply({ok:false,error:"HTML/ZIP source is missing."},400);
         if (sourceBase64.length > MAX_SOURCE_BASE64) return reply({ok:false,error:"Uploaded source is too large for this build bridge. Use a ZIP under about 21 MB for now."},413);
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
+
+        const ai = await superviseBuild(env, {
+          sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),
+          sourceUrl: websiteUrl,
+          sourceFileName,
+          appName,
+          packageName,
+          versionName,
+          versionCode,
+          orientation: b.orientation || "unspecified",
+          backNavigation: Boolean(b.backNavigation),
+          zoom: Boolean(b.zoom),
+          fullscreen: Boolean(b.fullscreen),
+          externalLinks: Boolean(b.externalLinks)
+        });
 
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
@@ -83,32 +107,51 @@ export default {
           buildId, appName, packageName, versionName, versionCode,
           orientation: b.orientation || "unspecified",
           sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),
-          sourceFileName, sourceUrl: websiteUrl,
-          backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks),
-          sourceChunkCount: chunks.length, createdAt: new Date().toISOString()
+          sourceFileName,
+          sourceUrl: websiteUrl,
+          backNavigation: Boolean(b.backNavigation),
+          zoom: Boolean(b.zoom),
+          fullscreen: Boolean(b.fullscreen),
+          externalLinks: Boolean(b.externalLinks),
+          sourceChunkCount: chunks.length,
+          aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason},
+          createdAt: new Date().toISOString()
         };
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`);
-        await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
+        await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
         for (let i=0;i<chunks.length;i++) {
           const name = `source-${String(i).padStart(4,"0")}.bin`;
           await putFile(env, `${base}/${name}`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
         }
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
-        const dispatch = await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {
+        await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {
           method:"POST", body:JSON.stringify({ref:"main",inputs:{build_id:buildId}})
         });
-        return reply({ok:true,status:"queued",buildId,runId:dispatch?.workflow_run_id || null,runUrl:dispatch?.run_url || `https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
-      } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
+        return reply({
+          ok:true,
+          status:"queued",
+          buildId,
+          aiSupervisor: manifest.aiSupervisor,
+          runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,
+          message:"Build queued in GitHub Actions."
+        },202);
+      } catch (e) {
+        console.error(e);
+        return reply({ok:false,error:e.message || "Build request failed."},502);
+      }
     }
 
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);
     if (match && request.method === "GET") {
       try {
-        const id = match[1]; const f = await getFile(env, `build-inputs/${id}/status.json`);
+        const id = match[1];
+        const f = await getFile(env, `build-inputs/${id}/status.json`);
         const raw = atob(String(f.content || "").replace(/\n/g,""));
         const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
         return reply(JSON.parse(new TextDecoder().decode(bytes)));
-      } catch (e) { return reply({ok:false,error:"Build ID not found or status unavailable."},404); }
+      } catch (e) {
+        return reply({ok:false,error:"Build ID not found or status unavailable."},404);
+      }
     }
     return reply({ok:false,error:"Endpoint not found."},404);
   }
