@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix build endpoint and add status polling
+      - name: Fix build endpoint
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -26,13 +26,16 @@ jobs:
           old="fetch(BUILD_API_URL,{method:'POST'"
           new="fetch(BUILD_API_URL.replace(/\\/$/,'')+'/build',{method:'POST'"
           if old in s:
-              s=s.replace(old,new,1)
-          p.write_text(s)
+              p.write_text(s.replace(old,new,1))
           PY
-      - name: Commit repair
+      - name: Commit repair if needed
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add factory/index.html
-          git diff --cached --quiet || git commit -m 'fix: connect factory UI to build endpoint'
-          git diff --cached --quiet || git push
+          if git diff --cached --quiet; then
+            echo 'No repair needed.'
+          else
+            git commit -m 'fix: connect factory UI to build endpoint'
+            git push
+          fi
