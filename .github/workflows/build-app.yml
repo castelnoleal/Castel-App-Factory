@@ -109,15 +109,29 @@ jobs:
           unzip -t generated-app/app/build/outputs/bundle/release/app-release.aab >/dev/null
           echo 'Generated APK and AAB passed artifact integrity checks.'
 
-      - name: Mark build successful
+      - name: Upload generated artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ inputs.build_id }}
+          if-no-files-found: error
+          path: |
+            generated-app/app/build/outputs/apk/debug/app-debug.apk
+            generated-app/app/build/outputs/bundle/release/app-release.aab
+            generated-app/app/build/reports/lint-results-debug.html
+
+      - name: Mark build successful with artifact metadata
         if: success()
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
+          artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq '.artifacts | map(select(.name == "app-'"$BUILD_ID"'")) | .[0]')
+          artifact_id=$(echo "$artifact" | jq -r '.id')
+          artifact_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${artifact_id}"
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
-          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --argjson artifactId "$artifact_id" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
 
       - name: Mark build failed
@@ -132,14 +146,3 @@ jobs:
             payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"failed",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
             gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null || true
           fi
-
-      - name: Upload generated artifacts
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-${{ inputs.build_id }}
-          if-no-files-found: error
-          path: |
-            generated-app/app/build/outputs/apk/debug/app-debug.apk
-            generated-app/app/build/outputs/bundle/release/app-release.aab
-            generated-app/app/build/reports/lint-results-debug.html
