@@ -1,85 +1,174 @@
-import json, os, re, shutil, base64, zipfile
+import base64
+import json
+import os
+import re
+import shutil
+import zipfile
 from pathlib import Path
 
-root=Path(__file__).resolve().parents[1]
-manifest_path=Path(os.environ['BUILD_MANIFEST'])
-out=Path(os.environ.get('BUILD_OUTPUT','generated-app'))
-template=root/'android-template'
+ROOT = Path(__file__).resolve().parents[1]
+TEMPLATE = ROOT / "android-template"
 
-cfg=json.loads(manifest_path.read_text())
-name=cfg['appName'].strip()
-pkg=cfg['packageName'].strip()
-version=str(cfg['versionName']).strip()
-code=int(cfg['versionCode'])
-source_type=cfg.get('sourceType','Uploaded HTML/ZIP')
-source_url=cfg.get('sourceUrl') or cfg.get('url') or ''
 
-if not re.fullmatch(r'[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+',pkg): raise SystemExit('Invalid package name')
-if not re.fullmatch(r'\d+(\.\d+){0,2}',version): raise SystemExit('Invalid version')
-if code<1: raise SystemExit('Invalid version code')
+def fail(message):
+    raise SystemExit(message)
 
-if out.exists(): shutil.rmtree(out)
-shutil.copytree(template,out)
-for p in [out/'.gradle',out/'build',out/'app'/'build']:
-    if p.exists(): shutil.rmtree(p)
 
-g=out/'app'/'build.gradle'
-s=g.read_text()
-s=re.sub(r"namespace '.*?'",f"namespace '{pkg}'",s)
-s=re.sub(r"applicationId '.*?'",f"applicationId '{pkg}'",s)
-s=re.sub(r"versionCode \d+",f"versionCode {code}",s)
-s=re.sub(r"versionName '.*?'",f"versionName '{version}'",s)
-g.write_text(s)
+def safe_zip_extract(zf, destination):
+    destination = destination.resolve()
+    for info in zf.infolist():
+        member = Path(info.filename)
+        if member.is_absolute() or ".." in member.parts:
+            fail(f"Unsafe ZIP entry: {info.filename}")
+        target = (destination / member).resolve()
+        if destination != target and destination not in target.parents:
+            fail(f"Unsafe ZIP entry: {info.filename}")
+    zf.extractall(destination)
 
-java_root=out/'app'/'src'/'main'/'java'
-for p in list(java_root.rglob('*.java')):
-    txt=p.read_text()
-    txt=re.sub(r'^package\s+[^;]+;',f'package {pkg};',txt,count=1,flags=re.M)
-    if source_url and (source_type.lower().startswith('https') or source_type.lower().startswith('website')):
-        java_url=json.dumps(source_url)
-        txt=re.sub(r'webView\.loadUrl\("[^"]*"\);',f'webView.loadUrl({java_url});',txt)
-    p.write_text(txt)
-    target=java_root/pkg.replace('.','/')/p.name
-    target.parent.mkdir(parents=True,exist_ok=True)
-    shutil.move(str(p),str(target))
-for d in sorted([x for x in java_root.rglob('*') if x.is_dir()],reverse=True):
-    try: d.rmdir()
-    except OSError: pass
 
-manifest=out/'app'/'src'/'main'/'AndroidManifest.xml'
-if manifest.exists():
-    ms=manifest.read_text()
-    label=xml_name=name.replace('&','&amp;').replace('"','&quot;')
-    ms=re.sub(r'android:label="[^"]*"',f'android:label="{label}"',ms)
-    orientation=cfg.get('orientation','unspecified')
-    if 'android:screenOrientation=' in ms:
-        ms=re.sub(r'android:screenOrientation="[^"]*"',f'android:screenOrientation="{orientation}"',ms)
-    elif orientation!='unspecified':
-        ms=ms.replace('android:exported="true"',f'android:screenOrientation="{orientation}" android:exported="true"')
-    manifest.write_text(ms)
+def find_index(root):
+    for candidate in (root / "index.html", root / "index.htm"):
+        if candidate.is_file():
+            return candidate
+    matches = sorted(
+        [p for p in root.rglob("index.html") if p.is_file()],
+        key=lambda p: (len(p.relative_to(root).parts), str(p).lower()),
+    )
+    return matches[0] if matches else None
 
-settings=out/'settings.gradle'
-if settings.exists():
-    project_name=re.sub(r'[^A-Za-z0-9_-]','_',name)
-    ss=settings.read_text(); ss=re.sub(r"rootProject\.name\s*=\s*'.*?'",f"rootProject.name = '{project_name}'",ss); settings.write_text(ss)
 
-assets=out/'app'/'src'/'main'/'assets'
-assets.mkdir(parents=True,exist_ok=True)
-source_b64=os.environ.get('SOURCE_BASE64','')
-if source_b64:
-    raw=base64.b64decode(source_b64)
-    if source_type.lower().endswith('zip') or cfg.get('sourceFileName','').lower().endswith('.zip'):
-        tmp=out/'_source.zip'; tmp.write_bytes(raw)
-        with zipfile.ZipFile(tmp) as z: z.extractall(assets)
-        tmp.unlink()
-    else:
-        (assets/'index.html').write_bytes(raw)
-elif not source_type.lower().startswith('https') and not source_url:
-    (assets/'index.html').write_text('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><h1>Castel App Factory</h1><p>Generated application.</p></body></html>')
+def normalize_local_site(assets):
+    index = find_index(assets)
+    if index is None:
+        fail("No index.html found in uploaded source")
+    target = assets / "index.html"
+    if index.resolve() != target.resolve():
+        shutil.copy2(index, target)
+    return target
 
-if not source_type.lower().startswith('https') and not (assets/'index.html').exists():
-    candidates=list(assets.rglob('index.html'))
-    if candidates: shutil.copy2(candidates[0],assets/'index.html')
-    else: raise SystemExit('No index.html found in uploaded source')
 
-print(f'Generated {name} ({pkg}) at {out}')
+def is_web_source(source_type, source_url):
+    return bool(source_url) and (
+        source_type.lower().startswith("https")
+        or source_type.lower().startswith("http")
+        or source_type.lower().startswith("website")
+    )
+
+
+def generate():
+    manifest_path = Path(os.environ["BUILD_MANIFEST"])
+    output = Path(os.environ.get("BUILD_OUTPUT", "generated-app"))
+    cfg = json.loads(manifest_path.read_text(encoding="utf-8"))
+
+    name = str(cfg.get("appName", "")).strip()
+    package_name = str(cfg.get("packageName", "")).strip()
+    version = str(cfg.get("versionName", "")).strip()
+    version_code = int(cfg.get("versionCode", 0))
+    source_type = str(cfg.get("sourceType", "Uploaded HTML")).strip()
+    source_url = str(cfg.get("sourceUrl") or cfg.get("url") or "").strip()
+
+    if not name:
+        fail("appName is required")
+    if not re.fullmatch(r"[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+", package_name):
+        fail("Invalid package name")
+    if not re.fullmatch(r"\d+(\.\d+){0,2}", version):
+        fail("Invalid version")
+    if version_code < 1:
+        fail("Invalid version code")
+
+    web_source = is_web_source(source_type, source_url)
+    if web_source:
+        if not re.fullmatch(r"https?://[^\s]+", source_url, re.IGNORECASE):
+            fail("Website source must use a valid http:// or https:// URL")
+    elif not os.environ.get("SOURCE_BASE64"):
+        fail("Uploaded HTML/ZIP source is missing")
+
+    if output.exists():
+        shutil.rmtree(output)
+    shutil.copytree(TEMPLATE, output)
+    for path in (output / ".gradle", output / "build", output / "app" / "build"):
+        if path.exists():
+            shutil.rmtree(path)
+
+    gradle_file = output / "app" / "build.gradle"
+    text = gradle_file.read_text(encoding="utf-8")
+    text = re.sub(r"namespace '.*?'", f"namespace '{package_name}'", text)
+    text = re.sub(r"applicationId '.*?'", f"applicationId '{package_name}'", text)
+    text = re.sub(r"versionCode \d+", f"versionCode {version_code}", text)
+    text = re.sub(r"versionName '.*?'", f"versionName '{version}'", text)
+    gradle_file.write_text(text, encoding="utf-8")
+
+    java_root = output / "app" / "src" / "main" / "java"
+    java_files = list(java_root.rglob("*.java"))
+    target_root = java_root / package_name.replace(".", "/")
+    target_root.mkdir(parents=True, exist_ok=True)
+    for source in java_files:
+        content = source.read_text(encoding="utf-8")
+        content = re.sub(
+            r"^package\s+[^;]+;",
+            f"package {package_name};",
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        if web_source:
+            content = re.sub(
+                r'webView\.loadUrl\("[^"]*"\);',
+                f"webView.loadUrl({json.dumps(source_url)});",
+                content,
+            )
+        source.write_text(content, encoding="utf-8")
+        target = target_root / source.name
+        if source.resolve() != target.resolve():
+            shutil.move(str(source), str(target))
+    for directory in sorted([p for p in java_root.rglob("*") if p.is_dir()], reverse=True):
+        try:
+            directory.rmdir()
+        except OSError:
+            pass
+
+    manifest = output / "app" / "src" / "main" / "AndroidManifest.xml"
+    manifest_text = manifest.read_text(encoding="utf-8")
+    escaped_name = name.replace("&", "&amp;").replace('"', "&quot;")
+    manifest_text = re.sub(r'android:label="[^"]*"', f'android:label="{escaped_name}"', manifest_text, count=1)
+    orientation = str(cfg.get("orientation", "unspecified"))
+    if orientation not in {"unspecified", "portrait", "landscape", "sensor", "fullSensor"}:
+        fail("Invalid orientation")
+    manifest_text = re.sub(r'android:screenOrientation="[^"]*"', f'android:screenOrientation="{orientation}"', manifest_text, count=1)
+    manifest.write_text(manifest_text, encoding="utf-8")
+
+    settings = output / "settings.gradle"
+    if settings.exists():
+        project_name = re.sub(r"[^A-Za-z0-9_-]", "_", name)
+        settings_text = settings.read_text(encoding="utf-8")
+        settings_text = re.sub(r"rootProject\.name\s*=\s*'.*?'", f"rootProject.name = '{project_name}'", settings_text)
+        settings.write_text(settings_text, encoding="utf-8")
+
+    assets = output / "app" / "src" / "main" / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+
+    if not web_source:
+        raw = base64.b64decode(os.environ["SOURCE_BASE64"])
+        source_name = str(cfg.get("sourceFileName", "")).lower()
+        source_is_zip = source_type.lower().endswith("zip") or source_name.endswith(".zip")
+        if source_is_zip:
+            archive = output / "_source.zip"
+            archive.write_bytes(raw)
+            try:
+                with zipfile.ZipFile(archive) as zf:
+                    if zf.testzip() is not None:
+                        fail("Uploaded ZIP is corrupt")
+                    safe_zip_extract(zf, assets)
+            except zipfile.BadZipFile:
+                fail("Uploaded ZIP is corrupt or invalid")
+            finally:
+                archive.unlink(missing_ok=True)
+        else:
+            (assets / "index.html").write_bytes(raw)
+        normalize_local_site(assets)
+
+    print(f"Generated {name} ({package_name}) at {output}")
+
+
+if __name__ == "__main__":
+    generate()
