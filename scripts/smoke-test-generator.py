@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GENERATOR = ROOT / "scripts" / "generate-app.py"
 
 
-def run_case(name, package_name, source_type, source_bytes=b""):
+def run_case(name, package_name, source_type, source_bytes=b"", source_file_name=""):
     with tempfile.TemporaryDirectory() as td:
         tmp = Path(td)
         manifest = tmp / "manifest.json"
@@ -23,7 +23,7 @@ def run_case(name, package_name, source_type, source_bytes=b""):
             "versionCode": 23,
             "sourceType": source_type,
             "sourceUrl": "https://example.com/" if source_type.startswith("HTTPS") else "",
-            "sourceFileName": "smoke.zip" if source_type.endswith("ZIP") else "",
+            "sourceFileName": source_file_name,
             "orientation": "portrait",
         }))
         env = os.environ.copy()
@@ -45,19 +45,20 @@ def run_case(name, package_name, source_type, source_bytes=b""):
         else:
             index = output / "app" / "src" / "main" / "assets" / "index.html"
             assert index.exists()
-            assert index.read_text().find("Smoke") >= 0
+            assert "Smoke" in index.read_text()
 
 
 run_case(
     "Smoke Local",
     "com.castel.smokelocal",
-    "Uploaded HTML/ZIP",
+    "Uploaded HTML",
     b"<!doctype html><html><body><h1>Smoke local</h1></body></html>",
+    "smoke.html",
 )
 
 zip_buffer = io.BytesIO()
 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as z:
     z.writestr("site/index.html", "<!doctype html><html><body><h1>Smoke ZIP</h1></body></html>")
-run_case("Smoke ZIP", "com.castel.smokezip", "Uploaded HTML/ZIP", zip_buffer.getvalue())
+run_case("Smoke ZIP", "com.castel.smokezip", "Uploaded HTML/ZIP", zip_buffer.getvalue(), "smoke.zip")
 run_case("Smoke Website", "com.castel.smokeweb", "HTTPS website")
 print("Generator smoke tests passed: HTML, ZIP, and HTTPS website modes.")
