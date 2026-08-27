@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Castel App Factory — Test APK</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0%,#18233f 0,#090d18 42%,#05070d 100%);color:#f4f7ff;display:grid;place-items:center;padding:20px}.card{width:min(680px,100%);border:1px solid #2a3654;background:rgba(12,18,32,.86);backdrop-filter:blur(18px);border-radius:24px;padding:28px;box-shadow:0 24px 80px #0008}.eyebrow{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:#8ea8d8}.logo{font-size:34px;font-weight:800;margin:8px 0}.desc{color:#aab6cc;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:20px 0}.field{background:#0a1020;border:1px solid #26324b;border-radius:14px;padding:14px}.field b{display:block;font-size:12px;color:#7f91b0;margin-bottom:5px}.field span{font-weight:700}.button{width:100%;border:0;border-radius:14px;padding:15px 18px;background:#fff;color:#080b12;font-weight:800;font-size:16px;cursor:pointer}.button:disabled{opacity:.55;cursor:wait}.status{margin-top:16px;border-radius:14px;padding:14px;background:#080d18;border:1px solid #26324b;color:#aebbd0;white-space:pre-wrap}.download{display:none;margin-top:14px;text-align:center;text-decoration:none;background:#4ade80;color:#06120a;padding:15px;border-radius:14px;font-weight:900}.small{font-size:12px;color:#71809a;margin-top:16px;text-align:center}.back{display:inline-block;margin-top:18px;color:#9db7e9;text-decoration:none}
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="eyebrow">Castel App Factory</div>
+  <div class="logo">Test APK</div>
+  <p class="desc">This is a deliberately separate testing lane. It sends a tiny known-good HTML app through the same build bridge, Android generator, GitHub Actions build, and APK verification pipeline.</p>
+  <div class="grid">
+    <div class="field"><b>App</b><span>Castel Factory Test</span></div>
+    <div class="field"><b>Package</b><span>com.castel.factorytest</span></div>
+    <div class="field"><b>Version</b><span>1.0.0 (1)</span></div>
+    <div class="field"><b>Output</b><span>Debug APK</span></div>
+  </div>
+  <button id="build" class="button" onclick="buildTest()">Build Initial Test APK</button>
+  <div id="status" class="status">Ready. No build has been started.</div>
+  <a id="download" class="download" target="_blank" rel="noopener">Download Test APK</a>
+  <div class="small">The public test link always points to the latest successful test APK.</div>
+  <a class="back" href="./">← Back to App Factory</a>
+</main>
+<script>
+const API='https://api.castelmei.com';
+const TEST_HTML='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>Castel Factory Test</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#080b12;color:#fff;font-family:system-ui;text-align:center;padding:24px}main{max-width:420px}h1{font-size:34px;margin:0 0 12px}p{color:#aab6cc;line-height:1.6}.ok{display:inline-block;padding:10px 14px;border-radius:999px;background:#163a27;color:#69e89b;font-weight:800}</style></head><body><main><div class="ok">BUILD TEST OK</div><h1>Castel App Factory</h1><p>This APK was generated from the dedicated test lane. If you can see this screen, the HTML-to-Android pipeline is working.</p></main></body></html>';
+function b64(text){const bytes=new TextEncoder().encode(text);let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s)}
+function setStatus(t){document.getElementById('status').textContent=t}
+async function buildTest(){
+ const btn=document.getElementById('build'),dl=document.getElementById('download');btn.disabled=true;dl.style.display='none';setStatus('Submitting test build…');
+ try{
+  const r=await fetch(API+'/build',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appName:'Castel Factory Test',packageName:'com.castel.factorytest',versionName:'1.0.0',versionCode:1,orientation:'portrait',sourceType:'Uploaded HTML',sourceFileName:'test.html',sourceBase64:b64(TEST_HTML),backNavigation:true,zoom:true,fullscreen:false,externalLinks:false,testBuild:true})});
+  const data=await r.json();if(!r.ok||!data.ok)throw new Error(data.error||'Build request failed');
+  setStatus('Queued. Build ID: '+data.buildId+'\nWaiting for GitHub Actions to finish…');
+  poll(data.buildId);
+ }catch(e){setStatus('Error: '+e.message);btn.disabled=false}
+}
+async function poll(id){
+ try{
+  const r=await fetch(API+'/build/'+id+'?t='+Date.now());const s=await r.json();
+  if(s.status==='success'){
+   const url=s.testApkUrl||'https://github.com/castelnoleal/castel-app-factory/releases/download/test-latest/Castel-App-Factory-Test.apk';
+   const dl=document.getElementById('download');dl.href=url;dl.style.display='block';document.getElementById('build').disabled=false;setStatus('Build successful. The APK has been published to the public test download.');return;
+  }
+  if(s.status==='failed'){document.getElementById('build').disabled=false;setStatus('Build failed. Open the GitHub Actions run to inspect the build logs.');return}
+  setTimeout(()=>poll(id),5000);
+ }catch(e){setStatus('Still waiting… '+e.message);setTimeout(()=>poll(id),7000)}
+}
+</script>
+</body>
+</html>
