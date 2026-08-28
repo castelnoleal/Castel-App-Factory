@@ -83,6 +83,6 @@ zip_buffer = io.BytesIO()
 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as z:
     z.writestr("site/index.html", "<!doctype html><html><body><h1>Smoke ZIP</h1></body></html>")
     z.writestr("site/app.js", "document.body.dataset.smoke='zip';")
-run_case("Smoke ZIP", "com.castel.smokezip", "Uploaded HTML/ZIP", zip_buffer.getvalue(), "smoke.zip")
-run_case("Smoke Website", "com.castel.smokeweb", "HTTPS website")
+run_case("Smoke ZIP", "com.castel.smokezip", "Uploaded HTML/ZIP", zip_buffer.getvalue(), "smoke.zip", build=True)
+run_case("Smoke Website", "com.castel.smokeweb", "HTTPS website", build=True)
 print("Generator tests passed: HTML generation + APK/AAB build, nested ZIP extraction, and HTTPS website mode.")
