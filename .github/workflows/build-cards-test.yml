@@ -1,0 +1,99 @@
+name: Build Cards Test APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'test-inputs/cards-site.json'
+      - 'scripts/generate-app.py'
+      - 'android-template/**'
+      - '.github/workflows/build-cards-test.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '12266719'
+          accept-android-sdk-licenses: true
+          packages: tools platform-tools
+
+      - name: Install Android SDK platform and build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Generate Cards Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/cards
+          BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/cards-site.json" \
+          BUILD_OUTPUT="$GITHUB_WORKSPACE/build/cards" \
+          SOURCE_BASE64="" \
+          python3 scripts/generate-app.py
+
+      - name: Build Cards APK and AAB
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+
+      - name: Verify artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="build/cards/app/build/outputs/apk/debug/app-debug.apk"
+          AAB="build/cards/app/build/outputs/bundle/release/app-release.aab"
+          test -s "$APK"
+          test -s "$AAB"
+          unzip -t "$APK" >/dev/null
+          unzip -t "$AAB" >/dev/null
+          unzip -l "$APK" | grep -q 'classes.dex'
+
+      - name: Publish test release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="build/cards/app/build/outputs/apk/debug/app-debug.apk"
+          AAB="build/cards/app/build/outputs/bundle/release/app-release.aab"
+          if gh release view cards-test-latest >/dev/null 2>&1; then
+            gh release upload cards-test-latest "$APK#MEIOCG-Cards-test.apk" "$AAB#MEIOCG-Cards-test.aab" --clobber
+          else
+            gh release create cards-test-latest "$APK#MEIOCG-Cards-test.apk" "$AAB#MEIOCG-Cards-test.aab" \
+              --title "MEIOCG Cards Test Build" \
+              --notes "Automated test build generated from https://cards.meiocg.org/" \
+              --prerelease
+          fi
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: meiocg-cards-test-apk-aab
+          path: |
+            build/cards/app/build/outputs/apk/debug/app-debug.apk
+            build/cards/app/build/outputs/bundle/release/app-release.aab
