@@ -41,7 +41,8 @@ jobs:
               if old not in s:
                   raise SystemExit('smoke test insertion point not found')
               s = s.replace(old, new, 1)
-              p.write_text(s)
+          s = s.replace('"smoke.zip")\nrun_case("Smoke Website", "com.castel.smokeweb", "HTTPS website")', '"smoke.zip", build=True)\nrun_case("Smoke Website", "com.castel.smokeweb", "HTTPS website", build=True)')
+          p.write_text(s)
           PY
 
       - name: Commit repaired files
@@ -54,5 +55,5 @@ jobs:
             echo 'No repair needed.'
             exit 0
           fi
-          git commit -m 'Fix uploaded ZIP web asset handling'
+          git commit -m 'Harden ZIP and website APK AAB tests'
           git push
