@@ -1,0 +1,10 @@
+{
+  "appName": "MEIOCG Cards",
+  "packageName": "org.meiocg.cards",
+  "versionName": "0.1.0",
+  "versionCode": 1,
+  "sourceType": "HTTPS website",
+  "sourceUrl": "https://cards.meiocg.org/",
+  "sourceFileName": "",
+  "orientation": "portrait"
+}
