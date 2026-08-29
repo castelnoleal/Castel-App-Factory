@@ -49,9 +49,6 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
             index = output / "app" / "src" / "main" / "assets" / "index.html"
             assert index.exists()
             assert "Smoke" in index.read_text(encoding="utf-8")
-            if source_name.endswith(".zip"):
-                assert (output / "app" / "src" / "main" / "assets" / "app.js").exists()
-            # ZIP-ASSET-SMOKE-FIX
             if source_file_name.endswith(".zip"):
                 assert any(p.name == "app.js" for p in (output / "app" / "src" / "main" / "assets").rglob("app.js"))
 
