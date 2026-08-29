@@ -55,7 +55,17 @@ def normalize_local_site(assets):
 
 
 def is_web_source(source_type, source_url):
-    return bool(source_url) and source_type.lower() in {"https website", "https website url", "website", "website url"}
+    if not source_url:
+        return False
+    kind = source_type.lower().strip()
+    return kind in {
+        "https website", "https website url", "http website", "http website url",
+        "website", "website url", "web", "url"
+    }
+
+
+def clean_url(value):
+    return str(value or "").strip().strip('"').strip("'")
 
 
 def generate():
@@ -68,7 +78,7 @@ def generate():
     version = str(cfg.get("versionName", "")).strip()
     version_code = int(cfg.get("versionCode", 0))
     source_type = str(cfg.get("sourceType", "Uploaded HTML/ZIP")).strip()
-    source_url = str(cfg.get("sourceUrl") or cfg.get("url") or "").strip()
+    source_url = clean_url(cfg.get("sourceUrl") or cfg.get("url") or "")
 
     if not name:
         fail("appName is required")
@@ -81,8 +91,8 @@ def generate():
 
     web_source = is_web_source(source_type, source_url)
     if web_source:
-        if not re.fullmatch(r"https://[^\s]+", source_url, re.IGNORECASE):
-            fail("Website source must use a valid HTTPS URL")
+        if not re.fullmatch(r"https?://[^\s]+", source_url, re.IGNORECASE):
+            fail("Website source must use a valid HTTP or HTTPS URL")
     elif not os.environ.get("SOURCE_BASE64"):
         fail("Uploaded HTML/ZIP source is missing")
 
@@ -109,7 +119,8 @@ def generate():
         content = source.read_text(encoding="utf-8")
         content = re.sub(r"^package\s+[^;]+;", f"package {package_name};", content, count=1, flags=re.MULTILINE)
         target_url = source_url if web_source else "https://appassets.androidplatform.net/assets/index.html"
-        content = content.replace("__TARGET_URL__", json.dumps(target_url))
+        java_url = target_url.replace("\\", "\\\\").replace('"', '\\"')
+        content = content.replace("__TARGET_URL__", java_url)
         content = content.replace("__ALLOW_EXTERNAL_LINKS__", "true" if bool(cfg.get("externalLinks")) else "false")
         content = content.replace("__ENABLE_ZOOM__", "true" if bool(cfg.get("zoom")) else "false")
         content = content.replace("__FULLSCREEN__", "true" if bool(cfg.get("fullscreen")) else "false")
@@ -142,13 +153,6 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
-    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
-    if not web_source:
-        for child in list(assets.iterdir()):
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
     if not web_source:
         for child in list(assets.iterdir()):
             if child.is_dir():
@@ -157,8 +161,8 @@ def generate():
                 child.unlink()
 
         raw = base64.b64decode(os.environ["SOURCE_BASE64"], validate=True)
-        source_name = str(cfg.get("sourceFileName", "")).lower()
-        source_is_zip = source_type.lower().endswith("zip") or source_name.endswith(".zip")
+        source_name = str(cfg.get("sourceFileName", "")).lower().strip()
+        source_is_zip = source_name.endswith(".zip")
         if source_is_zip:
             archive = output / "_source.zip"
             archive.write_bytes(raw)
