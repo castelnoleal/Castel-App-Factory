@@ -77,6 +77,27 @@ jobs:
           unzip -l "$APK" | grep -q 'classes.dex'
           unzip -l "$APK" | grep -q 'AndroidManifest.xml'
           sha256sum "$APK" "$AAB"
+      - name: Runtime launch test on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          script: |
+            set -euo pipefail
+            adb install -r build/cards/app/build/outputs/apk/debug/app-debug.apk
+            adb shell am force-stop org.meiocg.cards
+            adb shell monkey -p org.meiocg.cards -c android.intent.category.LAUNCHER 1
+            sleep 8
+            adb shell dumpsys activity activities | grep -q 'org.meiocg.cards'
+            if adb shell pidof org.meiocg.cards >/dev/null; then
+              echo 'MEIOCG Cards process is running.'
+            else
+              echo 'MEIOCG Cards process is not running.'
+              adb logcat -d -v time '*:E'
+              exit 1
+            fi
+            adb logcat -d -v time '*:E'
       - name: Publish latest test release
         env:
           GH_TOKEN: ${{ github.token }}
