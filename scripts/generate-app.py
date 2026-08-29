@@ -16,10 +16,17 @@ def fail(message):
 
 def safe_zip_extract(zf, destination):
     destination = destination.resolve()
+    total_uncompressed = 0
+    max_uncompressed = 250 * 1024 * 1024
     for info in zf.infolist():
         member = Path(info.filename)
         if member.is_absolute() or ".." in member.parts:
             fail(f"Unsafe ZIP entry: {info.filename}")
+        if info.is_dir() and not info.filename.endswith("/"):
+            fail(f"Invalid ZIP directory entry: {info.filename}")
+        total_uncompressed += max(0, info.file_size)
+        if total_uncompressed > max_uncompressed:
+            fail("ZIP expands beyond the 250 MB safety limit")
         target = (destination / member).resolve()
         if destination != target and destination not in target.parents:
             fail(f"Unsafe ZIP entry: {info.filename}")
@@ -48,11 +55,7 @@ def normalize_local_site(assets):
 
 
 def is_web_source(source_type, source_url):
-    return bool(source_url) and (
-        source_type.lower().startswith("https")
-        or source_type.lower().startswith("http")
-        or source_type.lower().startswith("website")
-    )
+    return bool(source_url) and source_type.lower() in {"https website", "https website url", "website", "website url"}
 
 
 def generate():
@@ -64,7 +67,7 @@ def generate():
     package_name = str(cfg.get("packageName", "")).strip()
     version = str(cfg.get("versionName", "")).strip()
     version_code = int(cfg.get("versionCode", 0))
-    source_type = str(cfg.get("sourceType", "Uploaded HTML")).strip()
+    source_type = str(cfg.get("sourceType", "Uploaded HTML/ZIP")).strip()
     source_url = str(cfg.get("sourceUrl") or cfg.get("url") or "").strip()
 
     if not name:
@@ -78,8 +81,8 @@ def generate():
 
     web_source = is_web_source(source_type, source_url)
     if web_source:
-        if not re.fullmatch(r"https?://[^\s]+", source_url, re.IGNORECASE):
-            fail("Website source must use a valid http:// or https:// URL")
+        if not re.fullmatch(r"https://[^\s]+", source_url, re.IGNORECASE):
+            fail("Website source must use a valid HTTPS URL")
     elif not os.environ.get("SOURCE_BASE64"):
         fail("Uploaded HTML/ZIP source is missing")
 
@@ -104,33 +107,12 @@ def generate():
     target_root.mkdir(parents=True, exist_ok=True)
     for source in java_files:
         content = source.read_text(encoding="utf-8")
-        content = re.sub(
-            r"^package\s+[^;]+;",
-            f"package {package_name};",
-            content,
-            count=1,
-            flags=re.MULTILINE,
-        )
-        # Always replace the template's initial load target. This is deliberately
-        # done after package rewriting so website builds cannot silently fall back
-        # to the template's local asset page.
-        if web_source:
-            load_statement = f"webView.loadUrl({json.dumps(source_url)});"
-        else:
-            load_statement = 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");'
-        if "webView.loadUrl(" in content:
-            content = re.sub(
-                r'webView\.loadUrl\([^;]*\);',
-                load_statement,
-                content,
-                count=1,
-            )
-        else:
-            content = content.replace(
-                "setContentView(webView);",
-                "setContentView(webView);\n\n        " + load_statement,
-                1,
-            )
+        content = re.sub(r"^package\s+[^;]+;", f"package {package_name};", content, count=1, flags=re.MULTILINE)
+        target_url = source_url if web_source else "https://appassets.androidplatform.net/assets/index.html"
+        content = content.replace("__TARGET_URL__", json.dumps(target_url))
+        content = content.replace("__ALLOW_EXTERNAL_LINKS__", "true" if bool(cfg.get("externalLinks")) else "false")
+        content = content.replace("__ENABLE_ZOOM__", "true" if bool(cfg.get("zoom")) else "false")
+        content = content.replace("__FULLSCREEN__", "true" if bool(cfg.get("fullscreen")) else "false")
         source.write_text(content, encoding="utf-8")
         target = target_root / source.name
         if source.resolve() != target.resolve():
@@ -160,13 +142,6 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
-    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
-    if not web_source:
-        for child in list(assets.iterdir()):
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
     if not web_source:
         for child in list(assets.iterdir()):
             if child.is_dir():
@@ -174,8 +149,7 @@ def generate():
             else:
                 child.unlink()
 
-    if not web_source:
-        raw = base64.b64decode(os.environ["SOURCE_BASE64"])
+        raw = base64.b64decode(os.environ["SOURCE_BASE64"], validate=True)
         source_name = str(cfg.get("sourceFileName", "")).lower()
         source_is_zip = source_type.lower().endswith("zip") or source_name.endswith(".zip")
         if source_is_zip:
