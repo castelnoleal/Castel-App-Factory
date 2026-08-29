@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'test-inputs/cards-site.json'
+      - 'test-inputs/local-html.json'
+      - 'test-inputs/sample-site/**'
       - 'scripts/generate-app.py'
       - 'android-template/**'
       - '.github/workflows/build-cards-test.yml'
@@ -108,3 +110,86 @@ jobs:
           path: |
             build/cards/app/build/outputs/apk/debug/app-debug.apk
             build/cards/app/build/outputs/bundle/release/app-release.aab
+
+  generic-local-source-tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: '12266719'
+          accept-android-sdk-licenses: true
+          packages: tools platform-tools
+
+      - name: Install Android SDK platform and build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Generate single HTML project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/local-html
+          SOURCE_BASE64="$(base64 -w0 test-inputs/sample-site/index.html)" \
+          BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/local-html.json" \
+          BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-html" \
+          python3 scripts/generate-app.py
+          grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java
+          test -s build/local-html/app/src/main/assets/index.html
+
+      - name: Build single HTML APK
+        run: gradle -p build/local-html assembleDebug --no-daemon --stacktrace
+
+      - name: Verify single HTML APK
+        run: |
+          set -euo pipefail
+          test -s build/local-html/app/build/outputs/apk/debug/app-debug.apk
+          unzip -t build/local-html/app/build/outputs/apk/debug/app-debug.apk >/dev/null
+          unzip -l build/local-html/app/build/outputs/apk/debug/app-debug.apk | grep -q 'assets/index.html'
+
+      - name: Generate ZIP project
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/zip-input build/local-zip
+          cp -R test-inputs/sample-site/. build/zip-input/
+          (cd build/zip-input && zip -qr ../sample-site.zip .)
+          python3 - <<'PY'
+          import json
+          p='test-inputs/local-html.json'
+          d=json.load(open(p))
+          d['appName']='Factory ZIP Test'
+          d['packageName']='com.castel.ziptest'
+          d['sourceFileName']='sample-site.zip'
+          open('build/zip-manifest.json','w').write(json.dumps(d))
+          PY
+          SOURCE_BASE64="$(base64 -w0 build/sample-site.zip)" \
+          BUILD_MANIFEST="$GITHUB_WORKSPACE/build/zip-manifest.json" \
+          BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-zip" \
+          python3 scripts/generate-app.py
+          test -s build/local-zip/app/src/main/assets/index.html
+          test -s build/local-zip/app/src/main/assets/style.css
+          grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java
+
+      - name: Build ZIP APK
+        run: gradle -p build/local-zip assembleDebug --no-daemon --stacktrace
+
+      - name: Verify ZIP APK
+        run: |
+          set -euo pipefail
+          test -s build/local-zip/app/build/outputs/apk/debug/app-debug.apk
+          unzip -t build/local-zip/app/build/outputs/apk/debug/app-debug.apk >/dev/null
+          unzip -l build/local-zip/app/build/outputs/apk/debug/app-debug.apk | grep -q 'assets/style.css'
