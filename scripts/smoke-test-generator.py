@@ -50,8 +50,9 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
             assert index.exists()
             assert "Smoke" in index.read_text(encoding="utf-8")
             if source_file_name.endswith(".zip"):
-                assert (output / "app" / "src" / "main" / "assets" / "app.js").exists()
-            # ZIP-ASSET-SMOKE-FIX
+                # The generator must preserve assets from a ZIP even when the
+                # site's index.html is nested inside a top-level folder.
+                assert any(p.name == "app.js" for p in (output / "app" / "src" / "main" / "assets").rglob("app.js"))
 
         if build:
             subprocess.run(
