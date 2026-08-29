@@ -36,7 +36,6 @@ public class MainActivity extends ComponentActivity {
         Window window = getWindow();
         window.setStatusBarColor(0xFF080B14);
         window.setNavigationBarColor(Color.BLACK);
-
         try {
             initializeWebView(window);
         } catch (Throwable fatal) {
@@ -47,7 +46,6 @@ public class MainActivity extends ComponentActivity {
     private void initializeWebView(Window window) {
         webView = new WebView(this);
         setContentView(webView);
-
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -73,31 +71,17 @@ public class MainActivity extends ComponentActivity {
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
             }
-
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
                 return assetLoader.shouldInterceptRequest(Uri.parse(url));
             }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 return handleNavigation(request.getUrl());
             }
-
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleNavigation(Uri.parse(url));
-            }
-
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
-                if (request.isForMainFrame()) {
-                    view.setBackgroundColor(Color.rgb(8, 11, 20));
-                    view.loadDataWithBaseURL(null,
-                            "<html><body style='background:#080b14;color:white;font-family:sans-serif;padding:32px'>" +
-                            "<h2>Unable to load the app</h2><p>Please check your internet connection and try again.</p>" +
-                            "</body></html>", "text/html", "UTF-8", null);
-                }
             }
         });
 
