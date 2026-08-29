@@ -3,11 +3,13 @@ name: Build Cards Test APK
 on:
   workflow_dispatch:
   push:
+    branches: [ main ]
     paths:
       - 'test-inputs/cards-site.json'
       - 'test-inputs/local-html.json'
       - 'test-inputs/sample-site/**'
       - 'scripts/generate-app.py'
+      - 'scripts/smoke-test-generator.py'
       - 'android-template/**'
       - '.github/workflows/build-cards-test.yml'
 
@@ -19,8 +21,13 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout latest main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Show source revision
+        run: git rev-parse HEAD
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
@@ -28,15 +35,11 @@ jobs:
           java-version: '17'
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: '12266719'
-          accept-android-sdk-licenses: true
-          packages: tools platform-tools
-      - name: Install Android SDK platform and build tools
+      - name: Install required Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
-          sdkmanager "platforms;android-36" "build-tools;36.0.0"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
@@ -46,7 +49,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p build/cards
           BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/cards-site.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/cards" \
           SOURCE_BASE64="" \
@@ -55,17 +57,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -F 'https://cards.meiocg.org/' build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java
-          if grep -F 'appassets.androidplatform.net/assets/index.html' build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java; then
-            echo 'ERROR: website build still points to local template asset'
-            exit 1
-          fi
+          MAIN="build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java"
+          test -s "$MAIN"
+          grep -F 'webView.loadUrl("https://cards.meiocg.org/");' "$MAIN"
+          ! grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
       - name: Build Cards APK and AAB
         shell: bash
-        run: |
-          set -euo pipefail
-          gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
-      - name: Verify artifacts
+        run: gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+      - name: Verify Cards artifacts
         shell: bash
         run: |
           set -euo pipefail
@@ -77,7 +76,8 @@ jobs:
           unzip -t "$AAB" >/dev/null
           unzip -l "$APK" | grep -q 'classes.dex'
           unzip -l "$APK" | grep -q 'AndroidManifest.xml'
-      - name: Publish test release
+          sha256sum "$APK" "$AAB"
+      - name: Publish latest test release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -88,15 +88,13 @@ jobs:
           if gh release view cards-test-latest >/dev/null 2>&1; then
             gh release upload cards-test-latest "$APK#MEIOCG-Cards-test.apk" "$AAB#MEIOCG-Cards-test.aab" --clobber
           else
-            gh release create cards-test-latest "$APK#MEIOCG-Cards-test.apk" "$AAB#MEIOCG-Cards-test.aab" \
-              --title "MEIOCG Cards Test Build" \
-              --notes "Automated test build generated from https://cards.meiocg.org/" \
-              --prerelease
+            gh release create cards-test-latest "$APK#MEIOCG-Cards-test.apk" "$AAB#MEIOCG-Cards-test.aab" --title "MEIOCG Cards Test Build" --notes "Automated acceptance build generated from https://cards.meiocg.org/" --prerelease
           fi
-      - name: Upload workflow artifacts
+      - name: Upload Cards artifacts
         uses: actions/upload-artifact@v4
         with:
           name: meiocg-cards-test-apk-aab
+          if-no-files-found: error
           path: |
             build/cards/app/build/outputs/apk/debug/app-debug.apk
             build/cards/app/build/outputs/bundle/release/app-release.aab
@@ -104,8 +102,13 @@ jobs:
   generic-local-source-tests:
     runs-on: ubuntu-24.04
     steps:
-      - name: Checkout
+      - name: Checkout latest main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+      - name: Show source revision
+        run: git rev-parse HEAD
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
@@ -113,46 +116,41 @@ jobs:
           java-version: '17'
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: '12266719'
-          accept-android-sdk-licenses: true
-          packages: tools platform-tools
-      - name: Install Android SDK platform and build tools
-        run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+      - name: Install required Android SDK packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-      - name: Generate single HTML project
+      - name: Generate and build standalone HTML
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p build/local-html
           SOURCE_BASE64="$(base64 -w0 test-inputs/sample-site/index.html)" \
           BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/local-html.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-html" \
           python3 scripts/generate-app.py
-          grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java
+          MAIN="build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java"
+          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
           test -s build/local-html/app/src/main/assets/index.html
-      - name: Build single HTML APK
-        run: gradle -p build/local-html assembleDebug --no-daemon --stacktrace
-      - name: Verify single HTML APK
-        run: |
-          set -euo pipefail
-          test -s build/local-html/app/build/outputs/apk/debug/app-debug.apk
+          gradle -p build/local-html lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
           unzip -t build/local-html/app/build/outputs/apk/debug/app-debug.apk >/dev/null
+          unzip -t build/local-html/app/build/outputs/bundle/release/app-release.aab >/dev/null
           unzip -l build/local-html/app/build/outputs/apk/debug/app-debug.apk | grep -q 'assets/index.html'
-      - name: Generate ZIP project
+      - name: Generate and build ZIP website
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p build/zip-input build/local-zip
+          mkdir -p build/zip-input
           cp -R test-inputs/sample-site/. build/zip-input/
           (cd build/zip-input && zip -qr ../sample-site.zip .)
           python3 - <<'PY'
           import json
-          p='test-inputs/local-html.json'
-          d=json.load(open(p))
+          d=json.load(open('test-inputs/local-html.json'))
           d['appName']='Factory ZIP Test'
           d['packageName']='com.castel.ziptest'
           d['sourceFileName']='sample-site.zip'
@@ -162,14 +160,21 @@ jobs:
           BUILD_MANIFEST="$GITHUB_WORKSPACE/build/zip-manifest.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-zip" \
           python3 scripts/generate-app.py
+          MAIN="build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java"
+          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
           test -s build/local-zip/app/src/main/assets/index.html
           test -s build/local-zip/app/src/main/assets/style.css
-          grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java
-      - name: Build ZIP APK
-        run: gradle -p build/local-zip assembleDebug --no-daemon --stacktrace
-      - name: Verify ZIP APK
-        run: |
-          set -euo pipefail
-          test -s build/local-zip/app/build/outputs/apk/debug/app-debug.apk
+          gradle -p build/local-zip lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
           unzip -t build/local-zip/app/build/outputs/apk/debug/app-debug.apk >/dev/null
+          unzip -t build/local-zip/app/build/outputs/bundle/release/app-release.aab >/dev/null
           unzip -l build/local-zip/app/build/outputs/apk/debug/app-debug.apk | grep -q 'assets/style.css'
+      - name: Upload generic acceptance artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generic-html-zip-acceptance
+          if-no-files-found: error
+          path: |
+            build/local-html/app/build/outputs/apk/debug/app-debug.apk
+            build/local-html/app/build/outputs/bundle/release/app-release.aab
+            build/local-zip/app/build/outputs/apk/debug/app-debug.apk
+            build/local-zip/app/build/outputs/bundle/release/app-release.aab
