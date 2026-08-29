@@ -22,8 +22,6 @@ def safe_zip_extract(zf, destination):
         member = Path(info.filename)
         if member.is_absolute() or ".." in member.parts:
             fail(f"Unsafe ZIP entry: {info.filename}")
-        if info.is_dir() and not info.filename.endswith("/"):
-            fail(f"Invalid ZIP directory entry: {info.filename}")
         total_uncompressed += max(0, info.file_size)
         if total_uncompressed > max_uncompressed:
             fail("ZIP expands beyond the 250 MB safety limit")
@@ -50,7 +48,15 @@ def normalize_local_site(assets):
         fail("No index.html found in uploaded source")
     target = assets / "index.html"
     if index.resolve() != target.resolve():
-        shutil.copy2(index, target)
+        source_dir = index.parent
+        for child in source_dir.iterdir():
+            destination = assets / child.name
+            if child.resolve() == destination.resolve():
+                continue
+            if child.is_dir():
+                shutil.copytree(child, destination, dirs_exist_ok=True)
+            else:
+                shutil.copy2(child, destination)
     return target
 
 
@@ -153,13 +159,6 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
-    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
-    if not web_source:
-        for child in list(assets.iterdir()):
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
     if not web_source:
         for child in list(assets.iterdir()):
             if child.is_dir():
