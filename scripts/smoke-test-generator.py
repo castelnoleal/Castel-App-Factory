@@ -43,18 +43,13 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
         assert "com.castel.generatedapp" not in text
 
         if source_type.startswith("HTTPS"):
-            assert "https://example.com/" in text
+            assert 'webView.loadUrl("https://example.com/");' in text
             assert not (output / "app" / "src" / "main" / "assets" / "index.html").exists()
         else:
             index = output / "app" / "src" / "main" / "assets" / "index.html"
             assert index.exists()
             assert "Smoke" in index.read_text(encoding="utf-8")
-            if source_name.endswith(".zip"):
-                assert (output / "app" / "src" / "main" / "assets" / "app.js").exists()
-            # ZIP-ASSET-SMOKE-FIX
             if source_file_name.endswith(".zip"):
-                # The generator must preserve assets from a ZIP even when the
-                # site's index.html is nested inside a top-level folder.
                 assert any(p.name == "app.js" for p in (output / "app" / "src" / "main" / "assets").rglob("app.js"))
 
         if build:
@@ -74,14 +69,7 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
                 assert z.testzip() is None
 
 
-run_case(
-    "Smoke Local",
-    "com.castel.smokelocal",
-    "Uploaded HTML",
-    b"<!doctype html><html><body><h1>Smoke local</h1></body></html>",
-    "smoke.html",
-    build=True,
-)
+run_case("Smoke Local", "com.castel.smokelocal", "Uploaded HTML", b"<!doctype html><html><body><h1>Smoke local</h1></body></html>", "smoke.html", build=True)
 
 zip_buffer = io.BytesIO()
 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as z:
