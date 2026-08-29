@@ -1,8 +1,10 @@
 package com.castel.generatedapp;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.View;
 import android.view.Window;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -11,6 +13,7 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.TextView;
 
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
@@ -32,8 +35,16 @@ public class MainActivity extends ComponentActivity {
         super.onCreate(savedInstanceState);
         Window window = getWindow();
         window.setStatusBarColor(0xFF080B14);
-        window.setNavigationBarColor(0xFF000000);
+        window.setNavigationBarColor(Color.BLACK);
 
+        try {
+            initializeWebView(window);
+        } catch (Throwable fatal) {
+            showLaunchError(fatal);
+        }
+    }
+
+    private void initializeWebView(Window window) {
         webView = new WebView(this);
         setContentView(webView);
 
@@ -51,6 +62,7 @@ public class MainActivity extends ComponentActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportMultipleWindows(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("assets", new WebViewAssetLoader.AssetsPathHandler(this))
@@ -76,11 +88,22 @@ public class MainActivity extends ComponentActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleNavigation(Uri.parse(url));
             }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+                if (request.isForMainFrame()) {
+                    view.setBackgroundColor(Color.rgb(8, 11, 20));
+                    view.loadDataWithBaseURL(null,
+                            "<html><body style='background:#080b14;color:white;font-family:sans-serif;padding:32px'>" +
+                            "<h2>Unable to load the app</h2><p>Please check your internet connection and try again.</p>" +
+                            "</body></html>", "text/html", "UTF-8", null);
+                }
+            }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> callback, FileChooserParams params) {
+            public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
                 fileChooserCallback = callback;
                 try {
@@ -97,12 +120,12 @@ public class MainActivity extends ComponentActivity {
 
         if (FULLSCREEN) {
             window.getDecorView().setSystemUiVisibility(
-                    android.view.View.SYSTEM_UI_FLAG_FULLSCREEN |
-                    android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                    android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
-                    android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+                    View.SYSTEM_UI_FLAG_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY |
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION |
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
 
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -118,6 +141,17 @@ public class MainActivity extends ComponentActivity {
         });
 
         webView.loadUrl("__TARGET_URL__");
+    }
+
+    private void showLaunchError(Throwable error) {
+        TextView message = new TextView(this);
+        message.setTextColor(Color.WHITE);
+        message.setTextSize(16);
+        message.setBackgroundColor(Color.rgb(8, 11, 20));
+        message.setPadding(40, 60, 40, 40);
+        message.setText("The app could not start.\n\n" + error.getClass().getSimpleName() +
+                (error.getMessage() == null ? "" : "\n" + error.getMessage()));
+        setContentView(message);
     }
 
     private boolean handleNavigation(Uri uri) {
