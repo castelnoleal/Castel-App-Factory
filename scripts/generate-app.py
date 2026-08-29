@@ -111,11 +111,25 @@ def generate():
             count=1,
             flags=re.MULTILINE,
         )
+        # Always replace the template's initial load target. This is deliberately
+        # done after package rewriting so website builds cannot silently fall back
+        # to the template's local asset page.
         if web_source:
+            load_statement = f"webView.loadUrl({json.dumps(source_url)});"
+        else:
+            load_statement = 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");'
+        if "webView.loadUrl(" in content:
             content = re.sub(
-                r'webView\.loadUrl\("[^"]*"\);',
-                f"webView.loadUrl({json.dumps(source_url)});",
+                r'webView\.loadUrl\([^;]*\);',
+                load_statement,
                 content,
+                count=1,
+            )
+        else:
+            content = content.replace(
+                "setContentView(webView);",
+                "setContentView(webView);\n\n        " + load_statement,
+                1,
             )
         source.write_text(content, encoding="utf-8")
         target = target_root / source.name
@@ -146,7 +160,6 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
-    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
     if not web_source:
         for child in list(assets.iterdir()):
             if child.is_dir():
