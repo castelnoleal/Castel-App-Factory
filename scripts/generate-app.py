@@ -57,6 +57,8 @@ def normalize_local_site(assets):
                 shutil.copytree(child, destination, dirs_exist_ok=True)
             else:
                 shutil.copy2(child, destination)
+        if index.exists() and index.resolve() != target.resolve():
+            shutil.copy2(index, target)
     return target
 
 
@@ -159,13 +161,6 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
-    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
-    if not web_source:
-        for child in list(assets.iterdir()):
-            if child.is_dir():
-                shutil.rmtree(child)
-            else:
-                child.unlink()
     if not web_source:
         for child in list(assets.iterdir()):
             if child.is_dir():
