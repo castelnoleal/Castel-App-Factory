@@ -55,6 +55,16 @@ jobs:
           SOURCE_BASE64="" \
           python3 scripts/generate-app.py
 
+      - name: Verify generated website target
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'https://cards.meiocg.org/' build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java
+          if grep -F 'appassets.androidplatform.net/assets/index.html' build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java; then
+            echo 'ERROR: website build still points to local template asset'
+            exit 1
+          fi
+
       - name: Build Cards APK and AAB
         shell: bash
         run: |
@@ -72,6 +82,7 @@ jobs:
           unzip -t "$APK" >/dev/null
           unzip -t "$AAB" >/dev/null
           unzip -l "$APK" | grep -q 'classes.dex'
+          unzip -p "$APK" classes.dex | strings | grep -F 'cards.meiocg.org/'
 
       - name: Publish test release
         env:
