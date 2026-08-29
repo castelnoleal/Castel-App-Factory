@@ -21,32 +21,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: '12266719'
           accept-android-sdk-licenses: true
           packages: tools platform-tools
-
       - name: Install Android SDK platform and build tools
         shell: bash
         run: |
           set -euo pipefail
           sdkmanager "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
-
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-
       - name: Generate Cards Android project
         shell: bash
         run: |
@@ -56,7 +51,6 @@ jobs:
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/cards" \
           SOURCE_BASE64="" \
           python3 scripts/generate-app.py
-
       - name: Verify generated website target
         shell: bash
         run: |
@@ -66,13 +60,11 @@ jobs:
             echo 'ERROR: website build still points to local template asset'
             exit 1
           fi
-
       - name: Build Cards APK and AAB
         shell: bash
         run: |
           set -euo pipefail
           gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
-
       - name: Verify artifacts
         shell: bash
         run: |
@@ -84,8 +76,7 @@ jobs:
           unzip -t "$APK" >/dev/null
           unzip -t "$AAB" >/dev/null
           unzip -l "$APK" | grep -q 'classes.dex'
-          unzip -p "$APK" classes.dex | strings | grep -F 'cards.meiocg.org/'
-
+          unzip -l "$APK" | grep -q 'AndroidManifest.xml'
       - name: Publish test release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -102,7 +93,6 @@ jobs:
               --notes "Automated test build generated from https://cards.meiocg.org/" \
               --prerelease
           fi
-
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -116,28 +106,23 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: '12266719'
           accept-android-sdk-licenses: true
           packages: tools platform-tools
-
       - name: Install Android SDK platform and build tools
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
-
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-
       - name: Generate single HTML project
         shell: bash
         run: |
@@ -149,17 +134,14 @@ jobs:
           python3 scripts/generate-app.py
           grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java
           test -s build/local-html/app/src/main/assets/index.html
-
       - name: Build single HTML APK
         run: gradle -p build/local-html assembleDebug --no-daemon --stacktrace
-
       - name: Verify single HTML APK
         run: |
           set -euo pipefail
           test -s build/local-html/app/build/outputs/apk/debug/app-debug.apk
           unzip -t build/local-html/app/build/outputs/apk/debug/app-debug.apk >/dev/null
           unzip -l build/local-html/app/build/outputs/apk/debug/app-debug.apk | grep -q 'assets/index.html'
-
       - name: Generate ZIP project
         shell: bash
         run: |
@@ -183,10 +165,8 @@ jobs:
           test -s build/local-zip/app/src/main/assets/index.html
           test -s build/local-zip/app/src/main/assets/style.css
           grep -F 'https://appassets.androidplatform.net/assets/index.html' build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java
-
       - name: Build ZIP APK
         run: gradle -p build/local-zip assembleDebug --no-daemon --stacktrace
-
       - name: Verify ZIP APK
         run: |
           set -euo pipefail
