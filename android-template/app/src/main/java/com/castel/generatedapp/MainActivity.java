@@ -63,7 +63,7 @@ public class MainActivity extends ComponentActivity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
 
         assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("assets", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
         webView.setWebViewClient(new WebViewClientCompat() {
