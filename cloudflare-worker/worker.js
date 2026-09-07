@@ -17,7 +17,7 @@ function headers() {
 }
 function reply(data, status=200) { return new Response(JSON.stringify(data), {status, headers: headers()}); }
 function validPkg(v) { return typeof v === "string" && /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(v); }
-function validHttps(v) { try { return new URL(v).protocol === "https:"; } catch { return false; } }
+function normalizeWebsiteUrl(v) { try { let raw=String(v||"").trim(); if (!raw) return null; if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) raw=`https://${raw}`; const u=new URL(raw); return (u.protocol === "https:" || u.protocol === "http:") ? u.href : null; } catch { return null; } }
 function b64utf8(text) {
   const bytes = new TextEncoder().encode(text); let out = "";
   for (let i=0;i<bytes.length;i+=0x8000) out += String.fromCharCode(...bytes.subarray(i,i+0x8000));
@@ -63,7 +63,7 @@ export default {
         const packageName = String(b.packageName || "").trim();
         const versionName = String(b.versionName || "").trim();
         const versionCode = Number(b.versionCode);
-        const websiteUrl = String(b.sourceUrl || b.websiteUrl || "").trim();
+        const websiteUrl = normalizeWebsiteUrl(b.sourceUrl || b.websiteUrl || "");
         const sourceFileName = String(b.sourceFileName || "").trim();
         const sourceBase64 = String(b.sourceBase64 || "");
         const testBuild = Boolean(b.testBuild);
@@ -71,7 +71,7 @@ export default {
         if (!validPkg(packageName)) return reply({ok:false,error:"Invalid Android package ID."},400);
         if (!/^\d+(\.\d+){0,2}$/.test(versionName)) return reply({ok:false,error:"Invalid version name."},400);
         if (!Number.isInteger(versionCode) || versionCode < 1 || versionCode > 2100000000) return reply({ok:false,error:"Invalid version code."},400);
-        if (sourceType === "website" && !validHttps(websiteUrl)) return reply({ok:false,error:"Website source must be HTTPS."},400);
+        if (sourceType === "website" && !websiteUrl) return reply({ok:false,error:"Website source must be a valid HTTP or HTTPS URL."},400);
         if (sourceType === "html" && !sourceBase64) return reply({ok:false,error:"HTML/ZIP source is missing."},400);
         if (sourceBase64.length > MAX_SOURCE_BASE64) return reply({ok:false,error:"Uploaded source is too large for this build bridge. Use a ZIP under about 21 MB for now."},413);
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
