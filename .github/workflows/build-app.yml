@@ -65,6 +65,16 @@ jobs:
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"running",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
+      - name: Update stage: generating Android project
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Generating Android project" --argjson progress 20 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Generating Android project" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+
       - name: Generate Android project
         env:
           BUILD_ID: ${{ inputs.build_id }}
@@ -101,10 +111,30 @@ jobs:
           else
             test -s generated-app/app/src/main/assets/index.html
           fi
+      - name: Update stage: compiling APK and AAB
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Compiling APK and AAB" --argjson progress 45 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Compiling APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+
       - name: Lint and build debug APK + release AAB
         run: |
           set -euo pipefail
           gradle -p generated-app lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+      - name: Update stage: runtime smoke test
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Starting Android emulator runtime test" --argjson progress 78 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Starting Android emulator runtime test" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+
       - name: Runtime smoke test generated APK
         uses: reactivecircus/android-emulator-runner@v2
         env:
@@ -131,6 +161,16 @@ jobs:
             fi
             adb shell pidof "$PKG" >/dev/null
             echo "Runtime smoke test passed for $PKG."
+
+      - name: Update stage: verifying artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Verifying generated APK and AAB" --argjson progress 92 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Verifying generated APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
 
       - name: Verify artifacts
         run: |
