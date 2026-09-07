@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080a0d">
+<title>MEIOCG National Rankings</title>
+<style>
+:root{--bg:#07090c;--panel:#0d1015;--panel2:#11151b;--line:#252b33;--text:#f4f5f7;--muted:#858e9b;--gold:#d6b56d;--gold2:#f1d995;--green:#75c79b}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+body{background-image:radial-gradient(700px 350px at 85% 0%,rgba(214,181,109,.08),transparent 60%)}
+.wrap{max-width:1250px;margin:auto;padding:22px 16px 60px}.topline{height:1px;background:linear-gradient(90deg,transparent,#4a4f58,transparent);margin-bottom:24px}
+header{padding:10px 0 24px;border-bottom:1px solid var(--line)}.eyebrow{font-size:10px;letter-spacing:.22em;color:var(--gold);font-weight:800;text-transform:uppercase}
+h1{font:500 clamp(38px,7vw,68px)/.95 Georgia,serif;letter-spacing:-.04em;margin:10px 0}.sub{font-size:13px;color:var(--muted);line-height:1.6}
+.live{display:flex;gap:8px;align-items:center;margin-top:14px;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}.dot{width:7px;height:7px;border-radius:50%;background:#e6a15c}
+.controls{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}input,select,button{height:42px;border:1px solid var(--line);border-radius:8px;background:#0b0e12;color:var(--text);padding:0 12px;font:inherit}input{flex:1;min-width:210px}button{cursor:pointer;font-size:10px;font-weight:800;letter-spacing:.1em}button.active{color:var(--gold2);border-color:#5b4d32;background:#17130c}
+.view{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}.view button{border:0;border-radius:0}
+.panel{margin-top:18px;border:1px solid var(--line);background:rgba(13,16,21,.94);border-radius:12px;overflow:hidden}.head{padding:17px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:15px;align-items:center}.head h2{font:500 21px Georgia,serif;margin:0}.meta{font-size:10px;color:var(--muted)}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:1px;background:var(--line)}.pod{min-height:190px;padding:24px 12px;text-align:center;background:#0d1015;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}.pod:before{content:"";position:absolute;inset:-50%;filter:blur(40px);opacity:.18}.pod.rank1{background:linear-gradient(#1a160e,#0d1015);border-top:2px solid var(--gold);box-shadow:0 0 55px rgba(214,181,109,.3);transform:translateY(-3px);z-index:2}.pod.rank1:before{background:radial-gradient(circle,rgba(214,181,109,.45),transparent 60%)}.pod.rank2{border-top:1px solid #aeb6c2;box-shadow:0 0 22px rgba(203,213,225,.08)}.pod.rank2:before{background:radial-gradient(circle,rgba(203,213,225,.18),transparent 60%)}.pod.rank3{border-top:1px solid #a86d43;box-shadow:0 0 20px rgba(251,146,60,.06)}.pod.rank3:before{background:radial-gradient(circle,rgba(251,146,60,.14),transparent 60%)}.place,.num,.pname,.ppoints,.pregion{position:relative;z-index:1}.place{font-size:9px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}.num{font:32px Georgia,serif;color:var(--gold);margin:5px}.pname{font-weight:800;font-size:17px}.ppoints{color:var(--gold2);font-weight:800;margin-top:6px}.pregion{font-size:10px;color:var(--muted);margin-top:5px}
+.tablewrap{overflow:hidden}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{padding:13px 10px;border-bottom:1px solid #1b2027;text-align:left;overflow:hidden;text-overflow:ellipsis}th{font-size:9px;letter-spacing:.12em;color:#69727f;text-transform:uppercase;background:#0a0d11}td{font-size:12px}th:nth-child(1),td:nth-child(1){width:12%}th:nth-child(2),td:nth-child(2){width:43%;white-space:normal}th:nth-child(3),td:nth-child(3){width:22%;text-align:right}th:nth-child(4),td:nth-child(4){width:23%;white-space:normal}.rank{font:17px Georgia,serif;color:#cbd1d8}.player{font-weight:800}.pts{font-weight:800;color:var(--gold2)}
+.empty,.loading{padding:45px 18px;text-align:center;color:var(--muted);font-size:12px}
+.metaGrid{display:grid;grid-template-columns:1fr 1fr}.chartbox{min-height:320px;display:grid;place-items:center;border-right:1px solid var(--line);padding:20px}.chartbox canvas{max-width:100%;max-height:300px}.metatable{width:100%;border-collapse:collapse}.metatable th,.metatable td{width:auto!important}.metatable th:nth-child(2),.metatable td:nth-child(2),.metatable th:nth-child(3),.metatable td:nth-child(3){text-align:right}
+.foot{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:9px;color:#626a76;display:flex;justify-content:space-between}
+@media(max-width:700px){.podium{grid-template-columns:1fr}.pod.rank1{order:-1;transform:none}.metaGrid{grid-template-columns:1fr}.chartbox{border-right:0;border-bottom:1px solid var(--line)}th,td{padding:11px 6px;font-size:10px}th{font-size:8px}.pname{font-size:12px}.pts{font-size:11px}.rank{font-size:15px}.controls select{flex:1}.foot{flex-direction:column;gap:6px}}
+
+.metagame-panel{margin-top:22px}.meta-layout{display:grid;grid-template-columns:minmax(280px,1fr) minmax(300px,1fr);border-top:1px solid var(--line)}.metachart{min-height:340px;display:grid;place-items:center;padding:20px;border-right:1px solid var(--line)}.metachart canvas{max-width:100%;max-height:320px}.metatable-wrap{overflow:auto}.metatable{width:100%;border-collapse:collapse}.metatable th{padding:12px 15px;text-align:left;font-size:9px;color:#68717e;text-transform:uppercase}.metatable td{padding:12px 15px;border-top:1px solid #1b2027;font-size:12px}.metatable td:nth-child(2),.metatable td:nth-child(3){text-align:right}@media(max-width:750px){.meta-layout{grid-template-columns:1fr}.metachart{border-right:0;border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="topline"></div>
+<header><div class="eyebrow">MEIOCG · Official National Standings</div><h1>National Rankings</h1><div class="sub">Current competitive standings, player search, regional origin and metagame distribution.</div><div class="live"><span class="dot" id="dot"></span><span id="status">Connecting to national rankings…</span></div></header>
+
+<div class="controls">
+<input id="search" type="search" placeholder="Search any ranked player…">
+<select id="sort"><option value="rank">Official Rank</option><option value="points">Points — High to Low</option><option value="name">Player — A to Z</option></select>
+<div class="view"><button id="topBtn" class="active">TOP 50</button><button id="fullBtn">FULL</button></div>
+<button id="refresh">REFRESH</button>
+</div>
+
+<section class="panel">
+<div class="head"><div><h2>Leaders</h2><div class="meta">Top three national-ranked players</div></div><div class="meta" id="updated">—</div></div>
+<div class="podium" id="podium"><div class="loading">Loading…</div></div>
+</section>
+
+<section class="panel">
+<div class="head"><div><h2>National Standings</h2><div class="meta">Rank · Player · Points · Region</div></div><div class="meta" id="count">—</div></div>
+<div class="tablewrap"><table><thead><tr><th>Rank</th><th>Player</th><th>Points</th><th>Region</th></tr></thead><tbody id="tbody"></tbody></table></div>
+<div class="empty" id="empty" style="display:none">No players found.</div>
+<div class="meta" id="sourceNote" style="padding:12px 14px;border-top:1px solid var(--line)">—</div>
+</section>
+
+<section class="panel">
+<div class="head"><div><h2>Metagame</h2><div class="meta">Distribution detected from the national dataset</div></div><div class="meta" id="metaCount">—</div></div>
+<div class="metaGrid"><div class="chartbox"><canvas id="pie"></canvas></div><div style="overflow:auto"><table class="metatable"><thead><tr><th>Metagame</th><th>Players</th><th>Share</th></tr></thead><tbody id="metaBody"></tbody></table></div></div>
+</section>
+
+<div class="foot"><span>MEIOCG · National Rankings</span><span>Live source · automatic refresh every 60 seconds</span></div>
+</div>
+
+<script>
+const MAIN_SHEET="1LJWBeYMloLsXfVCjNipT3h2misTqBtL-jegKXVWRma8";
+const REGION_SHEETS=[
+ "1r7j98gnM5O17wfoHslt-vEM-LtivUeFvbV44j5rNjeQ",
+ "181kR6rmB2sB8o_SX1kOCPszAMpdPv98TDV6VBTXV0IE",
+ "1OMJF7XZNYca2NWBuphHxDYz6aZWo-zVcY4UuclgFDF4",
+ "1ccr2Rd-MPirVEWhoeznN5Ae5E0ooLPa8gAbNUDpjEdY",
+ "1GDCTm-4dxfwgelyraZhrI6ys6BKB1XPwWSDhpPw94Dg"
+];
+const REFRESH=60000;
+let headers=[],rows=[],regionMap=new Map(),full=false;
+
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const text=v=>String(v??"").trim();
+const number=v=>{let n=Number(String(v??"").replace(/,/g,"").replace(/[^\d.-]/g,""));return Number.isFinite(n)?n:null};
+const col=patterns=>{let h=headers.map(x=>text(x).toLowerCase().replace(/[^a-z0-9]/g,""));return h.findIndex(x=>patterns.some(p=>x.includes(p.replace(/[^a-z0-9]/g,""))));};
+
+function playerData(){
+ const rank=col(["rank","ranking","position","place"]), name=col(["player","playername","name","competitor","duelist"]), pts=col(["points","point","score","pts","totalpoints"]);
+ const reg=col(["region","province","city","location","origin"]);
+ return rows.map((r,i)=>{
+   let n=name>=0?text(r[name]):text(r[0]); if(!n)return null;
+   let rk=rank>=0?number(r[rank]):null;
+   let p=pts>=0?number(r[pts]):0;
+   let region=reg>=0?text(r[reg]):(regionMap.get(n.toLowerCase().replace(/\s+/g," ").trim())||"");
+   return {name:n,rank:rk&&rk>=1?rk:i+1,points:p??0,region};
+ }).filter(Boolean);
+}
+
+function drawPie(data){
+ const canvas=document.getElementById("pie"), box=canvas.parentElement, size=Math.min(300,Math.max(220,box.clientWidth-35)),d=devicePixelRatio||1;
+ canvas.width=size*d;canvas.height=size*d;canvas.style.width=size+"px";canvas.style.height=size+"px";
+ const c=canvas.getContext("2d");c.setTransform(d,0,0,d,0,0);c.clearRect(0,0,size,size);
+ const total=data.reduce((s,x)=>s+x[1],0); if(!total){c.fillStyle="#68717e";c.font="12px system-ui";c.textAlign="center";c.fillText("No metagame column detected",size/2,size/2);return}
+ let a=-Math.PI/2;const colors=["#d6b56d","#8297d6","#75c79b","#c08bd8","#d9826f","#6ba8c9","#9f9aa8","#d3a36d","#789f8b","#a77fbb"];
+ data.forEach((x,i)=>{let da=x[1]/total*Math.PI*2;c.beginPath();c.moveTo(size/2,size/2);c.arc(size/2,size/2,size*.37,a,a+da);c.closePath();c.fillStyle=colors[i%colors.length];c.fill();a+=da});
+ c.beginPath();c.arc(size/2,size/2,size*.20,0,Math.PI*2);c.fillStyle="#0d1015";c.fill();
+}
+
+function renderMeta(){
+ const idx=headers.findIndex(h=>/metagame|archetype|deck|strategy|decktype/i.test(String(h)));
+ let m=new Map();
+ if(idx>=0)rows.forEach(r=>{let v=text(r[idx]);if(v)m.set(v,(m.get(v)||0)+1)});
+ let data=[...m.entries()].sort((a,b)=>b[1]-a[1]),total=data.reduce((s,x)=>s+x[1],0);
+ document.getElementById("metaCount").textContent=total?total+" players":"Not detected";
+ document.getElementById("metaBody").innerHTML=data.map(x=>`<tr><td>${esc(x[0])}</td><td>${x[1]}</td><td>${(x[1]/total*100).toFixed(1)}%</td></tr>`).join("");
+ drawPie(data);
+}
+
+
+let metagameRows=[], metagameHeaders=[], metaCanvasReady=false;
+
+async function loadRegionApi(){
+  if(!REGION_API_URL)return;
+  try{
+    const r=await fetch(REGION_API_URL,{cache:"no-store"});
+    if(!r.ok)return;
+    const data=await r.json();
+    (data.players||[]).forEach(x=>{
+      if(x.player&&x.region)regionMap.set(String(x.player).toLowerCase().replace(/\s+/g," ").trim(),x.region);
+    });
+    render();
+  }catch(e){}
+}
+
+function drawMetagame(){
+  let idx=metagameHeaders.findIndex(h=>/metagame|archetype|deck|strategy/i.test(String(h)));
+  if(idx<0) idx=headers.findIndex(h=>/metagame|archetype|deck|strategy/i.test(String(h)));
+  const rows=metagameRows.length?metagameRows:rawRows;
+  const hs=metagameRows.length?metagameHeaders:headers;
+  const map=new Map();
+  if(idx>=0) rows.forEach(r=>{const n=clean(r[idx]);if(n)map.set(n,(map.get(n)||0)+1);});
+  const data=[...map.entries()].sort((a,b)=>b[1]-a[1]),total=data.reduce((s,x)=>s+x[1],0);
+  const body=document.getElementById("metagameBody");
+  const count=document.getElementById("metaCount");
+  if(!body||!count)return;
+  count.textContent=total?`${total} players`:"No metagame data";
+  body.innerHTML=data.map(x=>`<tr><td>${esc(x[0])}</td><td>${x[1]}</td><td>${(x[1]/total*100).toFixed(1)}%</td></tr>`).join("");
+  const c=document.getElementById("metagameChart"); if(!c)return;
+  const ctx=c.getContext("2d"),size=Math.min(320,c.parentElement.clientWidth-20),dpr=devicePixelRatio||1;
+  c.width=size*dpr;c.height=size*dpr;c.style.width=size+"px";c.style.height=size+"px";ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size,size);
+  if(!data.length)return;
+  let a=-Math.PI/2; const colors=["#d6b56d","#7c9cff","#75c79b","#c084fc","#e77777","#6fb1d6","#b9a7e0","#8f9aa8"];
+  data.forEach((x,i)=>{let da=x[1]/total*Math.PI*2;ctx.beginPath();ctx.moveTo(size/2,size/2);ctx.arc(size/2,size/2,size*.37,a,a+da);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();a+=da;});
+  ctx.beginPath();ctx.arc(size/2,size/2,size*.19,0,Math.PI*2);ctx.fillStyle="#0c0f14";ctx.fill();
+}
+
+function applyRegions(all){
+  all.forEach(p=>{
+    const key=String(p.name).toLowerCase().replace(/\s+/g," ").trim();
+    if(!p.region && regionMap.has(key))p.region=regionMap.get(key);
+  });
+}
+function render(){
+ const all=playerData().sort((a,b)=>a.rank-b.rank),q=text(document.getElementById("search").value).toLowerCase();
+ let list=all.filter(p=>p.name.toLowerCase().includes(q)||p.region.toLowerCase().includes(q));
+ const s=document.getElementById("sort").value;if(s==="points")list.sort((a,b)=>b.points-a.points);if(s==="name")list.sort((a,b)=>a.name.localeCompare(b.name));if(s==="rank")list.sort((a,b)=>a.rank-b.rank);
+ const display=full||q?list:list.slice(0,50);
+ const top=all.filter(p=>[1,2,3].includes(p.rank)).sort((a,b)=>a.rank-b.rank);
+ const byRank={};top.forEach(p=>byRank[p.rank]=p);
+ document.getElementById("podium").innerHTML=[2,1,3].map(r=>byRank[r]).filter(Boolean).map(p=>`<div class="pod rank${p.rank}"><div class="place">Rank ${p.rank}</div><div class="num">${p.rank===1?"I":p.rank===2?"II":"III"}</div><div class="pname">${esc(p.name)}</div><div class="ppoints">${p.points.toLocaleString()} points</div><div class="pregion">${p.region?esc(p.region):"Region unavailable"}</div></div>`).join("");
+ document.getElementById("tbody").innerHTML=display.map(p=>`<tr><td class="rank">${p.rank}</td><td class="player">${esc(p.name)}</td><td class="pts">${p.points.toLocaleString()}</td><td>${p.region?esc(p.region):"—"}</td></tr>`).join("");
+ document.getElementById("empty").style.display=display.length?"none":"block";
+ document.getElementById("count").textContent=q?`${list.length} matching`:`${display.length} of ${all.length}`;
+ document.getElementById("updated").textContent=new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+ document.getElementById("sourceNote").textContent="National source synchronized · "+rows.length+" records";
+ document.getElementById("topBtn").classList.toggle("active",!full);document.getElementById("fullBtn").classList.toggle("active",full);
+ renderMeta();
+}
+
+function requestSheet(id,callback){
+ const cb="gs_"+Math.random().toString(36).slice(2),s=document.createElement("script");let done=false;
+ const finish=()=>{if(done)return;done=true;delete window[cb];s.remove()};
+ window[cb]=data=>{try{callback(data)}finally{finish()}};
+ s.onerror=finish;s.src=`https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=responseHandler:${cb}&tq=select%20*`;
+ document.body.appendChild(s);setTimeout(finish,8000);
+}
+
+function loadMain(){
+ document.getElementById("status").textContent="Loading national rankings…";
+ requestSheet(MAIN_SHEET,data=>{
+   if(!data||!data.table){document.getElementById("status").textContent="Unable to read the Master Sheet";document.getElementById("dot").style.background="#e77777";return}
+   headers=data.table.cols.map(c=>c.label||c.id||"");
+   rows=data.table.rows.map(r=>headers.map((_,i)=>r.c?.[i]?.f??r.c?.[i]?.v??""));
+   document.getElementById("status").textContent="Live · national rankings synchronized";document.getElementById("dot").style.background="var(--green)";
+   render();
+ });
+}
+
+function loadRegions(){
+ REGION_SHEETS.forEach(id=>requestSheet(id,data=>{
+   if(!data?.table)return;
+   const hs=data.table.cols.map(c=>c.label||c.id||"");
+   const ni=hs.findIndex(h=>/player|name|competitor|duelist/i.test(String(h)));
+   if(ni<0)return;
+   // Region is intentionally not guessed from a cell. The source file title
+   // follows "NRS [Region] Season [number]"; if Drive title is not exposed
+   // through GViz, the source remains pending a title/API mapping.
+ }));
+}
+
+document.getElementById("search").oninput=render;
+document.getElementById("sort").onchange=render;
+document.getElementById("refresh").onclick=loadMain;
+document.getElementById("topBtn").onclick=()=>{full=false;document.getElementById("search").value="";render()};
+document.getElementById("fullBtn").onclick=()=>{full=true;render()};
+loadMain();loadRegions();setInterval(loadMain,REFRESH);
+</script>
+</body>
+</html>
