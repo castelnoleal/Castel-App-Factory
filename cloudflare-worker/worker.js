@@ -59,7 +59,7 @@ export default {
     if (u.pathname === "/build" && request.method === "POST") {
       try {
         const b = await request.json();
-        const sourceType = b.["website","website url","https website","https website url","http website","http website url","web","url"].includes(String(b.sourceType||"").toLowerCase().trim()) ? "website" : "html";
+        const sourceType = ["website","website url","https website","https website url","http website","http website url","web","url"].includes(String(b.sourceType||"").toLowerCase().trim()) ? "website" : "html";
         const appName = String(b.appName || "").trim();
         const packageName = String(b.packageName || "").trim();
         const versionName = String(b.versionName || "").trim();
