@@ -1,0 +1,17 @@
+{
+  "buildId": "2ecf097f-3368-46fd-9da2-ae1a7b5f80b2",
+  "appName": "My App",
+  "packageName": "com.castel.myapp",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceType": "uploaded html/zip",
+  "sourceUrl": "",
+  "sourceFileName": "MEIOCG_National_Rankings_PRODUCTION_FIXED.html",
+  "sourceChunkCount": 1,
+  "orientation": "unspecified",
+  "fullscreen": true,
+  "zoom": false,
+  "backNavigation": true,
+  "externalLinks": false,
+  "createdAt": "2026-09-07T19:18:48.195Z"
+}
