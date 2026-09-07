@@ -103,11 +103,19 @@ jobs:
           set -euo pipefail
           source_mode=$(jq -r '.sourceMode // ""' "build-inputs/${BUILD_ID}/manifest.json")
           source_type=$(jq -r '.sourceType // ""' "build-inputs/${BUILD_ID}/manifest.json" | tr '[:upper:]' '[:lower:]')
-          if [ "$source_mode" = "website" ] || [[ "$source_type" =~ ^(website|website url|https website|https website url|http website|http website url|web|url)$ ]]; then
+          is_website=false
+          if [ "$source_mode" = "website" ]; then
+            is_website=true
+          else
+            case "$source_type" in
+              website|website_url|https_website|https_website_url|http_website|http_website_url|web|url) is_website=true ;;
+            esac
+          fi
+          if [ "$is_website" = true ]; then
             url=$(jq -r '.sourceUrl // ""' "build-inputs/${BUILD_ID}/manifest.json")
             test -n "$url"
             grep -R -F "webView.loadUrl(\"${url}\");" generated-app/app/src/main/java >/dev/null
-            if grep -R -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' generated-app/app/src/main/java >/dev/null; then echo 'HTTPS build still points at local template asset'; exit 1; fi
+            if grep -R -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' generated-app/app/src/main/java >/dev/null; then echo 'Website build still points at local template asset'; exit 1; fi
           else
             test -s generated-app/app/src/main/assets/index.html
           fi
