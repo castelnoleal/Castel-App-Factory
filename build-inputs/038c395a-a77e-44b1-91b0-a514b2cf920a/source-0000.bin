@@ -1,0 +1,1992 @@
+<!doctype html>
+<html lang="en">
+<head>
+<base href="https://kodex.meiocg.org/">
+<meta name="application-name" content="Duel Synapse KodeX">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#07090d">
+<meta name="kodex-app-ui-master" content="1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#090b12">
+<meta name="application-name" content="Duel Synapse: Kodex">
+<title>Duel Synapse: Kodex — MEIOCG Mirror</title>
+<style>
+:root{--bg:#080a10;--panel:#111522;--panel2:#171b2a;--line:#272d40;--text:#eef2ff;--muted:#9aa4bd;--accent:#67a8ff;--danger:#ff6b7a}
+*{box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden}body{margin:0;background:radial-gradient(circle at top,#17213a 0,#080a10 45%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+header{flex:0 0 auto;padding:14px 16px 8px;max-width:1000px;width:100%;margin:auto}.brand{font-size:13px;letter-spacing:.18em;color:var(--accent);font-weight:800}.title{font-size:28px;font-weight:850;margin:6px 0}.sub{color:var(--muted);font-size:13px}
+main{position:relative;flex:1 1 auto;min-height:0;max-width:1000px;width:100%;margin:auto;padding:0 16px 12px;overflow:hidden}.search{position:absolute;left:16px;right:16px;top:0;z-index:5;padding:10px 0;background:linear-gradient(var(--bg) 70%,transparent);backdrop-filter:blur(8px)}
+.searchbox{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 12px 35px #0005}.searchbox span{font-size:20px}.searchbox input{width:100%;border:0;outline:0;background:transparent;color:var(--text);font-size:17px}.searchbox button{border:0;background:transparent;color:var(--muted);font-size:20px}
+.status{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;margin:9px 4px}.dot{width:7px;height:7px;border-radius:50%;background:#45d483}.dot.off{background:#ffb454}
+#detail{display:none;position:absolute;overflow-y:auto;overflow-x:hidden;left:16px;right:16px;top:86px;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:4px 2px 24px}.grid{position:absolute;left:16px;right:16px;top:86px;bottom:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));align-content:start;gap:10px;padding:4px 2px 24px}.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px;cursor:pointer;transition:.18s}.card:hover{transform:translateY(-2px);border-color:#4d78ae}
+.compact-card{padding:10px 12px;min-height:0}
+.compact-card strong{font-size:14px;line-height:1.3}
+.compact-card .meta{font-size:10.5px;line-height:1.35;margin-top:3px}
+.compact-card .snippet{display:none}.card strong{display:block}.meta{color:var(--muted);font-size:11px;margin-top:5px}.snippet{font-size:12px;color:#cbd3e8;margin-top:8px;line-height:1.45}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;margin-top:10px}.back{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 12px;border-radius:10px}.detail-head{display:flex;gap:14px;align-items:flex-start;margin-top:14px}.thumb{width:120px;border-radius:9px;background:#05060a;object-fit:cover}.detail h2{margin:0 0 5px}.label{font-size:11px;color:var(--accent);font-weight:800;letter-spacing:.08em;margin-top:18px}.effect{white-space:pre-wrap;line-height:1.6;color:#dce2f2;font-size:14px}.ruling{padding:12px 0;border-top:1px solid var(--line);line-height:1.55;color:#dce2f2;font-size:14px}.empty{text-align:center;padding:55px 15px;color:var(--muted)}.chips{display:flex;gap:6px;flex-wrap:wrap}.chip{font-size:11px;padding:5px 8px;background:var(--panel2);border:1px solid var(--line);border-radius:99px}
+footer{display:none}
+@media(max-width:600px){
+.title{font-size:22px}
+.detail-head{flex-direction:row}
+.thumb{width:92px}
+.grid{top:82px;grid-template-columns:1fr;gap:7px}
+#detail{top:82px}
+.card{padding:9px 11px}
+}
+
+.search-actions{display:flex;gap:7px}
+.settings-btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);width:36px;height:36px;border-radius:10px;font-size:17px}
+.overlay{position:fixed;inset:0;background:#0009;display:none;z-index:50}
+.overlay.open{display:block}
+.settings-panel{position:absolute;top:0;right:0;width:min(360px,92vw);height:100dvh;max-height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(24px + env(safe-area-inset-bottom));background:var(--panel);border-left:1px solid var(--line);padding:18px;box-shadow:-18px 0 50px #0009}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}.settings-head{display:flex;justify-content:space-between;align-items:center}.settings-head h3{margin:0}
+.setting-row{display:flex;justify-content:space-between;gap:16px;align-items:center;padding:13px 0;border-top:1px solid var(--line)}
+.setting-row strong{font-size:14px}.setting-row small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.switch{width:44px;height:25px;border-radius:99px;background:#30384e;position:relative;flex:none;border:0}.switch:after{content:"";position:absolute;width:19px;height:19px;top:2px;left:3px;border-radius:50%;background:#fff;transition:.18s}.switch.on{background:var(--accent)}.switch.on:after{left:22px}
+.download-btn{width:100%;padding:11px;border:1px solid #3f6da8;background:#162640;color:var(--text);border-radius:11px;font-weight:750;margin-top:8px}
+.progress{height:7px;background:#252b3c;border-radius:99px;overflow:hidden;margin-top:10px}.progress>i{display:block;height:100%;width:0;background:var(--accent);transition:width .15s}
+.offline-note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:9px}.ruling-search-title{grid-column:1/-1;font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--accent);padding:10px 3px 2px}
+.image-wrap{flex:none}
+.feature-list{display:grid;gap:7px;margin:16px 0 8px}
+.feature-btn{display:flex;justify-content:space-between;align-items:center;width:100%;padding:11px 12px;border:1px solid var(--line);background:var(--panel2);color:var(--text);border-radius:11px;text-align:left}
+.feature-btn span{font-size:10px;color:var(--muted)}
+
+#wallpaperLayer,#wallpaperShade{position:fixed;inset:0;pointer-events:none}
+#wallpaperLayer{z-index:0;background-position:center;background-repeat:no-repeat;background-size:cover;background-attachment:fixed}
+#wallpaperShade{z-index:0;background:rgba(0,0,0,.35)}
+#app{position:relative;z-index:1;height:100dvh;min-height:100%;display:flex;flex-direction:column;overflow:hidden;background:transparent}
+input[type=range]{accent-color:var(--accent)}
+
+/* === MEIOCG CLEAN BEVELED UI === */
+:root{
+ --glass:rgba(10,14,26,.86);
+ --glass2:rgba(18,24,42,.92);
+ --edge:rgba(255,255,255,.12);
+ --edge2:rgba(103,168,255,.28);
+ --shadow:0 12px 30px rgba(0,0,0,.38);
+}
+body{background:#070910}
+header{
+ padding:12px 16px 10px;
+ position:relative;
+ z-index:4;
+}
+.topbar{min-height:68px}
+.brand{font-size:11px;letter-spacing:.22em}
+.title{font-size:25px;line-height:1.1;margin:4px 0}
+.sub{font-size:11px;color:#c2c9d9}
+main{padding:0 12px 10px}
+.search{
+ left:12px;right:12px;top:0;
+ padding:8px 0 10px;
+ background:linear-gradient(180deg,rgba(7,9,16,.92),rgba(7,9,16,.72) 72%,transparent);
+}
+.searchbox{
+ min-height:56px;
+ padding:8px 12px;
+ border-radius:19px;
+ background:linear-gradient(145deg,rgba(24,30,49,.96),rgba(9,13,25,.96));
+ border:1px solid rgba(255,255,255,.13);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08),inset 0 -2px 0 rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.35);
+}
+.searchbox input{font-size:16px}
+.searchbox span{font-size:21px;color:#cdd7ec}
+.searchbox button{font-size:22px}
+.status{
+ margin:7px 5px 0;
+ padding:0 4px;
+ font-size:11px;
+}
+.grid{
+ top:112px;
+ left:12px;right:12px;bottom:0;
+ display:flex;
+ flex-direction:column;
+ gap:8px;
+ padding:5px 4px 28px;
+}
+.card{
+ width:100%;
+ flex:0 0 auto;
+ min-height:58px;
+ padding:10px 13px;
+ border-radius:17px;
+ background:linear-gradient(145deg,rgba(24,30,48,.96),rgba(9,13,25,.96));
+ border:1px solid var(--edge);
+ box-shadow:
+   inset 0 1px 0 rgba(255,255,255,.10),
+   inset 0 -2px 0 rgba(0,0,0,.42),
+   0 7px 16px rgba(0,0,0,.30);
+}
+.card:hover{
+ transform:translateY(-1px);
+ border-color:var(--edge2);
+}
+.compact-card{padding:10px 13px}
+.compact-card strong{
+ font-size:14px;
+ line-height:1.25;
+ letter-spacing:.01em;
+}
+.compact-card .meta{
+ font-size:10.5px;
+ line-height:1.25;
+ margin-top:3px;
+ color:#aeb8ce;
+}
+.compact-card .meta:empty{display:none}
+.empty{
+ width:100%;
+ margin-top:4px;
+ padding:35px 18px;
+ border-radius:18px;
+ background:rgba(10,14,26,.78);
+ border:1px solid var(--edge);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.25);
+}
+#detail{
+ top:112px;
+ left:12px;right:12px;bottom:0;
+ padding:5px 4px 28px;
+}
+.panel{
+ margin:0;
+ border-radius:20px;
+ background:linear-gradient(145deg,rgba(17,23,39,.95),rgba(7,10,19,.96));
+ border:1px solid var(--edge);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 12px 28px rgba(0,0,0,.35);
+}
+.back,.feature-btn,.download-btn{
+ border-radius:13px;
+ background:linear-gradient(145deg,rgba(30,38,61,.95),rgba(12,17,29,.95));
+ border:1px solid rgba(255,255,255,.12);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 5px 12px rgba(0,0,0,.2);
+}
+.settings-btn{
+ border-radius:14px;
+ background:linear-gradient(145deg,#253653,#111a2c);
+ border:1px solid rgba(255,255,255,.14);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 7px 16px rgba(0,0,0,.32);
+}
+.settings-panel{
+ background:linear-gradient(160deg,rgba(18,24,41,.98),rgba(7,10,18,.99));
+ border-left:1px solid rgba(255,255,255,.13);
+}
+.ruling-search-title{
+ padding:8px 5px 2px;
+}
+@media(max-width:600px){
+ header{padding:9px 14px 8px}
+ .topbar{min-height:70px}
+ .title{font-size:23px}
+ .sub{font-size:10.5px}
+ main{padding:0 10px 8px}
+ .search{left:10px;right:10px}
+ .grid{top:114px;left:10px;right:10px;gap:7px}
+ #detail{top:114px;left:10px;right:10px}
+ .card{min-height:56px;padding:9px 12px;border-radius:16px}
+}
+
+/* === FINAL MOBILE BEVEL + SAFE-AREA FIX === */
+.search{
+  left:10px;right:10px;top:0;
+  padding:10px 10px 12px;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(18,24,40,.96),rgba(5,8,16,.94));
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -3px 0 rgba(0,0,0,.42),
+    0 14px 30px rgba(0,0,0,.42);
+}
+.searchbox{
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.16);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,.07),
+    inset 0 -3px 0 rgba(0,0,0,.42),
+    0 7px 15px rgba(0,0,0,.28);
+}
+.status{padding:0 6px 1px}
+.grid{
+  top:124px;
+  bottom:0;
+  padding:6px 5px calc(110px + env(safe-area-inset-bottom));
+}
+#detail{
+  top:124px;
+  bottom:0;
+  padding:6px 5px calc(125px + env(safe-area-inset-bottom));
+}
+#detail .panel{
+  border-radius:24px;
+  overflow:visible;
+  margin:0 0 24px;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    inset 0 -3px 0 rgba(0,0,0,.40),
+    0 14px 30px rgba(0,0,0,.40);
+}
+.detail-head{
+  border-radius:17px;
+}
+.ruling{
+  padding-bottom:10px;
+}
+#rulingSearchHint{
+  padding-bottom:35px;
+}
+@media(max-width:600px){
+  .search{
+    left:9px;right:9px;
+    border-radius:23px;
+    padding:9px 9px 11px;
+  }
+  .searchbox{border-radius:19px}
+  .grid{
+    top:122px;
+    left:9px;right:9px;
+    padding-bottom:calc(120px + env(safe-area-inset-bottom));
+  }
+  #detail{
+    top:122px;
+    left:9px;right:9px;
+    padding-bottom:calc(145px + env(safe-area-inset-bottom));
+  }
+  #detail .panel{
+    border-radius:23px;
+    padding:15px;
+    margin-bottom:35px;
+  }
+}
+
+.qa-entry{
+ margin-top:10px;
+ padding:14px;
+ border-radius:17px;
+ background:linear-gradient(145deg,rgba(23,30,48,.95),rgba(9,13,24,.96));
+ border:1px solid rgba(255,255,255,.11);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 0 rgba(0,0,0,.35),0 7px 16px rgba(0,0,0,.24);
+ line-height:1.5;
+}
+.qa-question,.qa-answer{margin-top:8px}
+.qa-question strong,.qa-answer strong{color:#79b6ff}
+
+.qa-collapsed{
+ position:relative;
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:10px;
+ margin-top:8px;
+ padding:12px 13px;
+ border-radius:16px;
+ background:linear-gradient(145deg,rgba(23,30,48,.96),rgba(9,13,24,.97));
+ border:1px solid rgba(255,255,255,.11);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07),inset 0 -2px 0 rgba(0,0,0,.35),0 6px 14px rgba(0,0,0,.23);
+ cursor:pointer;
+}
+.qa-collapsed.open{border-radius:16px}
+.qa-chevron{font-size:28px;color:#78b5ff;line-height:1;transition:transform .2s}
+.qa-collapsed.open .qa-chevron{transform:rotate(90deg)}
+.qa-summary{min-width:0;flex:1}
+.qa-title{font-size:13px;font-weight:700;line-height:1.35;color:#eef3ff}
+.qa-tap{font-size:9px;color:#8e9ab2;margin-top:4px}
+.qa-body{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,255,255,.10);font-size:13px;line-height:1.55;flex:1 1 100%;width:100%}
+.qa-loading{color:#9eabc1}
+.qa-error{color:#ff9b9b}
+.qa-translated{font-size:9px;color:#76b5ff;margin-top:7px}
+.qa-original{margin-top:9px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);color:#bcd3ff;border-radius:9px;padding:6px 9px}
+.qa-original-text{margin-top:9px;padding:9px;border-radius:10px;background:rgba(0,0,0,.18);font-size:11px;color:#b8c2d4}
+
+.qa-summary{
+  min-width:0;
+  width:100%;
+  flex:1 1 auto;
+  display:block;
+  writing-mode:horizontal-tb;
+  direction:ltr;
+}
+.qa-title{
+  display:block;
+  width:100%;
+  max-width:100%;
+  white-space:normal;
+  word-break:normal;
+  overflow-wrap:anywhere;
+  writing-mode:horizontal-tb;
+  direction:ltr;
+  font-size:13px;
+  font-weight:700;
+  line-height:1.45;
+  color:#eef3ff;
+}
+.qa-tap{display:block;width:100%}
+.qa-collapsed{
+  width:100%;
+  min-width:0;
+}
+
+/* === KODEX COMPACT INFORMATION MODE ===
+   Visual-only adjustment: makes card/ruling information denser on screen.
+   Search, database, wallpaper, and ruling logic are untouched. */
+.detail h2{font-size:18px!important;line-height:1.2!important}
+.detail .meta{font-size:10px!important;line-height:1.25!important}
+.label{font-size:9px!important;line-height:1.15!important;letter-spacing:.07em!important}
+.effect{font-size:12px!important;line-height:1.42!important}
+.ruling{font-size:12px!important;line-height:1.42!important}
+.chip{font-size:9px!important;padding:4px 7px!important}
+.qa-entry{font-size:11px!important;line-height:1.42!important;padding:10px!important}
+.qa-question,.qa-answer{font-size:11px!important;line-height:1.42!important}
+.qa-title{font-size:11px!important;line-height:1.3!important}
+.qa-tap{font-size:8px!important}
+.qa-body{font-size:11px!important;line-height:1.42!important}
+.qa-translated{font-size:8px!important}
+.qa-original{font-size:10px!important}
+.qa-original-text{font-size:10px!important;line-height:1.35!important}
+.card strong{font-size:13px!important;line-height:1.25!important}
+.compact-card strong{font-size:13px!important}
+.card .meta,.compact-card .meta{font-size:9.5px!important;line-height:1.25!important}
+.empty{font-size:12px!important}
+@media(max-width:600px){
+  .detail h2{font-size:16px!important}
+  .effect,.ruling{font-size:11px!important;line-height:1.4!important}
+  .detail .meta{font-size:9px!important}
+  .label{font-size:8px!important}
+  .qa-entry{font-size:10.5px!important;padding:9px!important}
+  .qa-question,.qa-answer,.qa-body{font-size:10.5px!important;line-height:1.4!important}
+  .card strong,.compact-card strong{font-size:12px!important}
+  .card .meta,.compact-card .meta{font-size:9px!important}
+}
+
+/* Actual QA collapse: body visibility follows the existing open state. */
+.qa-collapsed > .qa-body{
+ display:none !important;
+ visibility:hidden !important;
+}
+.qa-collapsed.open > .qa-body{
+ display:block !important;
+ visibility:visible !important;
+}
+
+/* === APP VIEWPORT SCROLL LOCK ===
+   Keep the browser/app shell fixed. Only search choices and card/ruling content scroll. */
+html,body{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  max-height:100%;
+  overflow:hidden !important;
+  overscroll-behavior:none;
+}
+body{
+  position:fixed;
+  inset:0;
+}
+main{
+  position:relative;
+  height:100dvh;
+  min-height:0;
+  max-height:100dvh;
+  overflow:hidden !important;
+}
+#results,
+#detail{
+  min-height:0;
+  max-height:none;
+  overflow-x:hidden !important;
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  touch-action:pan-y;
+  scrollbar-gutter:stable;
+}
+#results{
+  scrollbar-width:thin;
+}
+#detail{
+  scrollbar-width:thin;
+}
+#results::-webkit-scrollbar,
+#detail::-webkit-scrollbar{width:6px}
+#results::-webkit-scrollbar-thumb,
+#detail::-webkit-scrollbar-thumb{
+  background:rgba(103,168,255,.35);
+  border-radius:999px;
+}
+
+</style>
+
+<style>
+.app-brand{
+  display:flex;
+  flex-direction:column;
+  line-height:1;
+}
+.app-brand-main{
+  font-size:clamp(26px,5.8vw,42px);
+  font-weight:900;
+  letter-spacing:-.035em;
+  color:#f5f7ff;
+}
+.app-brand-sub{
+  margin-top:5px;
+  font-size:clamp(11px,2.7vw,16px);
+  font-weight:700;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:#8fb9ff;
+}
+</style>
+</head>
+<body>
+<div id="wallpaperLayer" aria-hidden="true"></div><div id="wallpaperShade" aria-hidden="true"></div><div id="app">
+<header>
+<div class="topbar"><div><div class="brand">MEIOCG</div><div class="title">Duel Synapse: Kodex</div><div class="sub">Card &amp; Rulings Database • V1.5</div></div>
+<button id="settings" class="settings-btn top-settings" aria-label="Open tools">⚙</button></div>
+</header>
+<main>
+<section class="search">
+<div class="searchbox"><span>⌕</span><input id="q" autocomplete="off" placeholder="Type a card name or text…"><div class="search-actions"><button id="clear" aria-label="Clear">×</button></div></div>
+<div class="status"><i id="dot" class="dot"></i><span id="status">Ready</span></div>
+</section>
+<section id="results" class="grid"></section>
+<section id="detail"></section>
+</main>
+
+<div id="settingsOverlay" class="overlay">
+  <div class="settings-panel">
+    <div class="settings-head"><h3>Tools & Settings</h3><button id="closeSettings" class="back">×</button></div>
+<div class="setting-row">
+  <div><strong>Card Pictures</strong><small>Show or hide artwork in card details.</small></div>
+  <button id="imageToggle" class="switch on" aria-label="Toggle card pictures"></button>
+</div>
+<div class="setting-row">
+  <div><strong>Compact Search</strong><small>Keep search results minimal for faster scanning.</small></div>
+  <button id="compactToggle" class="switch on" aria-label="Toggle compact search"></button>
+</div>
+<div class="setting-row">
+  <div><strong>Offline Database</strong><small>Download card data, images, and retrieved rulings for offline use.</small></div>
+</div>
+
+    <div style="padding-top:14px">
+      <div class="offline-note">Normal startup stays fast and uses the MEIOCG search index. These two options are explicit offline packs: the first stores card artwork too; the second stores the complete card/ruling data without artwork.</div>
+      <div class="setting-row">
+  <div><strong>Wallpaper Theme</strong><small>Choose an image from your device for the app background.</small></div>
+  <label class="download-btn" style="width:auto;margin:0;padding:8px 10px;cursor:pointer">
+    Choose
+    <input id="wallpaperInput" type="file" accept="image/*" hidden>
+  </label>
+</div>
+<div class="setting-row">
+  <div><strong>Wallpaper Overlay</strong><small>Adjust how strongly the wallpaper is dimmed behind the app.</small></div>
+  <input id="wallpaperOpacity" type="range" min="0" max="90" value="35" style="width:120px">
+</div>
+<div class="setting-row" style="display:block">
+  <div><strong>Ruling API Bridge</strong><small>Use a same-origin proxy for direct YGOrganization access. If none is available, the app uses a browser-compatible database mirror for the prototype. Default: <code>/api/ygorg</code></small></div>
+  <input id="rulingProxyInput" value="/api/ygorg" placeholder="/api/ygorg" style="width:100%;margin-top:8px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px">
+  <button id="saveRulingProxy" class="download-btn">Save API Bridge</button>
+</div>
+<div class="setting-row">
+  <div><strong>Wallpaper Fit</strong><small>Control how the image fills the screen.</small></div>
+  <select id="wallpaperFit" style="background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px">
+    <option value="cover">Cover</option>
+    <option value="contain">Contain</option>
+    <option value="100% 100%">Stretch</option>
+  </select>
+</div>
+<div class="feature-list">
+<button class="feature-btn" id="removeWallpaper">Remove Wallpaper <span>Reset</span></button>
+<button class="feature-btn" id="favoritesBtn">★ Favorites <span>Coming next</span></button>
+<button class="feature-btn" id="historyBtn">◷ Search History <span>Coming next</span></button>
+<button class="feature-btn" id="advancedBtn">⌕ Advanced Ruling Search <span>Coming next</span></button>
+</div>
+<button id="downloadOfflinePictures" class="download-btn">⬇ Full Database (with pictures)</button>
+<button id="downloadOfflineRulings" class="download-btn">⬇ Full Database (rulings only)</button>
+<label class="download-btn" style="display:block;text-align:center;cursor:pointer">
+  ⇩ Import YGOrganization Q&A History (ZIP / JSON)
+  <input id="rulingPackInput" type="file" accept=".zip,.json,application/json" hidden>
+</label>
+
+      <div class="progress"><i id="downloadProgress"></i></div>
+      <div id="downloadStatus" class="offline-note">No offline package downloaded yet.</div>
+    </div>
+  </div>
+</div>
+<footer>Ruling data source: MEIOCG-Database (automatically mirrored from YGOResources). Card data provider: MEIOCG-Database (GitHub Pages). YGOPRODeck is used only as an emergency fallback. This prototype does not claim rulings as MEIOCG-original.</footer>
+</div>
+<script>
+// === MEIOCG CARD DATABASE ===
+// Primary card source: your own GitHub Pages database.
+// YGOPRODeck remains only as an emergency fallback if the MEIOCG database
+// cannot be reached. Rulings continue to use the existing ruling sources.
+const MEIOCG_DB_BASE='https://cards.meiocg.org';
+const MEIOCG_CARD_DB=MEIOCG_DB_BASE+'/indexes/search.json';
+const MEIOCG_META_DB=MEIOCG_DB_BASE+'/data/metadata.json';
+const MEIOCG_NAME_INDEX=MEIOCG_DB_BASE+'/indexes/name.json';
+const MEIOCG_ID_INDEX=MEIOCG_DB_BASE+'/indexes/id.json';
+const MEIOCG_SEARCH_INDEX=MEIOCG_DB_BASE+'/indexes/search.json';
+// Per-card ruling aggregates: one request returns every stored Q&A for the card.
+// This is the primary Kodex ruling source for every card, not a card-specific rule.
+const MEIOCG_RULINGS_BASE=MEIOCG_DB_BASE+'/data/rulings/cards/';
+const MEIOCG_RULINGS_GITHUB_BASE='https://raw.githubusercontent.com/castelnoleal/MEIOCG-Database/main/data/rulings/cards/';
+const MEIOCG_RULING_NAME_INDEX=MEIOCG_DB_BASE+'/data/rulings/card-name-index.json';
+const MEIOCG_RULING_NAME_INDEX_GITHUB='https://raw.githubusercontent.com/castelnoleal/MEIOCG-Database/main/data/rulings/card-name-index.json';
+const MEIOCG_RULING_CACHE_TTL=6*60*60*1000;
+const API='https://db.ygoresources.com';
+const LEGACY_API='https://db.ygorganization.com';
+const MIRROR_API='https://ygocdb.com/api/v0';
+const QA_TAG_INDEX_PATH='/data/idx/qa/tags';
+const RECENT_QA_PATH='/data/meta/recent/en/qa';
+const FALLBACK_CARD_API='https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes';
+let cardDatabaseSource='MEIOCG';
+let meiocgNameIndex=null;
+let meiocgIdIndex=null;
+let meiocgLoadPromise=null;
+const q=document.getElementById('q'), results=document.getElementById('results'), detail=document.getElementById('detail'), statusEl=document.getElementById('status'), dot=document.getElementById('dot');
+let cards=[], timer, controller;
+let cachedRulingSearchIndex=null;
+let cachedRulingSearchAt=0;
+
+function esc(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function setStatus(s,offline=false){statusEl.textContent=s;dot.className='dot'+(offline?' off':'')}
+function cacheCards(){try{localStorage.setItem('meiocg_cards_v2',JSON.stringify(cards));localStorage.setItem('meiocg_cards_source','MEIOCG')}catch(e){}}
+function loadCache(){try{const x=JSON.parse(localStorage.getItem('meiocg_cards_v2')||'null');if(Array.isArray(x)){cards=x;setStatus(`Local MEIOCG card search ready • ${cards.length.toLocaleString()} cards`,true)}}catch(e){}}
+
+async function loadMEIOCGIndexes(){
+  try{
+    const [nameRes,idRes]=await Promise.all([
+      fetchWithTimeout(MEIOCG_NAME_INDEX,{cache:'force-cache'},5000),
+      fetchWithTimeout(MEIOCG_ID_INDEX,{cache:'force-cache'},5000)
+    ]);
+    if(nameRes.ok)meiocgNameIndex=await nameRes.json();
+    if(idRes.ok)meiocgIdIndex=await idRes.json();
+  }catch(e){}
+}
+
+async function loadMEIOCGCards(){
+  if(meiocgLoadPromise)return meiocgLoadPromise;
+  meiocgLoadPromise=(async()=>{
+    const r=await fetchWithTimeout(MEIOCG_SEARCH_INDEX,{cache:'force-cache'},8000);
+    if(!r.ok)throw new Error('MEIOCG search index HTTP '+r.status);
+    const j=await r.json();
+    if(!Array.isArray(j)||!j.length)throw new Error('MEIOCG search index is empty');
+    // Compact search records are deliberately used instead of the 20+ MB master
+    // cards.json. They contain everything Kodex needs for instant search/card view.
+    cards=j.map(x=>({
+      id:x.id, name:x.name||'', konami_id:x.konami_id||null, type:x.type||'',
+      desc:x.desc||'', race:x.race||'', attribute:x.attribute||'', level:x.level,
+      rank:x.rank, linkval:x.linkval, archetype:x.archetype||'',
+      image:x.image||'', image_small:x.image_small||'',
+      card_images:x.image?[{id:x.id,image_url:x.image,image_url_small:x.image_small||x.image}]:[]
+    }));
+    cardDatabaseSource='MEIOCG';
+    cacheCards();
+    setStatus(`MEIOCG fast search index ready • ${cards.length.toLocaleString()} cards`);
+    return cards;
+  })().catch(e=>{
+    setStatus(cards.length?`MEIOCG mirror unavailable • using cached index • ${cards.length.toLocaleString()} cards`:'MEIOCG card database unavailable',true);
+    return cards;
+    });
+  return meiocgLoadPromise;
+}
+
+function applyWallpaperSettings(){
+ const layer=document.getElementById('wallpaperLayer'), shade=document.getElementById('wallpaperShade');
+ if(layer){
+  layer.style.backgroundSize=wallpaperFit;
+  shade.style.background=`rgba(0,0,0,${wallpaperOpacity/100})`;
+ }
+ const op=document.getElementById('wallpaperOpacity');
+ const fit=document.getElementById('wallpaperFit');
+ if(op)op.value=wallpaperOpacity;
+ if(fit)fit.value=wallpaperFit;
+}
+async function saveWallpaperBlob(blob){
+ try{
+  await putOffline('wallpaper',{id:'current',blob});
+  const url=URL.createObjectURL(blob);
+  document.getElementById('wallpaperLayer').style.backgroundImage=`url("${url}")`;
+  localStorage.setItem('meiocg_has_wallpaper','1');
+ }catch(e){}
+}
+async function loadWallpaper(){
+ try{
+  const x=await getOffline('wallpaper','current');
+  if(x?.blob){
+   const url=URL.createObjectURL(x.blob);
+   document.getElementById('wallpaperLayer').style.backgroundImage=`url("${url}")`;
+  }
+ }catch(e){}
+ applyWallpaperSettings();
+}
+let showImages=localStorage.getItem('meiocg_show_images')!=='0';
+let compactSearch=localStorage.getItem('meiocg_compact_search')!=='0';
+
+function openOfflineDB(){
+ return new Promise((resolve,reject)=>{
+  const req=indexedDB.open(OFFLINE_DB,OFFLINE_VERSION);
+  req.onupgradeneeded=()=>{
+   const db=req.result;
+   if(!db.objectStoreNames.contains(CARD_STORE))db.createObjectStore(CARD_STORE,{keyPath:'id'});
+   if(!db.objectStoreNames.contains(IMAGE_STORE))db.createObjectStore(IMAGE_STORE,{keyPath:'id'});
+   if(!db.objectStoreNames.contains(RULING_STORE))db.createObjectStore(RULING_STORE,{keyPath:'id'});
+   if(!db.objectStoreNames.contains(QA_LINK_STORE)){const st=db.createObjectStore(QA_LINK_STORE,{keyPath:'id'});st.createIndex('cardId','cardId',{unique:false});}
+   if(!db.objectStoreNames.contains('wallpaper'))db.createObjectStore('wallpaper',{keyPath:'id'});
+  };
+  req.onsuccess=()=>resolve(req.result);
+  req.onerror=()=>reject(req.error);
+ });
+}
+async function putOffline(store,value){
+ const db=await openOfflineDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,'readwrite');
+  tx.objectStore(store).put(value);
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+ });
+}
+async function getOffline(store,key){
+ const db=await openOfflineDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,'readonly');
+  const r=tx.objectStore(store).get(key);
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+}
+async function bulkPutOffline(store,values,batchSize=250){
+ const db=await openOfflineDB();
+ for(let i=0;i<values.length;i+=batchSize){
+  const batch=values.slice(i,i+batchSize);
+  await new Promise((resolve,reject)=>{
+   const tx=db.transaction(store,'readwrite');
+   const os=tx.objectStore(store);
+   for(const v of batch)os.put(v);
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  });
+ }
+}
+async function getOfflineQAsForKonamiId(cardId){
+ if(cardId==null)return [];
+ try{
+  const db=await openOfflineDB();
+  const links=await new Promise((resolve,reject)=>{
+   const tx=db.transaction(QA_LINK_STORE,'readonly');
+   const idx=tx.objectStore(QA_LINK_STORE).index('cardId');
+   const r=idx.getAll(String(cardId));
+   r.onsuccess=()=>resolve(r.result||[]);r.onerror=()=>reject(r.error);
+  });
+  const out=[];
+  for(const link of links){
+   const row=await getOffline(RULING_STORE,`history:${link.fid}`);
+   if(row?.data)out.push(row.data);
+  }
+  return out;
+ }catch(e){return []}
+}
+async function allOffline(store){
+ const db=await openOfflineDB();
+ return new Promise((resolve,reject)=>{
+  const tx=db.transaction(store,'readonly');
+  const r=tx.objectStore(store).getAll();
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+}
+async function loadOfflineCards(){
+ try{
+  const saved=await allOffline(CARD_STORE);
+  if(saved.length){
+   cards=saved;
+   setStatus(`Offline card database ready • ${cards.length.toLocaleString()} cards`,true);
+   return true;
+  }
+ }catch(e){}
+ return false;
+}
+async function localImage(id){
+ if(!id)return null;
+ try{
+  const x=await getOffline(IMAGE_STORE,String(id));
+  return x?.blob?URL.createObjectURL(x.blob):null;
+ }catch(e){return null}
+}
+function updateSettingsUI(){
+ document.getElementById('imageToggle').classList.toggle('on',showImages);
+ document.getElementById('compactToggle').classList.toggle('on',compactSearch);
+ localStorage.setItem('meiocg_show_images',showImages?'1':'0');
+ localStorage.setItem('meiocg_compact_search',compactSearch?'1':'0');
+}
+async function downloadOfflinePack(withPictures){
+ const btnA=document.getElementById('downloadOfflinePictures');
+ const btnB=document.getElementById('downloadOfflineRulings');
+ const bar=document.getElementById('downloadProgress');
+ const msg=document.getElementById('downloadStatus');
+ const PACK_KEY='meiocg_offline_pack_state_v2';
+ btnA.disabled=true;btnB.disabled=true;bar.style.width='0%';
+
+ const state=()=>{
+  try{return JSON.parse(localStorage.getItem(PACK_KEY)||'{}')}catch(e){return {}}
+ };
+ const saveState=(patch)=>{
+  try{localStorage.setItem(PACK_KEY,JSON.stringify({...state(),...patch,updatedAt:Date.now()}))}catch(e){}
+ };
+
+ try{
+  // Reuse the existing MEIOCG card database and never erase previously stored records.
+  msg.textContent='Preparing MEIOCG offline database…';
+  const raw=await fetchJSON(MEIOCG_DB_BASE+'/data/cards.min.json',{cache:'no-store'});
+  const source=Array.isArray(raw)?raw:(raw.data||[]);
+  if(!source.length)throw Error('MEIOCG card database is empty');
+  const all=source.map(c=>({...c}));
+  await bulkPutOffline(CARD_STORE,all,200);
+  cards=all; cardDatabaseSource='MEIOCG'; cacheCards();
+  saveState({mode:withPictures?'pictures':'rulings',cards:all.length,phase:'cards'});
+  bar.style.width='15%';
+
+  // Save ruling name index locally.
+  msg.textContent='Saving the MEIOCG ruling index…';
+  try{
+   const idx=await fetchJSON(MEIOCG_RULING_NAME_INDEX,{cache:'no-store'});
+   await putOffline(RULING_STORE,{id:'__meiocg_ruling_name_index__',data:idx,type:'index',updatedAt:Date.now()});
+   try{localStorage.setItem('meiocg_ruling_card_index_raw',JSON.stringify(idx))}catch(e){}
+  }catch(e){}
+  bar.style.width='20%';
+
+  const ids=new Set();
+  for(const c of all){const id=getKonamiId(c);if(id)ids.add(String(id))}
+  if(!ids.size)throw Error('No Konami IDs were found in the MEIOCG card database');
+  const idList=[...ids];
+
+  // Individual aggregate records are the checkpoint: already stored = already complete.
+  let done=0,failed=0,cursor=0;
+  const concurrency=4; // Safer for Android memory/network than the previous 8.
+  async function worker(){
+   while(true){
+    const i=cursor++;
+    if(i>=idList.length)return;
+    const id=idList[i];
+    try{
+     const existing=await getOffline(RULING_STORE,getMEIOCGRulingCacheKey(id));
+     if(!existing?.data){
+      const row=await fetchMEIOCGRulings(id);
+      if(row)await putOffline(RULING_STORE,row);
+      else failed++;
+     }
+    }catch(e){failed++}
+    done++;
+    if(done%5===0||done===idList.length){
+     bar.style.width=(20+(done/idList.length*65))+'%';
+     msg.textContent=`Downloading rulings… ${done.toLocaleString()} / ${idList.length.toLocaleString()}${failed?` • ${failed} unavailable`:''}`;
+     saveState({phase:'rulings',rulingsDone:done,rulingsTotal:idList.length,failed});
+     await new Promise(r=>setTimeout(r,0));
+    }
+   }
+  }
+  await Promise.all(Array.from({length:Math.min(concurrency,idList.length)},worker));
+
+  let imageCount=0;
+  if(withPictures){
+   msg.textContent='Preparing card pictures…';
+   const imageJobs=[];
+   for(const c of all)for(const img of (c.card_images||[]))
+    if(img?.id&&img.image_url)imageJobs.push({id:String(img.id),cardId:c.id,url:img.image_url});
+
+   let ic=0,icursor=0;
+   const imageConcurrency=3; // Keep memory pressure low on phones.
+   async function imageWorker(){
+    while(true){
+     const i=icursor++;
+     if(i>=imageJobs.length)return;
+     const img=imageJobs[i];
+     try{
+      const existing=await getOffline(IMAGE_STORE,img.id);
+      if(!existing){
+       const r=await fetchWithTimeout(img.url,{cache:'force-cache'},12000);
+       if(r.ok){
+        const blob=await r.blob();
+        await putOffline(IMAGE_STORE,{id:img.id,blob,cardId:img.cardId,imageUrl:img.url});
+        imageCount++;
+       }
+      }else imageCount++;
+     }catch(e){}
+     ic++;
+     if(ic%10===0||ic===imageJobs.length){
+      bar.style.width=(85+(ic/Math.max(1,imageJobs.length)*15))+'%';
+      msg.textContent=`Downloading card pictures… ${ic.toLocaleString()} / ${imageJobs.length.toLocaleString()}`;
+      saveState({phase:'pictures',picturesDone:ic,picturesTotal:imageJobs.length});
+      await new Promise(r=>setTimeout(r,0));
+     }
+    }
+   }
+   await Promise.all(Array.from({length:Math.min(imageConcurrency,Math.max(1,imageJobs.length))},imageWorker));
+  }
+
+  bar.style.width='100%';
+  const stored=await allOffline(RULING_STORE);
+  const qaCount=stored.filter(x=>x.type==='meiocg-card-aggregate'&&x.data).length;
+  const finalMode=withPictures?'pictures':'rulings';
+  saveState({phase:'complete',mode:finalMode,cards:all.length,rulingAggregates:qaCount,failed,updatedAt:Date.now()});
+  msg.textContent=withPictures
+   ? `Offline database ready • ${all.length.toLocaleString()} cards • ${qaCount.toLocaleString()} ruling aggregates • ${imageCount.toLocaleString()} images`
+   : `Offline rulings database ready • ${all.length.toLocaleString()} cards • ${qaCount.toLocaleString()} ruling aggregates • no pictures downloaded`;
+  setStatus(`Offline MEIOCG database ready • ${all.length.toLocaleString()} cards`,true);
+ }catch(e){
+  saveState({phase:'interrupted',mode:withPictures?'pictures':'rulings',error:String(e?.message||e)});
+  msg.textContent=`Offline download interrupted: ${e?.message||'unknown error'}. Already downloaded records were preserved; run the same download again to continue.`;
+ }finally{
+  btnA.disabled=false;btnB.disabled=false;
+ }
+}
+async function warmCardDB(){
+  // Online mode mirrors cards.meiocg.org directly.
+  // Cached cards are only an immediate first-paint accelerator; the live
+  // MEIOCG search index is then authoritative.
+  loadCache();
+  if(cards.length) setStatus(`MEIOCG cached index • ${cards.length.toLocaleString()} cards`,true);
+  else setStatus('Loading MEIOCG card index…');
+
+  try{
+    await loadMEIOCGCards();
+    setStatus(`MEIOCG mirror ready • ${cards.length.toLocaleString()} cards`,false);
+  }catch(e){
+    if(cards.length) setStatus(`MEIOCG mirror unavailable • using cached index • ${cards.length.toLocaleString()} cards`,true);
+    else setStatus('MEIOCG card database unavailable',true);
+  }
+  loadMEIOCGIndexes().catch(()=>{});
+}
+
+function normalizeSearchText(s){
+ return String(s||'').toLowerCase()
+  .normalize('NFKD').replace(/[\u0300-\u036f]/g,'') // strip accents
+  .replace(/[-_'"’.,:;!?()\[\]]/g,' ')
+  .replace(/\s+/g,' ')
+  .trim();
+}
+// Normalizing name/desc/archetype text is real work (Unicode normalize + several
+// regex passes). Doing that for every card on every keystroke is what was making
+// search feel slow. Compute it once per card and cache it on the card object —
+// after that, searching is just cheap string.includes() checks.
+function getSearchFields(c){
+ let sf=c.__sf;
+ if(!sf){
+  sf={n:normalizeSearchText(c.name),d:normalizeSearchText(c.desc),arch:normalizeSearchText(c.archetype)};
+  try{Object.defineProperty(c,'__sf',{value:sf,enumerable:false,writable:true,configurable:true})}catch(e){c.__sf=sf}
+ }
+ return sf;
+}
+function score(c,z){
+ const {n,d,arch}=getSearchFields(c);
+
+ // Search card name, archetype, and card text.
+ // Priority: exact/prefix name match, then name substring, then archetype, then card text.
+ if(n===z)return 10000;
+ if(n.startsWith(z))return 9000;
+ if(n.includes(z))return 8000;
+ if(arch && (arch===z || arch.includes(z)))return 5000;
+ if(d.includes(z))return 3000;
+ return 0;
+}
+
+async function getCachedRulingMatches(term){
+ const z=term.toLowerCase().trim();
+ if(!z)return [];
+ try{
+  const now=Date.now();
+  if(!cachedRulingSearchIndex || now-cachedRulingSearchAt>30000){
+   const rows=await allOffline(RULING_STORE);
+   cachedRulingSearchIndex=rows.filter(x=>x.data);
+   cachedRulingSearchAt=now;
+  }
+  const matches=[];
+  for(const row of cachedRulingSearchIndex){
+   const raw=JSON.stringify(row.data||'');
+   if(raw.toLowerCase().includes(z)){
+    const entries=findQAEntries(row.data||{});
+    for(const e of entries){
+     const q=textFrom(e,['question_en','question','query','prompt','q']);
+     const a=textFrom(e,['answer_en','answer','response','resolution','a']);
+     const hay=(q+' '+a).toLowerCase();
+     if(hay.includes(z))matches.push({id:row.qaId||row.id,q,a});
+    }
+   }
+  }
+  const seen=new Set();
+  return matches.filter(x=>{
+   const k=x.id+'|'+x.q;
+   if(seen.has(k))return false;
+   seen.add(k);
+   return true;
+  }).slice(0,10);
+ }catch(e){return []}
+}
+function searchCards(s){
+ if(!s){
+  results.style.display='flex'; detail.style.display='none';
+  results.innerHTML='<div class="empty">Type a card name or text — name matches first.</div>';
+  detail.innerHTML=''; return;
+ }
+ const z=normalizeSearchText(s);
+ const source=cards;
+ if(!source.length){
+  results.style.display='flex'; detail.style.display='none';
+  results.innerHTML='<div class="empty">Loading MEIOCG card index…</div>';
+  return;
+ }
+ const out=[];
+ for(let i=0;i<source.length;i++){
+  const c=source[i], scoreValue=score(c,z);
+  if(scoreValue) out.push({c,score:scoreValue});
+ }
+ out.sort((a,b)=>b.score-a.score);
+ renderCardResults(out.slice(0,80),s,`${cardDatabaseSource} • ${out.length} result${out.length===1?'':'s'}`);
+}
+
+function renderCardResults(items,term,statusText){
+ results.innerHTML=items.length?items.map(x=>`<article class="card compact-card" data-id="${esc(x.c.id)}">
+  <strong>${esc(x.c.name)}</strong>
+  <div class="meta">${esc(x.c.type||'Monster Card')} • ${esc(x.c.race||'Effect')}</div>
+  <div class="meta">${x.c.attribute?esc(x.c.attribute)+' • ':''}${x.c.level?'Level '+esc(x.c.level):''}${x.c.linkval?'Link '+esc(x.c.linkval):''}</div>
+ </article>`).join(''):'<div class="empty">No local match yet — searching the live database…</div>';
+ detail.innerHTML=''; results.style.display='flex'; detail.style.display='none';
+ results.querySelectorAll('.card[data-id]').forEach(el=>el.onclick=()=>openCard(el.dataset.id));
+ setStatus(statusText||`${items.length} card result${items.length===1?'':'s'}`);
+}
+
+async function openCard(id){
+ let c=cards.find(x=>String(x.id)===String(id));
+ if(!c){
+  try{
+   const r=await fetchWithTimeout(MEIOCG_SEARCH_INDEX,{cache:'force-cache'},7000);
+   if(r.ok){const j=await r.json();const all=Array.isArray(j)?j:(j.data||[]);c=all.find(x=>String(x.id)===String(id))||null;}
+    if(!c){const r2=await fetchWithTimeout(FALLBACK_CARD_API+'&id='+encodeURIComponent(id),{cache:'no-store'},6000);if(r2.ok){const j2=await r2.json();c=Array.isArray(j2.data)?j2.data[0]:null;}}
+  }catch(e){}
+ }
+ if(!c)return;
+ try{await putOffline(CARD_STORE,c)}catch(e){}
+ results.innerHTML=''; results.style.display='none'; detail.style.display='block';
+ detail.innerHTML=`<div class="panel"><button class="back" onclick="back()">← Back to results</button><div class="detail-head"><div id="cardImageWrap" class="image-wrap" style="${showImages?'':'display:none'}"></div><div class="detail"><h2>${esc(c.name)}</h2><div class="meta">${esc(c.type||'')} ${c.race?'• '+esc(c.race):''} ${c.attribute?'• '+esc(c.attribute):''}</div><div class="chips">${(c.archetype?[c.archetype]:[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('')}</div></div></div><div class="label">CARD TEXT</div><div class="effect">${esc(c.desc||'No card text available.')}</div><div class="label">RULINGS / Q&A <span style="font-size:9px;color:var(--muted);letter-spacing:0">• MEIOCG DATABASE • ALL Q&A RECORDS</span></div><div id="rulings" class="ruling">Loading matching ruling records…</div><div id="rulingSearchHint" class="offline-note"></div></div>`;
+ if(showImages){
+  const wrap=document.getElementById('cardImageWrap');
+  const local=await localImage((c.card_images||[])[0]?.id);
+  if(local)wrap.innerHTML=`<img class="thumb" src="${local}" alt="${esc(c.name)}">`;
+  else if(c.image||c.card_images?.[0]?.image_url)wrap.innerHTML=`<img class="thumb" src="${esc(c.image||c.card_images[0].image_url)}" alt="${esc(c.name)}" onerror="this.style.display='none'">`;
+ }
+ await loadRulings(c);
+ const hint=document.getElementById('rulingSearchHint'); if(hint)hint.textContent='These retrieved Q&A records are cached locally and can be searched from the main search box.';
+}
+
+
+const RULING_PROXY_KEY='meiocg_ruling_proxy';
+const QA_LAZY_STORE=new Map();
+const QA_ENGLISH_TITLE_CACHE=new Map();
+let currentCard=null;
+let autoTranslateQA=localStorage.getItem('meiocg_auto_translate_qa')!=='0';
+function getRulingProxy(){
+ return (localStorage.getItem(RULING_PROXY_KEY)||'/api/ygorg').replace(/\/$/,'');
+}
+async function fetchWithTimeout(url,options={},timeout=5000){
+ const controller=new AbortController();
+ const timer=setTimeout(()=>controller.abort(),timeout);
+ try{
+  return await fetch(url,{...options,signal:controller.signal});
+ }finally{clearTimeout(timer)}
+}
+async function fetchJSONFromRulingDB(path){
+ const proxy=getRulingProxy();
+ const candidates=[
+  API+path,
+  proxy ? proxy+'?path='+encodeURIComponent(path) : null,
+  LEGACY_API+path
+ ].filter(Boolean);
+ let lastError=null;
+ for(const url of candidates){
+  try{
+   const r=await fetchWithTimeout(url,{cache:'no-store'},3500);
+   if(!r.ok)throw new Error(`HTTP ${r.status}`);
+   return await r.json();
+  }catch(e){lastError=e}
+ }
+ throw new Error(`YGOrganization request failed: ${lastError?.message||'Failed to fetch'}`);
+}
+async function fetchMirrorCard(cardId){
+ const url=`${MIRROR_API}/card/${encodeURIComponent(cardId)}?show=all`;
+ const r=await fetchWithTimeout(url,{cache:'no-store'},5000);
+ if(!r.ok)throw new Error(`YGOCDB HTTP ${r.status}`);
+ return await r.json();
+}
+function extractMirrorQAs(node,out=[],depth=0){
+ if(depth>10||node==null)return out;
+ if(Array.isArray(node)){for(const x of node)extractMirrorQAs(x,out,depth+1);return out}
+ if(typeof node!=='object')return out;
+ const keys=Object.keys(node).map(k=>k.toLowerCase());
+ const hasQ=keys.some(k=>k==='q'||k.includes('question')||k.includes('query'));
+ const hasA=keys.some(k=>k==='a'||k.includes('answer')||k.includes('response'));
+ if(hasQ||hasA){
+  let q=textFrom(node,['question','q','query']);
+  let a=textFrom(node,['answer','a','response']);
+  // Some mirror payloads put the whole FAQ in one field.
+  if(q&&!a){
+   const split=splitQACombined(q);
+   q=split.q;a=split.a;
+  }
+  if(q||a)out.push({q,a,id:node.id||node.fid||node.qa_id||node.qaId||''});
+ }
+ for(const v of Object.values(node))if(v&&typeof v==='object')extractMirrorQAs(v,out,depth+1);
+ return out;
+}
+function normalizeCardName(n){
+ return String(n||'').toLowerCase()
+  .replace(/[“”"'’]/g,'')
+  .replace(/\s+/g,' ')
+  .trim();
+}
+function findIdInIndex(obj,target){
+ const wanted=normalizeCardName(target);
+ if(!obj)return null;
+ if(Array.isArray(obj)){
+  for(const item of obj){
+   const hit=findIdInIndex(item,target);
+   if(hit)return hit;
+  }
+  return null;
+ }
+ if(typeof obj!=='object')return null;
+
+ for(const [k,v] of Object.entries(obj)){
+  if(normalizeCardName(k)===wanted){
+   if(typeof v==='number' || (typeof v==='string' && /^\d+$/.test(v)))return String(v);
+   if(v && typeof v==='object'){
+    const direct=v.id??v.card_id??v.cardId??v.konami_id??v.konamiId;
+    if(direct!=null && /^\d+$/.test(String(direct)))return String(direct);
+   }
+  }
+ }
+ for(const v of Object.values(obj)){
+  if(v && typeof v==='object'){
+   const hit=findIdInIndex(v,target);
+   if(hit)return hit;
+  }
+ }
+ return null;
+}
+async function resolveKonamiIdByName(c){
+ const direct=getKonamiId(c);
+ if(direct)return String(direct);
+
+ const key='meiocg_konami_name_index_en_v1';
+ try{
+  let index=null;
+  try{index=JSON.parse(localStorage.getItem(key)||'null')}catch(e){}
+  if(!index){
+   index=await fetchJSONFromRulingDB('/data/idx/card/name/en');
+   try{localStorage.setItem(key,JSON.stringify(index))}catch(e){}
+  }
+  const id=findIdInIndex(index,c.name);
+  if(id)return id;
+ }catch(e){}
+
+ return null;
+}
+function getKonamiId(c){
+ const direct=c.konami_id || c.konamiId || c.konamiID || c.konami_db_id || c.konami_database_id;
+ if(direct!=null)return String(direct);
+
+ // YGOPRODeck's misc=yes data normally places the Official Konami ID
+ // inside misc_info rather than at the top level.
+ const misc=Array.isArray(c.misc_info)?c.misc_info[0]:c.misc_info;
+ if(misc){
+  const id=misc.konami_id || misc.konamiId || misc.konamiID || misc.konami_db_id;
+  if(id!=null)return String(id);
+ }
+ return null;
+}
+function asArray(v){return Array.isArray(v)?v:(v==null?[]:[v])}
+function primitiveId(v){
+ if(typeof v==='number' || (typeof v==='string' && /^\d+$/.test(v)))return String(v);
+ if(v && typeof v==='object'){
+  const id=v.id ?? v.qa_id ?? v.qaId ?? v.question_id ?? v.questionId;
+  if(id!=null && /^\d+$/.test(String(id)))return String(id);
+ }
+ return null;
+}
+
+function primitiveId(v){
+ if(typeof v==='number' || (typeof v==='string' && /^\d+$/.test(v)))return String(v);
+ if(v && typeof v==='object'){
+  const id=v.id??v.qa_id??v.qaId??v.question_id??v.questionId??v.fid??v.FID;
+  if(id!=null && /^\d+$/.test(String(id)))return String(id);
+ }
+ return null;
+}
+function collectQARefs(node,parentKey='',out=new Set(),depth=0){
+ if(depth>12 || node==null)return out;
+ if(Array.isArray(node)){
+  for(const v of node)collectQARefs(v,parentKey,out,depth+1);
+  return out;
+ }
+ if(typeof node!=='object')return out;
+
+ for(const [k,v] of Object.entries(node)){
+  const key=k.toLowerCase();
+  const qaKey=/qa|faq|ruling|question|fid/.test(key);
+
+  if(qaKey){
+   for(const item of Array.isArray(v)?v:[v]){
+    const id=primitiveId(item);
+    if(id)out.add(id);
+    if(item && typeof item==='object')collectQARefs(item,k,out,depth+1);
+   }
+  }else if(v && typeof v==='object'){
+   collectQARefs(v,k,out,depth+1);
+  }
+ }
+ return out;
+}
+function findQAEntries(node,out=[],depth=0){
+ if(depth>12 || node==null)return out;
+ if(Array.isArray(node)){
+  for(const v of node)findQAEntries(v,out,depth+1);
+  return out;
+ }
+ if(typeof node!=='object')return out;
+
+ const keys=Object.keys(node).map(k=>k.toLowerCase());
+ const hasQuestion=keys.some(k=>/^(q|question|query|prompt|text_question)$/.test(k)||k.includes('question'));
+ const hasAnswer=keys.some(k=>/^(a|answer|response|resolution|text_answer)$/.test(k)||k.includes('answer'));
+
+ if(hasQuestion||hasAnswer)out.push(node);
+
+ for(const v of Object.values(node)){
+  if(v && typeof v==='object')findQAEntries(v,out,depth+1);
+ }
+ return out;
+}
+
+function decodeHTMLText(value){
+ if(value==null)return '';
+ let x=String(value);
+ // Convert common structural HTML to readable text first.
+ x=x.replace(/<\s*br\s*\/?>/gi,'\n')
+  .replace(/<\s*\/p\s*>/gi,'\n')
+  .replace(/<\s*\/div\s*>/gi,'\n')
+  .replace(/<\s*\/li\s*>/gi,'\n')
+  .replace(/<\s*li[^>]*>/gi,'• ');
+ // YGOrganization ruling text references other cards using <<Card Name>> wiki
+ // syntax. Resolve that to the plain card name BEFORE the generic tag-stripper
+ // below runs — otherwise it reads "<<Name>" as one malformed tag, eats the
+ // name, and leaves the trailing ">" behind (the bug you're seeing).
+ x=x.replace(/<<\s*([^<>]+?)\s*>>/g,'$1');
+ // Remove tags such as <a href=...>Card</a> while keeping their visible text.
+ x=x.replace(/<[^>]*>/g,'');
+ // Decode entities without requiring an external library.
+ const ta=document.createElement('textarea');
+ ta.innerHTML=x;
+ x=ta.value;
+ return x.replace(/\r/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+function looksNonEnglish(text){
+ if(!text)return false;
+ // Japanese kana, CJK ideographs, and Hangul ranges — the scripts YGOrganization's
+ // raw (untranslated) records are written in.
+ return /[\u3040-\u30FF\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF\uAC00-\uD7AF]/.test(String(text));
+}
+async function translateText(text,targetLang='en'){
+ const s=String(text||'').trim();
+ if(!s)return '';
+ try{
+  const url=`https://api.mymemory.translated.net/get?q=${encodeURIComponent(s.slice(0,480))}&langpair=ja|${targetLang}`;
+  const r=await fetchWithTimeout(url,{cache:'no-store'},6000);
+  if(!r.ok)throw new Error('translate HTTP '+r.status);
+  const j=await r.json();
+  const t=j?.responseData?.translatedText;
+  return (t && typeof t==='string' && !/mymemory|invalid/i.test(t))?decodeHTMLText(t):'';
+ }catch(e){return ''}
+}
+function splitQACombined(text){
+ const x=decodeHTMLText(text);
+ if(!x)return {q:'',a:''};
+
+ // YGOCDB FAQ pages commonly present:
+ // question text ... （A） answer text
+ // or question text ... (A) answer text
+ const m=x.match(/([\s\S]*?)(?:\n?\s*[（(]\s*A\s*[）)]\s*[:：]?\s*)([\s\S]+)$/i);
+ if(m)return {q:m[1].trim(),a:m[2].trim()};
+
+ return {q:x,a:''};
+}
+
+function officialEnglishValue(node,depth=0){
+ if(depth>8||node==null)return '';
+ if(typeof node==='string')return decodeHTMLText(node);
+ if(Array.isArray(node)){
+  for(const v of node){const x=officialEnglishValue(v,depth+1);if(x)return x}
+  return '';
+ }
+ if(typeof node!=='object')return '';
+ // Prefer explicit English keys.
+ const preferred=['en','english','en_us','en-US','text_en','question_en','answer_en'];
+ for(const k of preferred){
+  if(node[k]!=null){
+   const x=officialEnglishValue(node[k],depth+1);
+   if(x)return x;
+  }
+ }
+ return '';
+}
+function textFrom(obj,patterns){
+ if(!obj||typeof obj!=='object')return '';
+ const keys=Object.keys(obj);
+ for(const p of patterns){
+  const k=keys.find(x=>{
+   const z=x.toLowerCase();
+   return z===p || z.includes(p);
+  });
+  if(k){
+   const v=obj[k];
+   const en=officialEnglishValue(v);
+   if(en)return en;
+   if(typeof v==='string'&&v.trim())return decodeHTMLText(v);
+   if(Array.isArray(v)){
+    const t=v.map(x=>typeof x==='string'?decodeHTMLText(x):(x?.text||x?.content||'')).filter(Boolean).join('\n');
+    if(t)return decodeHTMLText(t);
+   }
+  }
+ }
+ return '';
+}
+
+
+
+
+const KONAMI_NAME_MAP_KEY='meiocg_konami_id_name_en_v4';
+let konamiNameMapPromise=null;
+let rulingCardIndexPromise=null;
+
+// YGOResources uses Konami database card IDs for its ruling endpoints.
+// Kodex card records may instead use YGOProDeck IDs, so resolve the current
+// card by English name once, cache the index, then use the Konami ID for the
+// per-card aggregate. This is the critical bridge that was missing.
+async function getRulingCardIndex(){
+ if(rulingCardIndexPromise)return rulingCardIndexPromise;
+ rulingCardIndexPromise=(async()=>{
+  const cacheKey='meiocg_ruling_card_index_en_v3';
+  try{
+   const cached=JSON.parse(localStorage.getItem(cacheKey)||'null');
+   if(cached?.byName && cached?.byId && Object.keys(cached.byName).length>1000)return cached;
+  }catch(e){}
+  try{
+   const local=await getOffline(RULING_STORE,'__meiocg_ruling_name_index__');
+   if(local?.data){
+    const index=local.data;
+    const byName={},byId={};
+    const add=(name,id)=>{if(id==null||!name)return;const sid=String(id),n=normalizeCardName(name);if(!n||/^\d+$/.test(n))return;byName[n]=sid;if(!byId[sid])byId[sid]=decodeHTMLText(name)};
+    const walk=(node)=>{if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(walk);return;}for(const [name,v] of Object.entries(node)){for(const item of (Array.isArray(v)?v:[v])){const id=primitiveId(item);if(id)add(name,id);if(item&&typeof item==='object'){const direct=item.id??item.card_id??item.cardId??item.konami_id??item.konamiId;if(direct!=null)add(name,direct)}}if(v&&typeof v==='object')walk(v)}};
+    walk(index); if(Object.keys(byName).length)return {byName,byId};
+   }
+  }catch(e){}
+  const candidates=[MEIOCG_RULING_NAME_INDEX,MEIOCG_RULING_NAME_INDEX_GITHUB];
+  for(const url of candidates){
+   try{
+    const r=await fetchWithTimeout(url,{cache:'default'},6000);
+    if(!r.ok)continue;
+    const index=await r.json();
+    const byName={},byId={};
+    const add=(name,id)=>{
+      if(id==null||!name)return;
+      const sid=String(id);
+      const n=normalizeCardName(name);
+      if(!n||/^\d+$/.test(n))return;
+      byName[n]=sid;
+      if(!byId[sid])byId[sid]=decodeHTMLText(name);
+    };
+    const walk=(node)=>{
+      if(!node||typeof node!=='object')return;
+      if(Array.isArray(node)){node.forEach(walk);return;}
+      for(const [name,v] of Object.entries(node)){
+        const vals=Array.isArray(v)?v:[v];
+        for(const item of vals){
+          const id=primitiveId(item);
+          if(id)add(name,id);
+          if(item&&typeof item==='object'){
+            const direct=item.id??item.card_id??item.cardId??item.konami_id??item.konamiId;
+            if(direct!=null)add(name,direct);
+          }
+        }
+        if(v&&typeof v==='object')walk(v);
+      }
+    };
+    walk(index);
+    const out={byName,byId};
+    if(Object.keys(byName).length){
+      try{localStorage.setItem(cacheKey,JSON.stringify(out))}catch(e){}
+      return out;
+    }
+   }catch(e){}
+  }
+  return {byName:{},byId:{}};
+ })();
+ return rulingCardIndexPromise;
+}
+async function resolveRulingCardId(c){
+ const direct=getKonamiId(c);
+ if(direct)return direct;
+ const idx=await getRulingCardIndex();
+ const n=normalizeCardName(c?.name);
+ return idx.byName[n]||null;
+}
+
+async function getKonamiNameMap(){
+ if(konamiNameMapPromise)return konamiNameMapPromise;
+ konamiNameMapPromise=(async()=>{
+  try{
+   let raw=null;
+   try{raw=JSON.parse(localStorage.getItem(KONAMI_NAME_MAP_KEY)||'null')}catch(e){}
+   if(raw && Object.keys(raw).length>100)return raw;
+   const idx=await getRulingCardIndex();
+   const map=idx.byId||{};
+   if(Object.keys(map).length){
+    try{localStorage.setItem(KONAMI_NAME_MAP_KEY,JSON.stringify(map))}catch(e){}
+   }
+   return map;
+  }catch(e){return {}}
+ })();
+ return konamiNameMapPromise;
+}
+
+function replaceKnownCardRef(raw,id,map){
+ const name=map[String(id)];
+ if(!name)return raw;
+ const patterns=[
+  new RegExp(`<unknown\\s+card\\s+#${id}>`,'gi'),
+  new RegExp(`<<\\s*${id}\\s*>>`,'g'),
+  new RegExp(`\\[\\s*unknown\\s+card\\s+#${id}\\s*\\]`,'gi'),
+  new RegExp(`\\[\\s*card\\s+#${id}\\s*\\]`,'gi'),
+  new RegExp(`\\{\\s*card\\s*:\\s*${id}\\s*\\}`,'gi')
+ ];
+ for(const re of patterns)raw=raw.replace(re,name);
+ return raw;
+}
+async function resolveKonamiCardNamesInText(text){
+ let raw=String(text||'');
+ if(!raw)return '';
+ const map=await getKonamiNameMap();
+ const ids=new Set();
+ for(const m of raw.matchAll(/<unknown\\s+card\\s+#(\\d+)>/gi))ids.add(m[1]);
+ for(const m of raw.matchAll(/<<\\s*(\\d{3,})\\s*>>/g))ids.add(m[1]);
+ for(const m of raw.matchAll(/\\[\\s*(?:unknown\\s+)?card\\s+#(\\d+)\\s*\\]/gi))ids.add(m[1]);
+ for(const m of raw.matchAll(/\\{\\s*card\\s*:\\s*(\\d+)\\s*\\}/gi))ids.add(m[1]);
+ for(const id of ids)raw=replaceKnownCardRef(raw,id,map);
+ return decodeHTMLText(raw);
+}
+
+function cleanQATitle(text){
+ let q=decodeHTMLText(text||'');
+ q=q.replace(/<<\s*([^<>]+?)\s*>>/g,'$1');
+ q=q.replace(/^\s*[>›»]+\s*/,'');
+ q=q.replace(/^\s*[<]+\s*/,'');
+ q=q.replace(/\s*[>]+\s*$/,'');
+ q=q.replace(/\s+/g,' ').trim();
+ return q;
+}
+function qaTitleFromEntry(entry){
+ let q=textFrom(entry,['title_en','title','name_en','name']);
+ if(!q)q=textFrom(entry,['question_en','query_en','prompt_en','q_en','question','query','prompt','q']);
+ if(!q)return 'Q&A';
+ const split=splitQACombined(q);
+ q=cleanQATitle(split.q||q);
+ return q.length>220?q.slice(0,217)+'…':q;
+}
+async function resolveEnglishQATitle(id,fallback){
+ const key=String(id||'');
+ if(!key)return fallback||'Q&A';
+
+ // 1) Persistent local cache: reuse a title we already resolved, or the full
+ // record if one was cached (e.g. by opening this Q&A previously).
+ const memory=QA_ENGLISH_TITLE_CACHE.get(key);
+ if(memory)return memory;
+ try{
+  const rows=await allOffline(RULING_STORE);
+  const saved=rows.find(x=>String(x.qaId||x.id||'')===key && (x.englishTitle||x.data));
+  if(saved){
+   let title=saved.englishTitle;
+   if(!title && saved.data){
+    const entries=findQAEntries(saved.data);
+    title=qaTitleFromEntry(entries[0]||saved.data);
+   }
+   if(title){
+    QA_ENGLISH_TITLE_CACHE.set(key,title);
+    return title;
+   }
+  }
+ }catch(e){}
+
+ // 2) Always ask YGOrganization for the English Q&A record first.
+ try{
+  const data=await fetchJSONFromRulingDB(`/data/qa/${encodeURIComponent(key)}`);
+  const entries=findQAEntries(data);
+  const source=entries[0]||data;
+
+  // Explicit English fields have highest priority.
+  let q=textFrom(source,['question_en','query_en','prompt_en','q_en']);
+  if(!q)q=textFrom(source,['question','query','prompt','q']);
+
+  if(q){
+   const split=splitQACombined(q);
+   q=cleanQATitle(await resolveKonamiCardNamesInText(split.q||q));
+
+   if(q && !looksNonEnglish(q)){
+    QA_ENGLISH_TITLE_CACHE.set(key,q);
+    // Cache the full record too (not just the title) so tapping this Q&A
+    // later opens instantly instead of making another network request.
+    try{
+     await putOffline(RULING_STORE,{
+      id:key,qaId:key,data,englishTitle:q,cardId:String(currentCard?.id||''),
+      language:'en',official:true,updatedAt:Date.now()
+     });
+    }catch(e){}
+    return q.length>220?q.slice(0,217)+'…':q;
+   }
+
+   // 3) Only when YGOrganization has no English translation, translate the title.
+   if(autoTranslateQA && q){
+    try{
+     const translated=await translateText(q,'en');
+     if(translated){
+      QA_ENGLISH_TITLE_CACHE.set(key,translated);
+      try{
+       await putOffline(RULING_STORE,{
+        id:key,qaId:key,data,englishTitle:translated,cardId:String(currentCard?.id||''),
+        language:'en',official:false,machineTranslated:true,updatedAt:Date.now()
+       });
+      }catch(e){}
+      return translated.length>220?translated.slice(0,217)+'…':translated;
+     }
+    }catch(e){}
+   }
+  }
+ }catch(e){}
+
+ return fallback||`Q&A #${key}`;
+}
+
+async function upgradeQATitlesToEnglish(container){
+ if(!container)return;
+ const nodes=[...container.querySelectorAll('.qa-collapsed[data-qa-key]')]
+  .filter(n=>!String(n.getAttribute('data-qa-key')||'').startsWith('local_'));
+
+ // Resolve a few at a time so a 70+ Q&A card doesn't wait for one request after another.
+ const batchSize=6;
+ for(let i=0;i<nodes.length;i+=batchSize){
+  const batch=nodes.slice(i,i+batchSize);
+  await Promise.all(batch.map(async node=>{
+   const id=node.getAttribute('data-qa-key');
+   const item=QA_LAZY_STORE.get(id);
+   if(!item)return;
+   const titleEl=node.querySelector('.qa-title');
+   const title=await resolveEnglishQATitle(id,titleEl?.textContent||`Q&A #${id}`);
+   if(titleEl)titleEl.textContent=title;
+   if(item) item.q=title;
+  }));
+ }
+}
+
+function registerLazyQA(id,entry){
+ const key=String(id||('local_'+QA_LAZY_STORE.size));
+ let q=textFrom(entry,['question_en','query_en','prompt_en','q_en','question','query','prompt','q']);
+ let a=textFrom(entry,['answer_en','response_en','resolution_en','a_en','answer','response','resolution','a']);
+ if(q&&!a){
+  const split=splitQACombined(q);
+  q=split.q;a=split.a;
+ }
+ QA_LAZY_STORE.set(key,{
+  id:key,
+  q:decodeHTMLText(q||''),
+  a:decodeHTMLText(a||''),
+  loaded:!!a
+ });
+ return key;
+}
+function qaTitleFromEntry(entry){
+ let q=textFrom(entry,['question_en','query_en','prompt_en','q_en','question','query','prompt','q']);
+ if(!q)return decodeHTMLText(textFrom(entry,['title_en','name_en','title','name']))||'Q&A';
+ const split=splitQACombined(q);
+ q=(split.q||q).replace(/\s+/g,' ').trim();
+ return q.length>220?q.slice(0,217)+'…':q;
+}
+function renderQA(entry,id=''){
+ const key=registerLazyQA(id,entry);
+ const item=QA_LAZY_STORE.get(String(key))||{};
+ const question=decodeHTMLText(entry.question_en||entry.question||item.q||'');
+ const answer=decodeHTMLText(entry.answer_en||entry.answer||item.a||'');
+ const title=cleanQATitle(entry.title_en||entry.title||question||'Q&A');
+ return `<article class="qa-collapsed" data-qa-key="${esc(key)}">
+  <div class="qa-chevron">⌄</div>
+  <div class="qa-summary">
+   <div class="label" style="margin-top:0">Q&A${id?` #${esc(id)}`:''}</div>
+   <div class="qa-title">${esc(title)}</div>
+  </div>
+  <div class="qa-body">
+   ${question?`<div class="qa-question"><strong>Q:</strong><div>${esc(question).replace(/\n/g,'<br>')}</div></div>`:''}
+   ${answer?`<div class="qa-answer"><strong>A:</strong><div>${esc(answer).replace(/\n/g,'<br>')}</div></div>`:'<div class="qa-loading">No English answer is stored for this record.</div>'}
+  </div>
+ </article>`;
+}
+
+// Kept for compatibility with older cached markup. New MEIOCG aggregates never
+// call this path because their English Q&A is already contained in one payload.
+async function expandQA(key,el){
+ const item=QA_LAZY_STORE.get(String(key));
+ if(!item||!el)return;
+ el.classList.toggle('open');
+}
+
+function extractMEIOCGRulingEntries(payload){
+ const records=Array.isArray(payload?.records)?payload.records:[];
+ return records.map((record,index)=>{
+  const history=record?.history||{};
+  const en=record?.api?.qaData?.en||{};
+  const ja=record?.api?.qaData?.ja||{};
+  const id=String(en.id||record.id||history.fid||index+1);
+  // The aggregate already contains the English title/question/answer. Prefer it
+  // directly so Kodex never needs one request per Q&A just to replace a number.
+  return {
+   id,
+   title_en:en.title||'',
+   question_en:en.question||'',
+   answer_en:en.answer||'',
+   title:history.title||ja.title||'',
+   question:history.question||ja.question||'',
+   answer:history.answer||ja.answer||'',
+   databaseDate:history.databaseDate||'',
+   translationStatus:en.translationStatus||''
+  };
+ }).filter(x=>x.title_en||x.question_en||x.answer_en||x.title||x.question||x.answer);
+}
+function renderMEIOCGRulingAggregate(payload){
+ const entries=extractMEIOCGRulingEntries(payload);
+ return entries.map(x=>renderQA(x,x.id)).filter(Boolean).join('');
+}
+function getMEIOCGRulingCacheKey(cardId){return `meiocg:rulings:${String(cardId)}`}
+function renderRulingPayload(data){
+ // New MEIOCG aggregate format: data.records[] with api.qaData.en.
+ if(Array.isArray(data?.records))return renderMEIOCGRulingAggregate(data);
+ const entries=findQAEntries(data);
+ const rendered=entries.map(x=>renderQA(x,x.id||x.qa_id||x.qaId||x.fid||'')).filter(Boolean).join('');
+ return rendered?`${rendered}`:'';
+}
+async function getCachedMEIOCGRulings(cardId){
+ try{
+  const row=await getOffline(RULING_STORE,getMEIOCGRulingCacheKey(cardId));
+  if(row?.data)return row;
+ }catch(e){}
+ return null;
+}
+async function fetchMEIOCGRulings(cardId){
+ const id=String(cardId||'').trim();
+ if(!id)return null;
+ const urls=[
+  `${MEIOCG_RULINGS_BASE}${encodeURIComponent(id)}.json`,
+  `${MEIOCG_RULINGS_GITHUB_BASE}${encodeURIComponent(id)}.json`
+ ];
+ let lastError=null;
+ for(const url of urls){
+  try{
+   const r=await fetchWithTimeout(url,{cache:'no-store'},8000);
+   if(!r.ok){lastError=new Error(`HTTP ${r.status}`);continue;}
+   const data=await r.json();
+   if(!data || !Array.isArray(data.records)){
+    lastError=new Error('Invalid MEIOCG ruling aggregate');
+    continue;
+   }
+   const row={
+    id:getMEIOCGRulingCacheKey(id),
+    cardId:id,
+    type:'meiocg-card-aggregate',
+    data,
+    count:Number(data.count||data.records.length||0),
+    updatedAt:Date.now(),
+    source:'MEIOCG-Database'
+   };
+   try{await putOffline(RULING_STORE,row)}catch(e){}
+   return row;
+  }catch(e){lastError=e}
+ }
+ throw lastError||new Error('MEIOCG ruling data unavailable');
+}
+async function resolveMEIOCGRulingCardNames(entries){
+ // The MEIOCG aggregate stores referenced cards as <<KONAMI_ID>>. Resolve those
+ // IDs locally from the already-loaded Kodex card database first, then fall back
+ // to the cached/official YGOrganization name index only for IDs not present locally.
+ const map={};
+ try{
+  for(const c of (Array.isArray(cards)?cards:[])){
+   if(c?.id!=null && c?.name)map[String(c.id)]=String(c.name);
+  }
+ }catch(e){}
+ let missing=false;
+ for(const entry of entries){
+  for(const key of ['title_en','question_en','answer_en','title','question','answer']){
+   const text=String(entry[key]||'');
+   if(/<<\s*\d{3,}\s*>>/.test(text)){
+    for(const m of text.matchAll(/<<\s*(\d{3,})\s*>>/g)){
+     if(!map[m[1]])missing=true;
+    }
+   }
+  }
+ }
+ if(missing){
+  try{
+   const official=await getKonamiNameMap();
+   Object.assign(map,official||{});
+  }catch(e){}
+ }
+ return entries.map(entry=>{
+  const out={...entry};
+  for(const key of ['title_en','question_en','answer_en','title','question','answer']){
+   out[key]=out[key].replace(/<<\s*(\d{3,})\s*>>/g,(m,id)=>map[String(id)]||m);
+  }
+  return out;
+ });
+}
+async function renderMEIOCGRulingBox(box,row,offline=false){
+ const payload=row?.data;
+ let entries=extractMEIOCGRulingEntries(payload);
+ if(!entries.length){
+  box.innerHTML=`<div class="ruling"><strong>No stored rulings</strong><div class="meta">This card currently has no Q&A records in the MEIOCG database.</div></div>`;
+  return false;
+ }
+ entries=await resolveMEIOCGRulingCardNames(entries);
+ const html=entries.map(x=>renderQA(x,x.id)).join('');
+ box.innerHTML=`<div class="ruling"><strong>${entries.length.toLocaleString()} MEIOCG Q&A record${entries.length===1?'':'s'}</strong><div class="meta">${offline?'Loaded from this device • no internet required':'Loaded from MEIOCG-Database • one aggregate request for this card'}</div></div>${html}`;
+ return true;
+}
+async function refreshMEIOCGRulingsInBackground(c,box,cached){
+ try{
+  const fresh=await fetchMEIOCGRulings(c.id);
+  // Do not overwrite a different card if the user navigated while fetching.
+  if(currentCard && String(currentCard.id)===String(c.id) && box.isConnected){
+   await renderMEIOCGRulingBox(box,fresh,false);
+  }
+ }catch(e){
+  // Stale cached data remains visible; legacy sources below are only used when
+  // there is no MEIOCG aggregate at all.
+ }
+}
+
+async function saveQATitleCache(cardId,id,title,source='ygorganization-en'){
+ if(!id||!title)return;
+ try{
+  await putOffline(RULING_STORE,{
+   id:`title:${String(id)}`,
+   cardId:String(cardId||''),
+   qaId:String(id),
+   title:String(title),
+   source,
+   updatedAt:Date.now()
+  });
+ }catch(e){}
+}
+async function getCachedQATitles(cardId){
+ try{
+  const rows=await allOffline(RULING_STORE);
+  return rows.filter(x=>x.qaId && (!cardId||String(x.cardId)===String(cardId)))
+    .reduce((m,x)=>(m[String(x.qaId)]=x,m),{});
+ }catch(e){return {}}
+}
+async function cacheQATitleFromOfficial(cardId,id,fallback=''){
+ try{
+  const title=await resolveEnglishQATitle(id,fallback);
+  if(title && !/^Q&A #\d+$/.test(title)){
+   await saveQATitleCache(cardId,id,title,'ygorganization-en');
+   return title;
+  }
+ }catch(e){}
+ return fallback||`Q&A #${id}`;
+}
+function setRulingLoadingState(text){
+ const box=document.getElementById('rulings');
+ if(box)box.innerHTML=`<div class="ruling"><strong>${esc(text)}</strong><div class="meta">Previously saved rulings remain available offline.</div></div>`;
+}
+async function loadRulings(c){
+ currentCard=c;
+ const box=document.getElementById('rulings');
+ if(!box)return;
+
+ // Fast path: use a direct Konami ID from the card record if available.
+ // Otherwise resolve it from the single cached MEIOCG name index.
+ let rulingId=getKonamiId(c);
+ if(!rulingId){
+   try{
+     const idx=await getRulingCardIndex();
+     rulingId=idx.byName[normalizeCardName(c.name)]||null;
+   }catch(e){}
+ }
+
+ // Never leave the card page in an indefinite loading state.
+ if(!rulingId){
+   box.innerHTML='<div class="ruling"><strong>Rulings unavailable</strong><div class="meta">This card has not been mapped to a Konami database ID yet.</div></div>';
+   return;
+ }
+
+ const cached=await getCachedMEIOCGRulings(rulingId).catch(()=>null);
+ if(cached?.data?.records){
+   await renderMEIOCGRulingBox(box,cached,true);
+   // Stale-while-revalidate: update silently after the complete cached list is visible.
+   const age=Date.now()-Number(cached.updatedAt||0);
+   if(age>MEIOCG_RULING_CACHE_TTL)refreshMEIOCGRulingsInBackground({...c,id:rulingId},box,cached).catch(()=>{});
+   return;
+ }
+
+ // First visit: one aggregate request only. The card UI is already visible.
+ box.innerHTML='<div class="ruling"><strong>Loading all rulings…</strong><div class="meta">Fetching one MEIOCG aggregate for this card.</div></div>';
+ try{
+   const fresh=await fetchMEIOCGRulings(rulingId);
+   if(currentCard===c && box.isConnected)await renderMEIOCGRulingBox(box,fresh,false);
+   return;
+ }catch(e){}
+
+ // Last-resort local cache lookup. No per-Q&A network waterfall.
+ try{
+   const cachedRows=await allOffline(RULING_STORE);
+   const rows=cachedRows.filter(x=>x.data && String(x.cardId||'')===String(rulingId));
+   if(rows.length){
+     const row=rows.sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0))[0];
+     await renderMEIOCGRulingBox(box,row,true);
+     return;
+   }
+ }catch(e){}
+
+ box.innerHTML='<div class="ruling"><strong>No documented Q&A rulings</strong><div class="meta">No Q&A records are linked to this card in the MEIOCG mirror.</div></div>';
+}
+
+function back(){detail.innerHTML='';detail.style.display='none';results.style.display='grid';searchCards(q.value)}
+q.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(()=>{searchCards(q.value.trim())},40)});
+document.getElementById('clear').onclick=()=>{q.value='';q.focus();searchCards('')};
+document.getElementById('settings').onclick=()=>document.getElementById('settingsOverlay').classList.add('open');
+document.getElementById('closeSettings').onclick=()=>document.getElementById('settingsOverlay').classList.remove('open');
+document.getElementById('settingsOverlay').onclick=e=>{if(e.target.id==='settingsOverlay')e.currentTarget.classList.remove('open')};
+document.getElementById('imageToggle').onclick=()=>{showImages=!showImages;updateSettingsUI()};
+document.getElementById('compactToggle').onclick=()=>{compactSearch=!compactSearch;updateSettingsUI()};
+document.getElementById('downloadOfflinePictures').onclick=()=>downloadOfflinePack(true);
+document.getElementById('downloadOfflineRulings').onclick=()=>downloadOfflinePack(false);
+async function readZipEntries(file){
+ const buf=await file.arrayBuffer();
+ const u8=new Uint8Array(buf), dv=new DataView(buf);
+ let eocd=-1;
+ for(let i=u8.length-22;i>=Math.max(0,u8.length-65557);i--){
+  if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+ }
+ if(eocd<0)throw Error('ZIP end record not found');
+ const cdSize=dv.getUint32(eocd+12,true), cdOffset=dv.getUint32(eocd+16,true);
+ let p=cdOffset, entries=[];
+ const td=new TextDecoder();
+ while(p<cdOffset+cdSize){
+  if(dv.getUint32(p,true)!==0x02014b50)break;
+  const method=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true), usize=dv.getUint32(p+24,true);
+  const nlen=dv.getUint16(p+28,true), xlen=dv.getUint16(p+30,true), clen=dv.getUint16(p+32,true);
+  const name=td.decode(u8.slice(p+46,p+46+nlen));
+  const lhoff=dv.getUint32(p+42,true);
+  entries.push({name,method,csize,usize,lhoff});
+  p+=46+nlen+xlen+clen;
+ }
+ const out=[];
+ for(const e of entries){
+  if(e.name.endsWith('/')||!e.name.toLowerCase().endsWith('.json'))continue;
+  if(e.csize>50*1024*1024)continue;
+  const lp=e.lhoff;
+  if(dv.getUint32(lp,true)!==0x04034b50)continue;
+  const nlen=dv.getUint16(lp+26,true), xlen=dv.getUint16(lp+28,true);
+  const start=lp+30+nlen+xlen;
+  const compressed=u8.slice(start,start+e.csize);
+  let bytes;
+  if(e.method===0)bytes=compressed;
+  else if(e.method===8){
+   const ds=new DecompressionStream('deflate-raw');
+   bytes=new Uint8Array(await new Response(new Blob([compressed]).stream().pipeThrough(ds)).arrayBuffer());
+  }else continue;
+  out.push({name:e.name,text:new TextDecoder().decode(bytes)});
+ }
+ return out;
+}
+async function importQAHistoryEntries(entries,msg,bar){
+ const qaRows=[], links=[], seen=new Set();
+ let processed=0;
+ for(const entry of entries){
+  processed++;
+  try{
+   const raw=JSON.parse(entry.text);
+   if(!raw || typeof raw!=='object')continue;
+   const fid=String(raw.fid??raw.id??raw.qa_id??raw.qaId??'').trim();
+   if(!/^\d+$/.test(fid)||seen.has(fid))continue;
+   seen.add(fid);
+   const title=cleanQATitle(raw.title||raw.title_en||raw.name||'');
+   const question=decodeHTMLText(raw.question_en||raw.question||'');
+   const answer=decodeHTMLText(raw.answer_en||raw.answer||'');
+   const mentioned=Array.isArray(raw.mentionedCards)?raw.mentionedCards.map(String).filter(x=>/^\d+$/.test(x)):[];
+   const data={fid:Number(fid),title,question,answer,tags:raw.tags||[],mentionedCards:mentioned.map(Number),databaseDate:raw.databaseDate||'',language:looksNonEnglish((title+' '+question+' '+answer))?'ja':'en',source:'db-ygoresources.com/yugioh-qa-history'};
+   qaRows.push({id:`history:${fid}`,qaId:fid,englishTitle:title,data,language:looksNonEnglish((title+' '+question+' '+answer))?'ja':'en',source:'ygorganization-history',updatedAt:Date.now()});
+   for(const cardId of mentioned)links.push({id:`${cardId}:${fid}`,cardId:String(cardId),fid});
+  }catch(e){}
+  if(processed%100===0){msg.textContent=`Importing official Q&A history… ${processed.toLocaleString()} / ${entries.length.toLocaleString()}`;bar.style.width=Math.min(95,Math.round(processed/entries.length*95))+'%';await new Promise(r=>setTimeout(r,0));}
+ }
+ await bulkPutOffline(RULING_STORE,qaRows);
+ await bulkPutOffline(QA_LINK_STORE,links);
+ return {count:qaRows.length,links:links.length};
+}
+document.getElementById('rulingPackInput').onchange=async e=>{
+ const file=e.target.files?.[0]; if(!file)return;
+ const msg=document.getElementById('downloadStatus'), bar=document.getElementById('downloadProgress');
+ try{
+  bar.style.width='0%';
+  msg.textContent='Reading official YGOrganization Q&A history…';
+  let entries=[];
+  if(file.name.toLowerCase().endsWith('.zip')) entries=await readZipEntries(file);
+  else entries=[{name:file.name,text:await file.text()}];
+  const usable=entries.filter(x=>/\.json$/i.test(x.name));
+  if(!usable.length)throw Error('No JSON Q&A files found');
+  const result=await importQAHistoryEntries(usable,msg,bar);
+  cachedRulingSearchIndex=null;
+  cachedRulingSearchAt=0;
+  bar.style.width='100%';
+  msg.textContent=`Official Q&A history imported • ${result.count.toLocaleString()} Q&As • ${result.links.toLocaleString()} card links. Stored locally for offline use.`;
+  setStatus(`Official YGOrganization Q&A history ready • ${result.count.toLocaleString()} records`,true);
+ }catch(err){
+  console.error(err);
+  msg.textContent='Could not import the Q&A history. Use the ZIP downloaded from the YGOrganization yugioh-qa-history repository or a JSON export.';
+ }finally{e.target.value=''}
+};
+
+const translateToggle=document.getElementById('translateToggle');
+if(translateToggle){
+ translateToggle.classList.toggle('on',autoTranslateQA);
+ translateToggle.onclick=()=>{
+  autoTranslateQA=!autoTranslateQA;
+  localStorage.setItem('meiocg_auto_translate_qa',autoTranslateQA?'1':'0');
+  translateToggle.classList.toggle('on',autoTranslateQA);
+ };
+}
+const proxyInput=document.getElementById('rulingProxyInput');
+if(proxyInput)proxyInput.value=getRulingProxy();
+document.getElementById('saveRulingProxy').onclick=()=>{
+ localStorage.setItem(RULING_PROXY_KEY,(proxyInput.value||'/api/ygorg').trim().replace(/\/$/,''));
+ proxyInput.value=getRulingProxy();
+ const msg=document.getElementById('downloadStatus');
+ if(msg)msg.textContent='Ruling API bridge saved. Reopen a card to test the connection.';
+};
+document.getElementById('wallpaperInput').onchange=async e=>{
+ const file=e.target.files?.[0]; if(file)await saveWallpaperBlob(file);
+};
+document.getElementById('wallpaperOpacity').oninput=e=>{
+ wallpaperOpacity=Number(e.target.value);localStorage.setItem('meiocg_wallpaper_opacity',wallpaperOpacity);applyWallpaperSettings();
+};
+document.getElementById('wallpaperFit').onchange=e=>{
+ wallpaperFit=e.target.value;localStorage.setItem('meiocg_wallpaper_fit',wallpaperFit);applyWallpaperSettings();
+};
+document.getElementById('removeWallpaper').onclick=async()=>{
+ try{
+  const db=await openOfflineDB();await new Promise((resolve,reject)=>{const tx=db.transaction('wallpaper','readwrite');tx.objectStore('wallpaper').delete('current');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
+ }catch(e){}
+ document.getElementById('wallpaperLayer').style.backgroundImage='';
+ localStorage.removeItem('meiocg_has_wallpaper');
+};
+
+updateSettingsUI();
+applyWallpaperSettings();
+loadWallpaper();
+warmCardDB();
+</script>
+<script>
+// YGOResources-style client caching: service worker + IndexedDB/local caches.
+// The service worker is scoped to /kodex/ when this file is hosted there.
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(()=>{}));
+}
+</script>
+<div id="kodex-engine-version" style="display:none">Duel Synapse Kodex V2 • MEIOCG fast engine</div>
+
+<script>
+/* KodeX QA accordion: isolated to QA cards only. */
+(function(){
+  if (window.__kodexQAAccordionInstalled) return;
+  window.__kodexQAAccordionInstalled = true;
+  document.addEventListener('click', function(ev){
+    const qa = ev.target.closest('.qa-collapsed');
+    if(!qa) return;
+    if(ev.target.closest('a,button,input,select,textarea')) return;
+    qa.classList.toggle('open');
+    qa.setAttribute('aria-expanded', qa.classList.contains('open') ? 'true' : 'false');
+  }, false);
+})();
+</script>
+
+
+<script>
+/* KodeX custom wallpaper controller — isolated from the card/ruling engine. */
+(function(){
+  if(window.__kodexWallpaperFixed)return;
+  window.__kodexWallpaperFixed=true;
+  const DB='kodex-wallpaper-v1', STORE='wallpaper';
+
+  function db(){
+    return new Promise((res,rej)=>{
+      const r=indexedDB.open(DB,1);
+      r.onupgradeneeded=()=>r.result.createObjectStore(STORE);
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+    });
+  }
+  async function put(value){
+    const d=await db();
+    return new Promise((res,rej)=>{
+      const t=d.transaction(STORE,'readwrite');
+      t.objectStore(STORE).put(value,'current');
+      t.oncomplete=()=>{d.close();res()}; t.onerror=()=>{d.close();rej(t.error)};
+    });
+  }
+  async function get(){
+    const d=await db();
+    return new Promise((res,rej)=>{
+      const r=d.transaction(STORE).objectStore(STORE).get('current');
+      r.onsuccess=()=>{d.close();res(r.result||null)}; r.onerror=()=>{d.close();rej(r.error)};
+    });
+  }
+  function apply(blob,meta){
+    const layer=document.getElementById('wallpaperLayer');
+    if(!layer||!blob)return;
+    if(layer.__url)URL.revokeObjectURL(layer.__url);
+    const url=URL.createObjectURL(blob); layer.__url=url;
+    layer.style.backgroundImage=`url("${url}")`;
+    layer.style.backgroundSize=meta.fit||'cover';
+    layer.style.backgroundPosition=meta.position||'center';
+    layer.style.backgroundRepeat='no-repeat';
+    layer.style.opacity=String(meta.opacity==null?1:meta.opacity);
+    layer.style.display='block';
+    const shade=document.getElementById('wallpaperShade');
+    if(shade)shade.style.display='block';
+  }
+  async function restore(){try{const x=await get();if(x&&x.blob)apply(x.blob,x.meta||{})}catch(e){}}
+
+  function bind(){
+    const input=document.querySelector('#wallpaperInput,input[type="file"][accept*="image"]');
+    if(input&&!input.__wp){
+      input.__wp=true;
+      input.addEventListener('change',async()=>{
+        const f=input.files&&input.files[0]; if(!f||!f.type.startsWith('image/'))return;
+        const meta={
+          fit:document.querySelector('#wallpaperFit')?.value||'cover',
+          position:document.querySelector('#wallpaperPosition')?.value||'center',
+          opacity:parseFloat(document.querySelector('#wallpaperOpacity')?.value||'1')
+        };
+        apply(f,meta);
+        try{await put({blob:f,meta})}catch(e){}
+      });
+    }
+  }
+  function init(){bind();restore()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+})();
+</script>
+
+</body>
+</html>
