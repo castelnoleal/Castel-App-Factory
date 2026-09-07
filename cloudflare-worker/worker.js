@@ -4,6 +4,7 @@ const ORIGIN = "https://factory.castelmei.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
 const CHUNK_CHARS = 800_000;
+const BUILD_BRIDGE_REVISION = "website-source-v2";
 
 function headers() {
   return {
@@ -51,14 +52,14 @@ export default {
     const u = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null,{status:204,headers:headers()});
     if (u.pathname === "/health" && request.method === "GET") {
-      return reply({ok:true,service:"Castel App Factory API",status:"online",repo:`${env.GITHUB_OWNER || ""}/${env.GITHUB_REPO || ""}`,aiSupervisor: Boolean(env.OPENAI_API_KEY)});
+      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || ""}/${env.GITHUB_REPO || ""}`,aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
     if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) return reply({ok:false,error:"Build bridge is not configured."},503);
 
     if (u.pathname === "/build" && request.method === "POST") {
       try {
         const b = await request.json();
-        const sourceType = b.sourceType === "HTTPS website" || b.sourceType === "website" ? "website" : "html";
+        const sourceType = b.["website","website url","https website","https website url","http website","http website url","web","url"].includes(String(b.sourceType||"").toLowerCase().trim()) ? "website" : "html";
         const appName = String(b.appName || "").trim();
         const packageName = String(b.packageName || "").trim();
         const versionName = String(b.versionName || "").trim();
@@ -102,7 +103,7 @@ export default {
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
         await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:"main",inputs:{build_id:buildId}})});
-        return reply({ok:true,status:"queued",buildId,testBuild,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
+        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
       } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
     }
 
