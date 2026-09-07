@@ -4,7 +4,7 @@ const ORIGIN = "https://factory.castelmei.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
 const CHUNK_CHARS = 800_000;
-const BUILD_BRIDGE_REVISION = "website-source-v2";
+const BUILD_BRIDGE_REVISION = "website-source-v3";
 
 function headers() {
   return {
@@ -59,12 +59,17 @@ export default {
     if (u.pathname === "/build" && request.method === "POST") {
       try {
         const b = await request.json();
-        const sourceType = ["website","website url","https website","https website url","http website","http website url","web","url"].includes(String(b.sourceType||"").toLowerCase().trim()) ? "website" : "html";
+        const declaredSource = String(b.sourceMode || b.sourceType || "").toLowerCase().trim();
+        const websiteKinds = new Set(["website","website url","https website","https website url","http website","http website url","web","url"]);
+        const rawWebsiteUrl = b.sourceUrl || b.websiteUrl || "";
+        const normalizedWebsiteUrl = normalizeWebsiteUrl(rawWebsiteUrl);
+        // Treat a valid URL-only request as a website even if an older frontend sends an unexpected source label.
+        const sourceType = websiteKinds.has(declaredSource) || (!b.sourceBase64 && !!normalizedWebsiteUrl) ? "website" : "html";
         const appName = String(b.appName || "").trim();
         const packageName = String(b.packageName || "").trim();
         const versionName = String(b.versionName || "").trim();
         const versionCode = Number(b.versionCode);
-        const websiteUrl = normalizeWebsiteUrl(b.sourceUrl || b.websiteUrl || "");
+        const websiteUrl = normalizedWebsiteUrl;
         const sourceFileName = String(b.sourceFileName || "").trim();
         const sourceBase64 = String(b.sourceBase64 || "");
         const testBuild = Boolean(b.testBuild);
@@ -90,6 +95,7 @@ export default {
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
         const manifest = {
           buildId, appName, packageName, versionName, versionCode,
+          sourceMode: sourceType,
           orientation: b.orientation || "unspecified",
           sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),
           sourceFileName, sourceUrl: websiteUrl,
