@@ -18,8 +18,8 @@ jobs:
       - name: Check Cloudflare credentials
         id: credentials
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID }}
         run: |
           if [ -n "$CLOUDFLARE_API_TOKEN" ] && [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then
             echo "configured=true" >> "$GITHUB_OUTPUT"
@@ -30,13 +30,13 @@ jobs:
         if: steps.credentials.outputs.configured == 'true'
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || secrets.CF_ACCOUNT_ID }}
           workingDirectory: cloudflare-worker
       - name: Fail if Cloudflare credentials are missing
         if: steps.credentials.outputs.configured != 'true'
         run: |
-          echo 'Cloudflare deployment cannot continue because CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID is not configured.'
+          echo 'Cloudflare deployment cannot continue because no supported Cloudflare credentials were found. Configure either CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID or CF_API_TOKEN + CF_ACCOUNT_ID.'
           exit 1
       - name: Verify deployed build bridge
         if: steps.credentials.outputs.configured == 'true'
