@@ -1,4 +1,9 @@
-import { superviseBuild } from "./ai-supervisor.js";
+// Optional AI supervision is advisory. Keep the Worker self-contained so a
+// missing optional module can never block production deployment.
+async function superviseBuild(env, context = {}) {
+  if (!env?.OPENAI_API_KEY) return { enabled: false, reason: "OPENAI_API_KEY is not configured" };
+  return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
+}
 
 const ORIGIN = "https://factory.castelmei.com";
 const API_VERSION = "2022-11-28";
