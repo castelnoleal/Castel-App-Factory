@@ -103,6 +103,33 @@ jobs:
         run: |
           set -euo pipefail
           gradle -p generated-app lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+      - name: Runtime smoke test generated APK
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          BUILD_ID: \${{ inputs.build_id }}
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          force-avd-creation: false
+          disable-animations: true
+          script: |
+            set -euo pipefail
+            APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
+            PKG=$(jq -r '.packageName' "build-inputs/\${BUILD_ID}/manifest.json")
+            adb install -r "$APK"
+            adb logcat -c
+            adb shell am force-stop "$PKG" || true
+            adb shell am start -W -n "$PKG/.MainActivity"
+            sleep 8
+            if adb logcat -d | grep -E "FATAL EXCEPTION|Process: \${PKG}" | grep -q .; then
+              echo "Runtime crash detected after launch."
+              adb logcat -d | tail -n 300
+              exit 1
+            fi
+            adb shell pidof "$PKG" >/dev/null
+            echo "Runtime smoke test passed for $PKG."
+
       - name: Verify artifacts
         run: |
           set -euo pipefail
