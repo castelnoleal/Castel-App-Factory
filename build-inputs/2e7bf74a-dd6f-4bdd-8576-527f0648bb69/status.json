@@ -1,7 +1,16 @@
 {
   "buildId": "2e7bf74a-dd6f-4bdd-8576-527f0648bb69",
-  "status": "running",
+  "status": "success",
   "runId": 34153721115,
   "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/34153721115",
-  "updatedAt": "2026-09-07T18:58:31Z"
+  "artifactId": 10030248838,
+  "artifactUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/34153721115/artifacts/10030248838",
+  "buildApkUrl": "https://github.com/castelnoleal/Castel-App-Factory/releases/download/build-2e7bf74a-dd6f-4bdd-8576-527f0648bb69/app-debug.apk",
+  "buildAabUrl": "https://github.com/castelnoleal/Castel-App-Factory/releases/download/build-2e7bf74a-dd6f-4bdd-8576-527f0648bb69/app-release.aab",
+  "testBuild": false,
+  "testApkUrl": null,
+  "testAabUrl": null,
+  "apk": "app-debug.apk",
+  "aab": "app-release.aab",
+  "updatedAt": "2026-09-07T18:59:05Z"
 }
