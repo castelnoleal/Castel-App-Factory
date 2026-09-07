@@ -155,7 +155,7 @@ jobs:
         run: |
           set -euo pipefail
           artifact_name="app-${BUILD_ID}"
-          artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" --jq --arg name "$artifact_name" '.artifacts | map(select(.name == $name)) | .[0]')
+          artifact=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts" | jq --arg name "$artifact_name" '.artifacts | map(select(.name == $name)) | .[0]')
           artifact_id=$(echo "$artifact" | jq -r '.id')
           test "$artifact_id" != "null"
           artifact_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${artifact_id}"
