@@ -1,0 +1,17 @@
+{
+  "buildId": "038c395a-a77e-44b1-91b0-a514b2cf920a",
+  "appName": "My App",
+  "packageName": "com.castel.myapp",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceType": "uploaded html/zip",
+  "sourceUrl": "",
+  "sourceFileName": "Duel_Synapse_KodeX_APP_UI_SCROLL_LOCK.html",
+  "sourceChunkCount": 1,
+  "orientation": "unspecified",
+  "fullscreen": false,
+  "zoom": false,
+  "backNavigation": true,
+  "externalLinks": false,
+  "createdAt": "2026-09-07T02:36:44.439Z"
+}
