@@ -1,6 +1,7 @@
 {
   "buildId": "038c395a-a77e-44b1-91b0-a514b2cf920a",
-  "status": "queued",
-  "createdAt": "2026-09-07T02:36:44.439Z",
-  "updatedAt": "2026-09-07T02:36:44.439Z"
+  "status": "running",
+  "runId": 34076860107,
+  "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/34076860107",
+  "updatedAt": "2026-09-07T02:37:18Z"
 }
