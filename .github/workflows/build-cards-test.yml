@@ -91,15 +91,10 @@ jobs:
             adb shell getprop sys.boot_completed
             adb install -r build/cards/app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop org.meiocg.cards
-            adb shell am start -W -n org.meiocg.cards/.MainActivity
+            adb shell am start -W -n org.meiocg.cards/.MainActivity || true
             sleep 12
-            if adb shell pidof org.meiocg.cards >/dev/null 2>&1; then
-              echo 'MEIOCG Cards process is running.'
-            else
-              echo 'MEIOCG Cards process is not running.'
-              adb logcat -d -v time '*:E'
-              exit 1
-            fi
+            PID="$(adb shell pidof org.meiocg.cards 2>/dev/null | tr -d '\r' || true)"
+            if [ -n "$PID" ]; then echo "MEIOCG Cards process is running: $PID"; else echo 'MEIOCG Cards process is not running.'; adb logcat -d -v time '*:E' | tail -n 200; exit 1; fi
             adb shell dumpsys activity activities | grep -F 'org.meiocg.cards' >/dev/null
             adb logcat -d -v time '*:E' | tail -n 200
       - name: Publish latest test release
