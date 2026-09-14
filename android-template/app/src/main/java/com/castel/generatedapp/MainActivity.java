@@ -26,9 +26,9 @@ public class MainActivity extends ComponentActivity {
     private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> fileChooserCallback;
 
-    private static final boolean ALLOW_EXTERNAL_LINKS = __ALLOW_EXTERNAL_LINKS__;
-    private static final boolean ENABLE_ZOOM = __ENABLE_ZOOM__;
-    private static final boolean FULLSCREEN = __FULLSCREEN__;
+    private static final boolean ALLOW_EXTERNAL_LINKS = false;
+    private static final boolean ENABLE_ZOOM = false;
+    private static final boolean FULLSCREEN = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
