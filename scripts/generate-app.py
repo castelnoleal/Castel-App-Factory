@@ -161,6 +161,13 @@ def generate():
 
     assets = output / "app" / "src" / "main" / "assets"
     assets.mkdir(parents=True, exist_ok=True)
+    # ZIP-ASSET-FIX: remove template web assets before importing uploaded site content.
+    if not web_source:
+        for child in list(assets.iterdir()):
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                child.unlink()
     # Never ship template web assets. Website builds load the supplied URL directly;
     # local HTML/ZIP builds repopulate this directory from the uploaded source below.
     for child in list(assets.iterdir()):
