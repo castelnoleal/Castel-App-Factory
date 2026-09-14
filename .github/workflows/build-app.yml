@@ -65,7 +65,7 @@ jobs:
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"running",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
-      - name: Update stage: generating Android project
+      - name: "Update stage: generating Android project"
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
@@ -119,7 +119,7 @@ jobs:
           else
             test -s generated-app/app/src/main/assets/index.html
           fi
-      - name: Update stage: compiling APK and AAB
+      - name: "Update stage: compiling APK and AAB"
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
@@ -133,7 +133,7 @@ jobs:
         run: |
           set -euo pipefail
           gradle -p generated-app lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
-      - name: Update stage: runtime smoke test
+      - name: "Update stage: runtime smoke test"
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
@@ -170,7 +170,7 @@ jobs:
             adb shell pidof "$PKG" >/dev/null
             echo "Runtime smoke test passed for $PKG."
 
-      - name: Update stage: verifying artifacts
+      - name: "Update stage: verifying artifacts"
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
