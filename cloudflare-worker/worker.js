@@ -1,5 +1,6 @@
 // Optional AI supervision is advisory. Keep the Worker self-contained so a
 // missing optional module can never block production deployment.
+// Deployment marker: website-source-v3 bridge.
 async function superviseBuild(env, context = {}) {
   if (!env?.OPENAI_API_KEY) return { enabled: false, reason: "OPENAI_API_KEY is not configured" };
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
@@ -68,7 +69,6 @@ export default {
         const websiteKinds = new Set(["website","website url","https website","https website url","http website","http website url","web","url"]);
         const rawWebsiteUrl = b.sourceUrl || b.websiteUrl || "";
         const normalizedWebsiteUrl = normalizeWebsiteUrl(rawWebsiteUrl);
-        // Treat a valid URL-only request as a website even if an older frontend sends an unexpected source label.
         const sourceType = websiteKinds.has(declaredSource) || (!b.sourceBase64 && !!normalizedWebsiteUrl) ? "website" : "html";
         const appName = String(b.appName || "").trim();
         const packageName = String(b.packageName || "").trim();
@@ -86,29 +86,12 @@ export default {
         if (sourceType === "html" && !sourceBase64) return reply({ok:false,error:"HTML/ZIP source is missing."},400);
         if (sourceBase64.length > MAX_SOURCE_BASE64) return reply({ok:false,error:"Uploaded source is too large for this build bridge. Use a ZIP under about 21 MB for now."},413);
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
-
-        const ai = await superviseBuild(env, {
-          sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),
-          sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode,
-          orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom),
-          fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)
-        });
-
+        const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
         const chunks = [];
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {
-          buildId, appName, packageName, versionName, versionCode,
-          sourceMode: sourceType,
-          orientation: b.orientation || "unspecified",
-          sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"),
-          sourceFileName, sourceUrl: websiteUrl,
-          backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks),
-          sourceChunkCount: chunks.length, testBuild,
-          aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason},
-          createdAt: new Date().toISOString()
-        };
+        const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), sourceChunkCount: chunks.length, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
@@ -117,16 +100,10 @@ export default {
         return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
       } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
     }
-
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);
     if (match && request.method === "GET") {
-      try {
-        const id = match[1];
-        const f = await getFile(env, `build-inputs/${id}/status.json`);
-        const raw = atob(String(f.content || "").replace(/\n/g,""));
-        const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
-        return reply(JSON.parse(new TextDecoder().decode(bytes)));
-      } catch (e) { return reply({ok:false,error:"Build ID not found or status unavailable."},404); }
+      try { const id = match[1]; const f = await getFile(env, `build-inputs/${id}/status.json`); const raw = atob(String(f.content || "").replace(/\n/g,"")); const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0)); return reply(JSON.parse(new TextDecoder().decode(bytes))); }
+      catch (e) { return reply({ok:false,error:"Build ID not found or status unavailable."},404); }
     }
     return reply({ok:false,error:"Endpoint not found."},404);
   }
