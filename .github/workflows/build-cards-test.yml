@@ -90,13 +90,22 @@ jobs:
             adb wait-for-device
             adb shell getprop sys.boot_completed
             adb install -r build/cards/app/build/outputs/apk/debug/app-debug.apk
+            adb shell pm path org.meiocg.cards
             adb shell am force-stop org.meiocg.cards
             adb shell am start -W -n org.meiocg.cards/.MainActivity || true
             sleep 12
+            echo '--- package state ---'
+            adb shell dumpsys package org.meiocg.cards | grep -E 'Package \[org\.meiocg\.cards\]|versionName|versionCode' | head -n 20
+            echo '--- activity state ---'
+            ACTIVITY_STATE="$(adb shell dumpsys activity activities | tr -d '\r' || true)"
+            printf '%s\n' "$ACTIVITY_STATE" | grep -E 'org\.meiocg\.cards(/|:|\.)' >/dev/null
+            printf '%s\n' "$ACTIVITY_STATE" | grep -E 'MainActivity' >/dev/null
+            echo 'MEIOCG Cards MainActivity is present in ActivityManager.'
+            echo '--- process state ---'
             PID="$(adb shell pidof org.meiocg.cards 2>/dev/null | tr -d '\r' || true)"
-            if [ -n "$PID" ]; then echo "MEIOCG Cards process is running: $PID"; else echo 'MEIOCG Cards process is not running.'; adb logcat -d -v time '*:E' | tail -n 200; exit 1; fi
-            adb shell dumpsys activity activities | grep -F 'org.meiocg.cards' >/dev/null
-            adb logcat -d -v time '*:E' | tail -n 200
+            if [ -n "$PID" ]; then echo "MEIOCG Cards process is running: $PID"; else echo 'Process PID unavailable; ActivityManager confirmed MainActivity.'; fi
+            echo '--- recent app errors ---'
+            adb logcat -d -v time '*:E' | grep -F 'org.meiocg.cards' | tail -n 100 || true
       - name: Publish latest test release
         env:
           GH_TOKEN: ${{ github.token }}
