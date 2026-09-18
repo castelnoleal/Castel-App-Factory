@@ -24,9 +24,7 @@ The OpenAI key is server-side only. Never put either credential in `factory/inde
 
 ## AI build supervisor
 
-When `OPENAI_API_KEY` is present, the Worker calls an OpenAI model using function calling before it queues a build. The model receives only normalized build metadata and must call the strict `approve_build` tool. Deterministic validation remains authoritative, and the Worker performs the actual GitHub write and workflow dispatch. This follows the server-side function-calling pattern documented for Cloudflare Workers.
-
-The selected model is `gpt-5.6-luna` to keep high-volume build supervision relatively cost-efficient. If the OpenAI key is absent, the Worker continues with deterministic validation and reports that the AI supervisor is disabled.
+When `OPENAI_API_KEY` is present, the Worker calls an OpenAI model using function calling before it queues a build. The model receives only normalized build metadata and must call the strict `approve_build` tool. Deterministic validation remains authoritative, and the Worker performs the actual GitHub write and workflow dispatch.
 
 ## Endpoints
 
@@ -48,4 +46,4 @@ with a unique package such as:
 
 `org.meiocg.duelsynapse`
 
-Deployment trigger verification follows credential setup.
+Deployment trigger verification: Account ID updated.
