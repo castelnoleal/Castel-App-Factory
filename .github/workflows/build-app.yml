@@ -136,6 +136,21 @@ jobs:
           else
             test -s generated-app/app/src/main/assets/index.html
           fi
+      - name: Verify generated app icon assets
+        env:
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          icon_chunks=$(jq -r '.iconChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
+          if [ "$icon_chunks" -gt 0 ]; then
+            for density in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+              test -s "generated-app/app/src/main/res/mipmap-${density}/ic_launcher.png"
+              test -s "generated-app/app/src/main/res/mipmap-${density}/ic_launcher_round.png"
+            done
+            test -s generated-app/app/src/main/res/drawable-nodpi/app_icon.png
+            file generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'PNG image'
+          fi
+
       - name: "Update stage: compiling APK and AAB"
         env:
           GH_TOKEN: ${{ github.token }}
