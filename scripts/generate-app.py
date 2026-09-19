@@ -3,6 +3,8 @@ import json
 import os
 import re
 import shutil
+import subprocess
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -60,6 +62,68 @@ def normalize_local_site(assets):
         if index.exists() and index.resolve() != target.resolve():
             shutil.copy2(index, target)
     return target
+
+
+def install_app_icon(icon_base64, icon_file_name, output):
+    if not icon_base64:
+        return
+    try:
+        raw = base64.b64decode(icon_base64, validate=True)
+    except Exception:
+        fail("Uploaded app icon is not valid base64")
+    if len(raw) > 6 * 1024 * 1024:
+        fail("Uploaded app icon exceeds the 6 MB limit")
+    if not re.search(r"\.(png|jpe?g|webp)$", icon_file_name or "", re.IGNORECASE):
+        fail("App icon must be PNG, JPG, JPEG, or WebP")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        source = tmp / ("icon" + Path(icon_file_name).suffix.lower())
+        source.write_bytes(raw)
+        try:
+            subprocess.run(["convert", "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            fail("ImageMagick is required to process app icons")
+
+        # Android launcher density buckets. The source is center-cropped to a square
+        # so rectangular uploads still produce predictable launcher assets.
+        sizes = {
+            "mdpi": 48,
+            "hdpi": 72,
+            "xhdpi": 96,
+            "xxhdpi": 144,
+            "xxxhdpi": 192,
+        }
+        res = output / "app" / "src" / "main" / "res"
+        for density, size in sizes.items():
+            folder = res / f"mipmap-{density}"
+            folder.mkdir(parents=True, exist_ok=True)
+            target = folder / "ic_launcher.png"
+            subprocess.run([
+                "convert", str(source),
+                "-auto-orient",
+                "-thumbnail", f"{size}x{size}^",
+                "-gravity", "center",
+                "-extent", f"{size}x{size}",
+                "-strip",
+                "PNG32:" + str(target),
+            ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
+            round_target = folder / "ic_launcher_round.png"
+            shutil.copy2(target, round_target)
+
+        # Keep a convenient common app asset for future generated screens/features.
+        common = res / "drawable-nodpi"
+        common.mkdir(parents=True, exist_ok=True)
+        subprocess.run([
+            "convert", str(source),
+            "-auto-orient",
+            "-thumbnail", "512x512^",
+            "-gravity", "center",
+            "-extent", "512x512",
+            "-strip",
+            "PNG32:" + str(common / "app_icon.png"),
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
 
 
 def is_web_source(source_type, source_url):
@@ -142,6 +206,8 @@ def generate():
             directory.rmdir()
         except OSError:
             pass
+
+    install_app_icon(os.environ.get("ICON_BASE64", ""), str(cfg.get("iconFileName", "")), output)
 
     manifest = output / "app" / "src" / "main" / "AndroidManifest.xml"
     manifest_text = manifest.read_text(encoding="utf-8")
