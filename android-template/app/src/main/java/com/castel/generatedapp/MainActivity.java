@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.webkit.ValueCallback;
@@ -29,6 +30,7 @@ public class MainActivity extends ComponentActivity {
     private static final boolean ALLOW_EXTERNAL_LINKS = false;
     private static final boolean ENABLE_ZOOM = false;
     private static final boolean FULLSCREEN = false;
+    private static final boolean BACK_NAVIGATION = __BACK_NAVIGATION__;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -83,6 +85,16 @@ public class MainActivity extends ComponentActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleNavigation(Uri.parse(url));
             }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                Log.i("CastelAppFactory", "PAGE_LOADED:" + url);
+            }
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, android.webkit.WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                if (request.isForMainFrame()) Log.e("CastelAppFactory", "PAGE_ERROR:" + request.getUrl() + ":" + error.getErrorCode());
+            }
         });
 
         webView.setWebChromeClient(new WebChromeClient() {
@@ -112,17 +124,19 @@ public class MainActivity extends ComponentActivity {
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
 
-        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
-            @Override
-            public void handleOnBackPressed() {
-                if (webView != null && webView.canGoBack()) {
-                    webView.goBack();
-                } else {
-                    setEnabled(false);
-                    getOnBackPressedDispatcher().onBackPressed();
+        if (BACK_NAVIGATION) {
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    if (webView != null && webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        setEnabled(false);
+                        getOnBackPressedDispatcher().onBackPressed();
+                    }
                 }
-            }
-        });
+            });
+        }
 
         webView.loadUrl("__TARGET_URL__");
     }
