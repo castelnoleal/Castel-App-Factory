@@ -1,0 +1,112 @@
+name: Auto Repair Failed Build
+
+on:
+  workflow_run:
+    workflows: ["Build Generated App"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 2
+
+      - name: Inspect failed build
+        id: inspect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed > /tmp/failed.log || true
+          tail -n 400 /tmp/failed.log
+          echo "repairable=false" >> "$GITHUB_OUTPUT"
+          if grep -Eq 'Syntax error: end of file unexpected|expecting "fi"|Bad component name:|android-actions/setup-android@v3|set -euo pipefail' /tmp/failed.log; then echo "repairable=true" >> "$GITHUB_OUTPUT"; fi
+          build_id="$(grep -oE 'BUILD_ID[:=][[:space:]]*[0-9a-f-]{20,}' /tmp/failed.log | head -n1 | sed -E 's/.*BUILD_ID[:=][[:space:]]*//' || true)"
+          echo "build_id=$build_id" >> "$GITHUB_OUTPUT"
+
+      - name: Apply deterministic repairs
+        if: steps.inspect.outputs.repairable == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path(".github/workflows/build-app.yml")
+          s = p.read_text()
+          original = s
+          s = s.replace("android-actions/setup-android@v3", "android-actions/setup-android@v4")
+          if "Runtime smoke test generated APK" in s:
+              start = s.find("          script: |", s.find("name: Runtime smoke test generated APK"))
+              end = s.find("\n\n      - name: \"Update stage: verifying artifacts\"", start)
+              if start >= 0 and end >= 0:
+                  block = r'''          script: |
+            set -eu
+            adb install -r generated-app/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am force-stop "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" || true
+            adb shell am start -n "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")/.MainActivity" || true
+            sleep 10
+            adb logcat -d > /tmp/castel-runtime.log || true
+            if grep -E "FATAL EXCEPTION|Process: $(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" /tmp/castel-runtime.log >/dev/null 2>&1; then echo "Runtime crash detected after launch."; tail -n 300 /tmp/castel-runtime.log; exit 1; fi
+            adb shell dumpsys activity activities | grep -F "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")/.MainActivity" >/dev/null
+            adb shell pidof "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" >/dev/null || adb shell dumpsys activity activities | grep -F "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" >/dev/null
+            echo "Runtime smoke test passed."'''
+                  s = s[:start] + block + s[end:]
+          if s != original:
+              p.write_text(s)
+              print("Repair applied.")
+          else:
+              print("No source change required.")
+          PY
+
+      - name: Validate repaired workflow
+        if: steps.inspect.outputs.repairable == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import yaml
+          from pathlib import Path
+          d=yaml.safe_load(Path(".github/workflows/build-app.yml").read_text())
+          assert isinstance(d, dict) and "jobs" in d
+          print("YAML parse passed.")
+          PY
+          grep -F 'android-actions/setup-android@v4' .github/workflows/build-app.yml >/dev/null
+          grep -F 'adb shell am start -n' .github/workflows/build-app.yml >/dev/null
+          grep -F 'Runtime smoke test passed.' .github/workflows/build-app.yml >/dev/null
+
+      - name: Commit and dispatch repaired build
+        if: steps.inspect.outputs.repairable == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ steps.inspect.outputs.build_id }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then echo "No source repair required."; exit 0; fi
+          git add .github/workflows/build-app.yml
+          git commit -m "Auto-repair failed build $RUN_ID"
+          git push origin HEAD:main
+          test -n "$BUILD_ID"
+          gh workflow run build-app.yml --repo "$GITHUB_REPOSITORY" --ref main -f "build_id=$BUILD_ID"
+          echo "Repaired build dispatched: $BUILD_ID"
+
+      - name: Report non-repairable failure
+        if: steps.inspect.outputs.repairable != 'true'
+        run: echo "Failure did not match a deterministic repair class; no automatic source change was made."
