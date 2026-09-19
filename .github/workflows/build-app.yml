@@ -160,7 +160,7 @@ jobs:
             adb install -r generated-app/app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
             adb shell am force-stop "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" || true
-            adb shell am start -W -n "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json").MainActivity"
+            adb shell am start -W -n "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")/.MainActivity"
             sleep 8
             if adb logcat -d | grep -E "FATAL EXCEPTION|Process: $(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" | grep -q .; then
               echo "Runtime crash detected after launch."
