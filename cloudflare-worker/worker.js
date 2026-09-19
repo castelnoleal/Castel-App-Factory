@@ -58,9 +58,9 @@ export default {
     const u = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null,{status:204,headers:headers()});
     if (u.pathname === "/health" && request.method === "GET") {
-      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || ""}/${env.GITHUB_REPO || ""}`,aiSupervisor: Boolean(env.OPENAI_API_KEY)});
+      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "Castel-App-Factory"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "Castel-App-Factory")),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
-    if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) return reply({ok:false,error:"Build bridge is not configured."},503);
+    if (!env.GITHUB_TOKEN) return reply({ok:false,error:"Build bridge GitHub token is not configured. Add the GITHUB_TOKEN Worker secret."},503);
 
     const downloadMatch = u.pathname.match(/^\/download\/([0-9a-f-]{36})\/(apk|aab)$/i);
     if (downloadMatch && request.method === "GET") {
@@ -68,7 +68,7 @@ export default {
         const buildId = downloadMatch[1];
         const kind = downloadMatch[2].toLowerCase();
         const fileName = kind === "apk" ? "app-debug.apk" : "app-release.aab";
-        const releaseUrl = `https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/releases/download/build-${buildId}/${fileName}`;
+        const releaseUrl = `https://github.com/${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "Castel-App-Factory"}/releases/download/build-${buildId}/${fileName}`;
         const upstream = await fetch(releaseUrl, {
           method: "GET",
           redirect: "follow",
