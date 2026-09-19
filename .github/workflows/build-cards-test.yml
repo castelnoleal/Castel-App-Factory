@@ -34,7 +34,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Install required Android SDK packages
         shell: bash
         run: |
@@ -144,7 +144,7 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
       - name: Install required Android SDK packages
         shell: bash
         run: |
