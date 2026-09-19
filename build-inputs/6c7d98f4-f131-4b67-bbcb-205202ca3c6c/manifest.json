@@ -1,0 +1,23 @@
+{
+  "buildId": "6c7d98f4-f131-4b67-bbcb-205202ca3c6c",
+  "appName": "KodeX",
+  "packageName": "com.castel.myapp",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "",
+  "sourceUrl": "https://kodex.meiocg.org/",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": false,
+  "sourceChunkCount": 0,
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-19T17:54:47.404Z"
+}
