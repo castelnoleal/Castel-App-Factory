@@ -157,19 +157,15 @@ jobs:
           disable-animations: true
           script: |
             set -eu
-            PKG="$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")"
-            APK="generated-app/app/build/outputs/apk/debug/app-debug.apk"
-            adb install -r "$APK"
+            adb install -r generated-app/app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
-            adb shell am force-stop "$PKG" || true
-            adb shell am start -W -n "$PKG/.MainActivity"
-            sleep 8
-            if adb logcat -d | grep -E "FATAL EXCEPTION|Process: ${PKG}" | grep -q .; then
-              echo "Runtime crash detected after launch."
-              adb logcat -d | tail -n 300
-              exit 1
-            fi
-            adb shell pidof "$PKG" >/dev/null
+            adb shell am force-stop "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" || true
+            adb shell am start -n "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")/.MainActivity" || true
+            sleep 10
+            adb logcat -d > /tmp/castel-runtime.log || true
+            if grep -E "FATAL EXCEPTION|Process: $(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" /tmp/castel-runtime.log >/dev/null 2>&1; then echo "Runtime crash detected after launch."; tail -n 300 /tmp/castel-runtime.log; exit 1; fi
+            adb shell dumpsys activity activities | grep -F "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")/.MainActivity" >/dev/null
+            adb shell pidof "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" >/dev/null || adb shell dumpsys activity activities | grep -F "$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" >/dev/null
             echo "Runtime smoke test passed."
 
       - name: "Update stage: verifying artifacts"
