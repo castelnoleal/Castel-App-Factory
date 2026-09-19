@@ -93,7 +93,7 @@ jobs:
             adb shell pm path org.meiocg.cards
             adb shell am force-stop org.meiocg.cards
             adb shell am start -W -n org.meiocg.cards/.MainActivity || true
-            sleep 12
+            sleep 20
             echo '--- package state ---'
             adb shell dumpsys package org.meiocg.cards | grep -E 'Package \[org\.meiocg\.cards\]|versionName|versionCode' | head -n 20
             echo '--- activity state ---'
@@ -101,6 +101,12 @@ jobs:
             printf '%s\n' "$ACTIVITY_STATE" | grep -E 'org\.meiocg\.cards(/|:|\.)' >/dev/null
             printf '%s\n' "$ACTIVITY_STATE" | grep -E 'MainActivity' >/dev/null
             echo 'MEIOCG Cards MainActivity is present in ActivityManager.'
+            echo '--- WebView runtime state ---'
+            WEBVIEW_LOG="$(adb logcat -d -v brief -s CastelAppFactory:I CastelAppFactory:E || true)"
+            printf '%s\n' "$WEBVIEW_LOG"
+            printf '%s\n' "$WEBVIEW_LOG" | grep -F 'PAGE_LOADED:' >/dev/null
+            ! printf '%s\n' "$WEBVIEW_LOG" | grep -F 'PAGE_ERROR:' >/dev/null
+            echo 'MEIOCG Cards remote website reached WebView successfully.'
             echo '--- process state ---'
             PID="$(adb shell pidof org.meiocg.cards 2>/dev/null | tr -d '\r' || true)"
             if [ -n "$PID" ]; then echo "MEIOCG Cards process is running: $PID"; else echo 'Process PID unavailable; ActivityManager confirmed MainActivity.'; fi
