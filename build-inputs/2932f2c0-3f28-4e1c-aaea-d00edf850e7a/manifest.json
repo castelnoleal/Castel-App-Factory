@@ -1,0 +1,23 @@
+{
+  "buildId": "2932f2c0-3f28-4e1c-aaea-d00edf850e7a",
+  "appName": "Duel Synapse KodeX",
+  "packageName": "com.meiocg.duelsynapse",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "html",
+  "orientation": "unspecified",
+  "sourceType": "Uploaded HTML",
+  "sourceFileName": "DS KodeX 1.0.html",
+  "sourceUrl": null,
+  "backNavigation": false,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": true,
+  "sourceChunkCount": 1,
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-19T20:01:42.664Z"
+}
