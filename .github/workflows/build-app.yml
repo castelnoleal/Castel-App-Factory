@@ -58,6 +58,14 @@ jobs:
               gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/source.bin"
             done
           fi
+          icon_chunk_count=$(jq -r '.iconChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
+          : > "build-inputs/${BUILD_ID}/icon.bin"
+          if [ "$icon_chunk_count" -gt 0 ]; then
+            for ((i=0; i<icon_chunk_count; i++)); do
+              name=$(printf 'icon-%04d.bin' "$i")
+              gh api "repos/${GITHUB_REPOSITORY}/contents/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
+            done
+          fi
       - name: Mark build running
         env:
           GH_TOKEN: ${{ github.token }}
@@ -77,15 +85,22 @@ jobs:
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Generating Android project" --argjson progress 20 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Generating Android project" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
 
+      - name: Install image asset tooling
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
       - name: Generate Android project
         env:
           BUILD_ID: ${{ inputs.build_id }}
           BUILD_MANIFEST: build-inputs/${{ inputs.build_id }}/manifest.json
           BUILD_OUTPUT: generated-app
           SOURCE_BASE64: ''
+          ICON_BASE64: ''
         run: |
           set -euo pipefail
           if test -s "build-inputs/${BUILD_ID}/source.bin"; then export SOURCE_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/source.bin")"; fi
+          if test -s "build-inputs/${BUILD_ID}/icon.bin"; then export ICON_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/icon.bin")"; fi
           python3 scripts/generate-app.py
       - name: Validate generated project
         env:
