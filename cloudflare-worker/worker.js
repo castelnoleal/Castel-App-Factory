@@ -62,6 +62,31 @@ export default {
     }
     if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) return reply({ok:false,error:"Build bridge is not configured."},503);
 
+    const downloadMatch = u.pathname.match(/^\\/download\\/([0-9a-f-]{36})\\/(apk|aab)$/i);
+    if (downloadMatch && request.method === "GET") {
+      try {
+        const buildId = downloadMatch[1];
+        const kind = downloadMatch[2].toLowerCase();
+        const fileName = kind === "apk" ? "app-debug.apk" : "app-release.aab";
+        const releaseUrl = `https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/releases/download/build-${buildId}/${fileName}`;
+        const upstream = await fetch(releaseUrl, {
+          method: "GET",
+          redirect: "follow",
+          headers: { "Accept": "application/octet-stream", "User-Agent": "castel-app-factory-download" }
+        });
+        if (!upstream.ok) return reply({ok:false,error:`Artifact download returned HTTP ${upstream.status}.`}, upstream.status);
+        const outHeaders = new Headers();
+        outHeaders.set("Content-Type", kind === "apk" ? "application/vnd.android.package-archive" : "application/octet-stream");
+        outHeaders.set("Content-Disposition", `attachment; filename="${fileName}"`);
+        outHeaders.set("Cache-Control", "private, no-store");
+        const length = upstream.headers.get("Content-Length");
+        if (length) outHeaders.set("Content-Length", length);
+        return new Response(upstream.body, {status: 200, headers: outHeaders});
+      } catch (e) {
+        return reply({ok:false,error:e.message || "Artifact download failed."}, 502);
+      }
+    }
+
     if (u.pathname === "/build" && request.method === "POST") {
       try {
         const b = await request.json();
