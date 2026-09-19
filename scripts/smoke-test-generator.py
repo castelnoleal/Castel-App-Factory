@@ -26,6 +26,7 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
             "sourceUrl": source_url,
             "sourceFileName": source_file_name,
             "orientation": "portrait",
+            "backNavigation": True,
         }), encoding="utf-8")
         env = os.environ.copy()
         env["BUILD_MANIFEST"] = str(manifest)
@@ -41,6 +42,8 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
         assert f"package {package_name};" in text
         assert f"applicationId '{package_name}'" in (output / "app" / "build.gradle").read_text(encoding="utf-8")
         assert "com.castel.generatedapp" not in text
+        assert "Log.i("CastelAppFactory", "PAGE_LOADED:" + url);" in text
+        assert "BACK_NAVIGATION" in text
 
         if source_type.startswith("HTTPS"):
             assert 'webView.loadUrl("https://example.com/");' in text
