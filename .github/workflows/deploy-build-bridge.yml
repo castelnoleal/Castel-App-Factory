@@ -47,4 +47,5 @@ jobs:
           echo "$body"
           echo "$body" | grep -q '"status":"online"'
           echo "$body" | grep -q '"revision":"website-source-v3"'
-          echo "Build bridge deployment verified successfully."
+          echo "$body" | grep -q '"githubConfigured":true'
+          echo "Build bridge deployment verified successfully with GitHub build credentials."
