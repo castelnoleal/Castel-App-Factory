@@ -139,7 +139,7 @@ public class MainActivity extends ComponentActivity {
             });
         }
 
-        webView.loadUrl("__TARGET_URL__");
+        webView.post(() -> webView.loadUrl("__TARGET_URL__"));
     }
 
     private void showLaunchError(Throwable error) {
