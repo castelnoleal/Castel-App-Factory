@@ -9,6 +9,7 @@ async function superviseBuild(env, context = {}) {
 const ORIGIN = "https://factory.castelmei.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
+const MAX_ICON_BASE64 = 8_000_000;
 const CHUNK_CHARS = 800_000;
 const BUILD_BRIDGE_REVISION = "website-source-v3";
 
@@ -102,6 +103,8 @@ export default {
         const websiteUrl = normalizedWebsiteUrl;
         const sourceFileName = String(b.sourceFileName || "").trim();
         const sourceBase64 = String(b.sourceBase64 || "");
+        const iconBase64 = String(b.iconBase64 || "");
+        const iconFileName = String(b.iconFileName || "").trim();
         const testBuild = Boolean(b.testBuild);
         if (!appName || appName.length > 40) return reply({ok:false,error:"Invalid app name."},400);
         if (!validPkg(packageName)) return reply({ok:false,error:"Invalid Android package ID."},400);
@@ -110,16 +113,22 @@ export default {
         if (sourceType === "website" && !websiteUrl) return reply({ok:false,error:"Website source must be a valid HTTP or HTTPS URL."},400);
         if (sourceType === "html" && !sourceBase64) return reply({ok:false,error:"HTML/ZIP source is missing."},400);
         if (sourceBase64.length > MAX_SOURCE_BASE64) return reply({ok:false,error:"Uploaded source is too large for this build bridge. Use a ZIP under about 21 MB for now."},413);
+        if (iconBase64.length > MAX_ICON_BASE64) return reply({ok:false,error:"App icon is too large. Use an image under about 6 MB."},413);
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
+        if (iconBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(iconBase64)) return reply({ok:false,error:"App icon encoding is invalid."},400);
+        if (iconBase64 && !/\.(png|jpe?g|webp)$/i.test(iconFileName)) return reply({ok:false,error:"App icon must be PNG, JPG, JPEG, or WebP."},400);
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
         const chunks = [];
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), sourceChunkCount: chunks.length, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
+        const iconChunks = [];
+        if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
+        const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
+        for (let i=0;i<iconChunks.length;i++) await putFile(env, `${base}/icon-${String(i).padStart(4,"0")}.bin`, iconChunks[i], `Queue build ${buildId} icon ${i+1}/${iconChunks.length}`);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
         await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:"main",inputs:{build_id:buildId}})});
         return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
