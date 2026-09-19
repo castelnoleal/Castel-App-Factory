@@ -21,7 +21,7 @@
 <footer class="footer">Castel App Factory • APK + AAB manufacturing pipeline</footer>
 </main>
 <script>
-const API=window.CASTEL_BUILD_API||'https://api.castelmei.com';const REQUIRED_BRIDGE_REVISION='website-source-v3';const BUILD_STORAGE_KEY='castel_app_factory_build_id';let mode='html',source=null,iconSource=null,previewUrl=null,pollTimer=null;const $=id=>document.getElementById(id);
+const API=window.CASTEL_BUILD_API||'https://api.castelmei.com';const REQUIRED_BRIDGE_REVISION='app-assets-v1';const BUILD_STORAGE_KEY='castel_app_factory_build_id';let mode='html',source=null,iconSource=null,previewUrl=null,pollTimer=null;const $=id=>document.getElementById(id);
 function msg(el,text,kind=''){el.className='status show '+kind;el.textContent=text}
 $('iconDrop').onclick=()=>$('iconFile').click();$('iconFile').onchange=e=>{iconSource=e.target.files[0]||null;updateIconLabel()};$('th').onclick=()=>setMode('html');$('tu').onclick=()=>setMode('url');$('drop').onclick=()=>$('file').click();$('file').onchange=e=>{source=e.target.files[0]||null;updateLabel();preview()};$('refresh').onclick=preview;$('clear').onclick=()=>{source=null;$('file').value='';updateLabel();preview()};$('url').oninput=preview;$('validate').onclick=validate;
 function setMode(m){mode=m;$('local').classList.toggle('hidden',m!=='html');$('remote').classList.toggle('hidden',m!=='url');$('th').classList.toggle('active',m==='html');$('tu').classList.toggle('active',m==='url');preview()}
