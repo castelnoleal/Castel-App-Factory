@@ -11,7 +11,7 @@ const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
 const MAX_ICON_BASE64 = 8_000_000;
 const CHUNK_CHARS = 800_000;
-const BUILD_BRIDGE_REVISION = "website-source-v3";
+const BUILD_BRIDGE_REVISION = "app-assets-v1";
 
 function headers() {
   return {
