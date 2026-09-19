@@ -1,0 +1,23 @@
+{
+  "buildId": "55c258ac-da67-4201-aff7-b8f6d2482739",
+  "appName": "KodeX",
+  "packageName": "com.castel.myapp",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "html",
+  "orientation": "unspecified",
+  "sourceType": "Uploaded HTML",
+  "sourceFileName": "Duel_Synapse_KodeX_APP_SEARCH_FIXED.html",
+  "sourceUrl": null,
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": false,
+  "externalLinks": false,
+  "sourceChunkCount": 1,
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-19T03:03:10.062Z"
+}
