@@ -116,8 +116,8 @@ jobs:
           if [ "$is_website" = true ]; then
             url=$(jq -r '.sourceUrl // ""' "build-inputs/${BUILD_ID}/manifest.json")
             test -n "$url"
-            grep -R -F "webView.loadUrl(\"${url}\");" generated-app/app/src/main/java >/dev/null
-            if grep -R -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' generated-app/app/src/main/java >/dev/null; then echo 'Website build still points at local template asset'; exit 1; fi
+            if ! grep -R -F "webView.loadUrl(\"${url}\");" generated-app/app/src/main/java >/dev/null && ! grep -R -F "webView.post(() -> webView.loadUrl(\"${url}\"));" generated-app/app/src/main/java >/dev/null; then echo "Generated website target does not match the supplied URL"; exit 1; fi
+            if grep -R -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' generated-app/app/src/main/java >/dev/null || grep -R -F 'webView.post(() -> webView.loadUrl("https://appassets.androidplatform.net/assets/index.html"));' generated-app/app/src/main/java >/dev/null; then echo "Website build still points at local template asset"; exit 1; fi
           else
             test -s generated-app/app/src/main/assets/index.html
           fi
