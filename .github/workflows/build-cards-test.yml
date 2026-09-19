@@ -59,8 +59,8 @@ jobs:
           set -euo pipefail
           MAIN="build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java"
           test -s "$MAIN"
-          grep -F 'webView.loadUrl("https://cards.meiocg.org/");' "$MAIN"
-          ! grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
+          grep -F 'webView.loadUrl("https://cards.meiocg.org/")' "$MAIN"
+          ! grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
       - name: Build Cards APK and AAB
         shell: bash
         run: gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
@@ -170,7 +170,7 @@ jobs:
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-html" \
           python3 scripts/generate-app.py
           MAIN="build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java"
-          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
+          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
           test -s build/local-html/app/src/main/assets/index.html
           gradle -p build/local-html lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
           unzip -t build/local-html/app/build/outputs/apk/debug/app-debug.apk >/dev/null
@@ -196,7 +196,7 @@ jobs:
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-zip" \
           python3 scripts/generate-app.py
           MAIN="build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java"
-          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");' "$MAIN"
+          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
           test -s build/local-zip/app/src/main/assets/index.html
           test -s build/local-zip/app/src/main/assets/style.css
           gradle -p build/local-zip lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
