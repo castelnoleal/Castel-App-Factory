@@ -63,7 +63,7 @@ jobs:
           if [ "$icon_chunk_count" -gt 0 ]; then
             for ((i=0; i<icon_chunk_count; i++)); do
               name=$(printf 'icon-%04d.bin' "$i")
-              gh api "repos/${GITHUB_REPOSITORY}/contents/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
+              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
             done
           fi
       - name: Mark build running
