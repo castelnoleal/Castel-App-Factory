@@ -95,12 +95,12 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
           BUILD_MANIFEST: build-inputs/${{ inputs.build_id }}/manifest.json
           BUILD_OUTPUT: generated-app
-          SOURCE_BASE64: ''
-          ICON_BASE64: ''
+          SOURCE_FILE: ''
+          ICON_FILE: ''
         run: |
           set -euo pipefail
-          if test -s "build-inputs/${BUILD_ID}/source.bin"; then export SOURCE_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/source.bin")"; fi
-          if test -s "build-inputs/${BUILD_ID}/icon.bin"; then export ICON_BASE64="$(base64 -w0 "build-inputs/${BUILD_ID}/icon.bin")"; fi
+          if test -s "build-inputs/${BUILD_ID}/source.bin"; then export SOURCE_FILE="build-inputs/${BUILD_ID}/source.bin"; fi
+          if test -s "build-inputs/${BUILD_ID}/icon.bin"; then export ICON_FILE="build-inputs/${BUILD_ID}/icon.bin"; fi
           python3 scripts/generate-app.py
       - name: Validate generated project
         env:
