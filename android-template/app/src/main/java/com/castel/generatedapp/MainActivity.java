@@ -31,7 +31,7 @@ public class MainActivity extends ComponentActivity {
     private static final boolean ALLOW_EXTERNAL_LINKS = false;
     private static final boolean ENABLE_ZOOM = false;
     private static final boolean FULLSCREEN = false;
-    private static final boolean BACK_NAVIGATION = __BACK_NAVIGATION__;
+    private static final boolean BACK_NAVIGATION = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
