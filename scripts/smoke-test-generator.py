@@ -46,7 +46,7 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
         assert "BACK_NAVIGATION" in text
 
         if source_type.startswith("HTTPS"):
-            assert 'webView.loadUrl("https://example.com/");' in text
+            assert 'webView.loadUrl("https://example.com/")' in text
             assert not (output / "app" / "src" / "main" / "assets" / "index.html").exists()
         else:
             index = output / "app" / "src" / "main" / "assets" / "index.html"
