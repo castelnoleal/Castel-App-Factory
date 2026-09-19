@@ -64,14 +64,14 @@ def normalize_local_site(assets):
     return target
 
 
-def install_app_icon(icon_base64, icon_file_name, output):
-    if not icon_base64:
+def install_app_icon(icon_file, icon_file_name, output):
+    if not icon_file:
         return
-    try:
-        raw = base64.b64decode(icon_base64, validate=True)
-    except Exception:
-        fail("Uploaded app icon is not valid base64")
-    if len(raw) > 6 * 1024 * 1024:
+    source_path = Path(icon_file)
+    if not source_path.is_file():
+        fail("Uploaded app icon file is missing")
+    raw_size = source_path.stat().st_size
+    if raw_size > 6 * 1024 * 1024:
         fail("Uploaded app icon exceeds the 6 MB limit")
     if not re.search(r"\.(png|jpe?g|webp)$", icon_file_name or "", re.IGNORECASE):
         fail("App icon must be PNG, JPG, JPEG, or WebP")
@@ -79,7 +79,7 @@ def install_app_icon(icon_base64, icon_file_name, output):
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         source = tmp / ("icon" + Path(icon_file_name).suffix.lower())
-        source.write_bytes(raw)
+        shutil.copy2(source_path, source)
         try:
             subprocess.run(["convert", "-version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except (FileNotFoundError, subprocess.CalledProcessError):
@@ -165,7 +165,7 @@ def generate():
     if web_source:
         if not re.fullmatch(r"https?://[^\s]+", source_url, re.IGNORECASE):
             fail("Website source must use a valid HTTP or HTTPS URL")
-    elif not os.environ.get("SOURCE_BASE64"):
+    elif not os.environ.get("SOURCE_FILE"):
         fail("Uploaded HTML/ZIP source is missing")
 
     if output.exists():
@@ -207,7 +207,7 @@ def generate():
         except OSError:
             pass
 
-    install_app_icon(os.environ.get("ICON_BASE64", ""), str(cfg.get("iconFileName", "")), output)
+    install_app_icon(os.environ.get("ICON_FILE", ""), str(cfg.get("iconFileName", "")), output)
 
     manifest = output / "app" / "src" / "main" / "AndroidManifest.xml"
     manifest_text = manifest.read_text(encoding="utf-8")
@@ -244,8 +244,11 @@ def generate():
             child.unlink()
 
     if not web_source:
-        raw = base64.b64decode(os.environ["SOURCE_BASE64"], validate=True)
-        source_name = str(cfg.get("sourceFileName", "")).lower().strip()
+        source_file = Path(os.environ["SOURCE_FILE"])
+        if not source_file.is_file():
+            fail("Uploaded HTML/ZIP source file is missing")
+        raw = source_file.read_bytes()
+        source_name = str(cfg.get("sourceFileName", source_file.name)).lower().strip()
         source_is_zip = source_name.endswith(".zip")
         if source_is_zip:
             archive = output / "_source.zip"
