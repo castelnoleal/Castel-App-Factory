@@ -62,7 +62,7 @@ export default {
     }
     if (!env.GITHUB_TOKEN || !env.GITHUB_OWNER || !env.GITHUB_REPO) return reply({ok:false,error:"Build bridge is not configured."},503);
 
-    const downloadMatch = u.pathname.match(/^\\/download\\/([0-9a-f-]{36})\\/(apk|aab)$/i);
+    const downloadMatch = u.pathname.match(/^\/download\/([0-9a-f-]{36})\/(apk|aab)$/i);
     if (downloadMatch && request.method === "GET") {
       try {
         const buildId = downloadMatch[1];
