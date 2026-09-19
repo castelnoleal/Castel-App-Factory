@@ -1,1 +1,7 @@
-{"buildId":"2f1ef761-a53c-4436-b2a4-8b2eb3d219fa","status":"queued","testBuild":false,"aiSupervisor":{"enabled":false,"reason":"OPENAI_API_KEY is not configured"},"updatedAt":"2026-09-19T03:01:10.486Z"}
+{
+  "buildId": "2f1ef761-a53c-4436-b2a4-8b2eb3d219fa",
+  "status": "failed",
+  "runId": 35417348696,
+  "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/35417348696",
+  "updatedAt": "2026-09-19T03:01:34Z"
+}
