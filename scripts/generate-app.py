@@ -112,7 +112,17 @@ def install_app_icon(icon_file, icon_file_name, output):
             round_target = folder / "ic_launcher_round.png"
             shutil.copy2(target, round_target)
 
-        # Keep a convenient common app asset for future generated screens/features.
+        # Remove the template's adaptive/vector launcher definitions so Android
+        # resolves the generated density-specific PNGs above on every API level.
+        for xml_path in (
+            res / "mipmap-anydpi" / "ic_launcher.xml",
+            res / "mipmap-anydpi-v26" / "ic_launcher.xml",
+            res / "mipmap-anydpi-v26" / "ic_launcher_round.xml",
+        ):
+            if xml_path.exists():
+                xml_path.unlink()
+
+        # Keep common app assets for future generated screens/features.
         common = res / "drawable-nodpi"
         common.mkdir(parents=True, exist_ok=True)
         subprocess.run([
