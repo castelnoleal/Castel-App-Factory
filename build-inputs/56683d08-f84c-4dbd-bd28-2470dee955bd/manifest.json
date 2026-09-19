@@ -1,0 +1,25 @@
+{
+  "buildId": "56683d08-f84c-4dbd-bd28-2470dee955bd",
+  "appName": "KodeX",
+  "packageName": "com.meiocgcastel.kodex",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "html",
+  "orientation": "portrait",
+  "sourceType": "Uploaded HTML",
+  "sourceFileName": "DS Kodex 1.0.html",
+  "sourceUrl": null,
+  "backNavigation": false,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": true,
+  "sourceChunkCount": 1,
+  "iconChunkCount": 3,
+  "iconFileName": "827.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-19T22:57:16.354Z"
+}
