@@ -234,8 +234,8 @@ jobs:
           artifact_id=$(echo "$artifact" | jq -r '.id')
           test "$artifact_id" != "null"
           artifact_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}/artifacts/${artifact_id}"
-          build_apk_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/build-${BUILD_ID}/app-debug.apk"
-          build_aab_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/build-${BUILD_ID}/app-release.aab"
+          build_apk_url="https://api.castelmei.com/download/${BUILD_ID}/apk"
+          build_aab_url="https://api.castelmei.com/download/${BUILD_ID}/aab"
           test_build=$(jq -r '.testBuild // false' "build-inputs/${BUILD_ID}/manifest.json")
           test_apk_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.apk"
           test_aab_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.aab"
