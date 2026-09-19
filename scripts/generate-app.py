@@ -132,6 +132,7 @@ def generate():
         content = content.replace("__ALLOW_EXTERNAL_LINKS__", "true" if bool(cfg.get("externalLinks")) else "false")
         content = content.replace("__ENABLE_ZOOM__", "true" if bool(cfg.get("zoom")) else "false")
         content = content.replace("__FULLSCREEN__", "true" if bool(cfg.get("fullscreen")) else "false")
+        content = content.replace("__BACK_NAVIGATION__", "true" if bool(cfg.get("backNavigation", True)) else "false")
         source.write_text(content, encoding="utf-8")
         target = target_root / source.name
         if source.resolve() != target.resolve():
