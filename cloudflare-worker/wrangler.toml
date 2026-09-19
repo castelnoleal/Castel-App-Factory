@@ -2,3 +2,8 @@ name = "castel-app-factory-api"
 main = "worker.js"
 compatibility_date = "2026-08-25"
 workers_dev = true
+
+[vars]
+GITHUB_OWNER = "castelnoleal"
+GITHUB_REPO = "Castel-App-Factory"
+GITHUB_WORKFLOW = "build-app.yml"
