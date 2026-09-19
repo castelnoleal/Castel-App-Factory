@@ -156,7 +156,7 @@ jobs:
           force-avd-creation: false
           disable-animations: true
           script: |
-            set -euo pipefail
+            set -eu
             APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
             PKG=$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")
             adb install -r "$APK"
