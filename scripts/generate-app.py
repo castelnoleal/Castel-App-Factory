@@ -245,6 +245,8 @@ def generate():
         content = content.replace("private static final boolean BACK_NAVIGATION = true;", "private static final boolean BACK_NAVIGATION = " + ("true" if bool(cfg.get("backNavigation", True)) else "false") + ";")
         offline_value = "true" if bool(cfg.get("offlineStorage", False)) else "false"
         content = content.replace("private static final boolean OFFLINE_STORAGE = false;", "private static final boolean OFFLINE_STORAGE = " + offline_value + ";")
+        auto_update_value = "true" if bool(cfg.get("autoUpdate", False)) else "false"
+        content = content.replace("private static final boolean AUTO_UPDATE = false;", "private static final boolean AUTO_UPDATE = " + auto_update_value + ";")
         cache_mode = str(cfg.get("cacheMode", "standard")).lower()
         cache_value = {"off": "WebSettings.LOAD_NO_CACHE", "standard": "WebSettings.LOAD_DEFAULT", "offline": "WebSettings.LOAD_CACHE_ELSE_NETWORK", "aggressive": "WebSettings.LOAD_CACHE_ELSE_NETWORK"}.get(cache_mode, "WebSettings.LOAD_DEFAULT")
         content = content.replace("private static final int CACHE_MODE = WebSettings.LOAD_DEFAULT;", "private static final int CACHE_MODE = " + cache_value + ";")
