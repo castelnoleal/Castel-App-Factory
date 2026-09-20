@@ -1,9 +1,9 @@
 {
   "buildId": "ba7c0de4-815b-4541-84bc-055224fd2242",
   "status": "running",
-  "message": "Starting Android emulator runtime test",
-  "progress": 78,
+  "message": "Verifying generated APK and AAB",
+  "progress": 92,
   "runId": 35485635878,
   "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/35485635878",
-  "updatedAt": "2026-09-20T03:05:58Z"
+  "updatedAt": "2026-09-20T03:17:41Z"
 }
