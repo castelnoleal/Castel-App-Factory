@@ -1,9 +1,16 @@
 {
   "buildId": "3944bcbb-5b8e-434e-8463-25fa7aaa6ebf",
-  "status": "running",
-  "message": "Verifying generated APK and AAB",
-  "progress": 92,
+  "status": "success",
   "runId": 35491091677,
   "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/35491091677",
-  "updatedAt": "2026-09-20T05:23:26Z"
+  "artifactId": 10598609710,
+  "artifactUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/35491091677/artifacts/10598609710",
+  "buildApkUrl": "https://api.castelmei.com/download/3944bcbb-5b8e-434e-8463-25fa7aaa6ebf/apk",
+  "buildAabUrl": "https://api.castelmei.com/download/3944bcbb-5b8e-434e-8463-25fa7aaa6ebf/aab",
+  "testBuild": false,
+  "testApkUrl": null,
+  "testAabUrl": null,
+  "apk": "app-debug.apk",
+  "aab": "app-release.aab",
+  "updatedAt": "2026-09-20T05:23:31Z"
 }
