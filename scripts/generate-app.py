@@ -102,6 +102,8 @@ def install_app_icon(icon_file, icon_file_name, output):
             subprocess.run([
                 "convert", str(source),
                 "-auto-orient",
+                "-alpha", "on",
+                "-background", "none",
                 "-thumbnail", f"{size}x{size}^",
                 "-gravity", "center",
                 "-extent", f"{size}x{size}",
@@ -128,6 +130,8 @@ def install_app_icon(icon_file, icon_file_name, output):
         subprocess.run([
             "convert", str(source),
             "-auto-orient",
+            "-alpha", "on",
+            "-background", "none",
             "-thumbnail", "512x512^",
             "-gravity", "center",
             "-extent", "512x512",
