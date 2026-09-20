@@ -46,6 +46,6 @@ jobs:
           body=$(curl --fail --silent --show-error --retry 3 https://api.castelmei.com/health)
           echo "$body"
           echo "$body" | grep -q '"status":"online"'
-          echo "$body" | grep -q '"revision":"website-source-v3"'
+          echo "$body" | grep -q '"revision":"app-assets-v1"'
           echo "$body" | grep -q '"githubConfigured":true'
           echo "Build bridge deployment verified successfully with GitHub build credentials."
