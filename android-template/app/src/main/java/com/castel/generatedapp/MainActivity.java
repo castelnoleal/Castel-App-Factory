@@ -96,7 +96,7 @@ public class MainActivity extends ComponentActivity {
                         if (safe.contains("..") || safe.startsWith("/")) return null;
                         File f = new File(offlineDataDir, safe);
                         if (!f.isFile()) return null;
-                        return new WebResourceResponse("application/octet-stream", null, new FileInputStream(f));
+                        return new WebResourceResponse(mimeType(safe), charsetFor(safe), new FileInputStream(f));
                     } catch (Exception ignored) { return null; }
                 })
                 .build();
@@ -229,6 +229,28 @@ public class MainActivity extends ComponentActivity {
             File f = new File(new File(offlineDataDir, safe), path);
             return f.isFile() ? "https://appassets.androidplatform.net/data/" + safe + "/" + path : "";
         }
+    }
+
+    private String mimeType(String path) {
+        String p = path.toLowerCase();
+        if (p.endsWith(".html") || p.endsWith(".htm")) return "text/html";
+        if (p.endsWith(".css")) return "text/css";
+        if (p.endsWith(".js")) return "application/javascript";
+        if (p.endsWith(".json")) return "application/json";
+        if (p.endsWith(".txt") || p.endsWith(".csv")) return "text/plain";
+        if (p.endsWith(".png")) return "image/png";
+        if (p.endsWith(".jpg") || p.endsWith(".jpeg")) return "image/jpeg";
+        if (p.endsWith(".webp")) return "image/webp";
+        if (p.endsWith(".gif")) return "image/gif";
+        if (p.endsWith(".svg")) return "image/svg+xml";
+        return "application/octet-stream";
+    }
+
+    private String charsetFor(String path) {
+        String p = path.toLowerCase();
+        if (p.endsWith(".html") || p.endsWith(".htm") || p.endsWith(".css") || p.endsWith(".js") ||
+            p.endsWith(".json") || p.endsWith(".txt") || p.endsWith(".csv") || p.endsWith(".svg")) return "UTF-8";
+        return null;
     }
 
     private File fileForKey(String key) { return new File(offlineDataDir, safeKey(key)); }
