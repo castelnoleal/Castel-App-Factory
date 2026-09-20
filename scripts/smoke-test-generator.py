@@ -1,4 +1,3 @@
-import base64
 import io
 import json
 import os
@@ -31,7 +30,12 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
         env = os.environ.copy()
         env["BUILD_MANIFEST"] = str(manifest)
         env["BUILD_OUTPUT"] = str(output)
-        env["SOURCE_BASE64"] = base64.b64encode(source_bytes).decode() if source_bytes else ""
+        env["SOURCE_FILE"] = ""
+        env["ICON_FILE"] = ""
+        if source_bytes:
+            source_path = tmp / (source_file_name or "source.bin")
+            source_path.write_bytes(source_bytes)
+            env["SOURCE_FILE"] = str(source_path)
         subprocess.run(["python3", str(GENERATOR)], cwd=ROOT, env=env, check=True)
 
         assert (output / "settings.gradle").exists()
