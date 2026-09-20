@@ -1,0 +1,28 @@
+{
+  "buildId": "8a4e8f08-17df-4c12-9ff2-99215dd654c5",
+  "appName": "Kodex v.1.2",
+  "packageName": "com.castel.myapp",
+  "versionName": "1.0.1",
+  "versionCode": 1,
+  "sourceMode": "html",
+  "orientation": "unspecified",
+  "sourceType": "Uploaded HTML",
+  "sourceFileName": "Kodex_APK_Ready.html",
+  "sourceUrl": null,
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": false,
+  "offlineStorage": true,
+  "autoUpdate": false,
+  "cacheMode": "offline",
+  "sourceChunkCount": 1,
+  "iconChunkCount": 1,
+  "iconFileName": "50708.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-20T23:30:43.476Z"
+}
