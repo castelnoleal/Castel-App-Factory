@@ -1,0 +1,165 @@
+name: Offline Storage Acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/offline-storage-test.yml'
+      - 'android-template/**'
+      - 'scripts/generate-app.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-storage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout factory
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools emulator'
+
+      - name: Install Android API 36
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Create offline acceptance fixture
+        run: |
+          set -euo pipefail
+          rm -rf offline-test generated-app
+          mkdir -p offline-test
+          cat > offline-test/manifest.json <<'JSON'
+          {
+            "appName": "Offline Storage Acceptance",
+            "packageName": "com.castel.offlinetest",
+            "versionName": "1.0.0",
+            "versionCode": 1,
+            "sourceType": "Uploaded HTML",
+            "sourceMode": "html",
+            "sourceFileName": "index.html",
+            "offlineStorage": true,
+            "autoUpdate": false,
+            "cacheMode": "offline",
+            "orientation": "portrait",
+            "backNavigation": true,
+            "zoom": false,
+            "fullscreen": false,
+            "externalLinks": false
+          }
+          JSON
+          cat > offline-test/index.html <<'HTML'
+          <!doctype html>
+          <html><body>
+          <h1>Offline storage acceptance</h1>
+          <pre id="status">STARTING</pre>
+          <script>
+          const out = m => {
+            document.getElementById('status').textContent += "\n" + m;
+            console.log("OFFLINE_TEST:" + m);
+          };
+          function done(ok, err) {
+            if (ok) out("DOWNLOAD_OK");
+            else { out("DOWNLOAD_FAIL:" + err); window.CastelTestFailed = true; }
+          }
+          function verifyStored() {
+            if (!window.CastelApp || !CastelApp.enabled()) {
+              out("BRIDGE_DISABLED"); window.CastelTestFailed = true; return;
+            }
+            if (!CastelApp.hasData("payload.txt")) {
+              out("DATA_MISSING"); window.CastelTestFailed = true; return;
+            }
+            const u = CastelApp.dataUrl("payload.txt");
+            if (!u) { out("DATA_URL_MISSING"); window.CastelTestFailed = true; return; }
+            fetch(u).then(r => r.text()).then(t => {
+              if (t === "CASTEL_OFFLINE_PERSISTENCE_OK") out("OFFLINE_PERSISTENCE_PASS");
+              else { out("BAD_PAYLOAD:" + t); window.CastelTestFailed = true; }
+            }).catch(e => { out("OFFLINE_FETCH_FAIL:" + e); window.CastelTestFailed = true; });
+          }
+          if (location.search === "?download") {
+            out("DOWNLOAD_PHASE");
+            CastelApp.downloadData("http://10.0.2.2:8765/payload.txt", "payload.txt", "done");
+          } else {
+            out("VERIFY_PHASE");
+            verifyStored();
+          }
+          </script></body></html>
+          HTML
+          python3 -m http.server 8765 --directory offline-test >/tmp/offline-server.log 2>&1 &
+          echo $! >/tmp/offline-server.pid
+
+      - name: Generate acceptance APK
+        env:
+          BUILD_MANIFEST: offline-test/manifest.json
+          BUILD_OUTPUT: generated-app
+          SOURCE_FILE: offline-test/index.html
+          ICON_FILE: ''
+        run: |
+          set -euo pipefail
+          python3 scripts/generate-app.py
+          test -f generated-app/app/src/main/assets/index.html
+          grep -F 'OFFLINE_STORAGE = true' generated-app/app/src/main/java/com/castel/offlinetest/MainActivity.java
+          grep -F 'LOAD_CACHE_ELSE_NETWORK' generated-app/app/src/main/java/com/castel/offlinetest/MainActivity.java
+
+      - name: Build acceptance APK
+        run: |
+          set -euo pipefail
+          gradle -p generated-app assembleDebug --no-daemon --stacktrace
+          test -s generated-app/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Runtime offline persistence acceptance
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: '-no-window -no-audio -no-boot-anim -netdelay none -netspeed full -dns-server 8.8.8.8,1.1.1.1'
+          script: |
+            set -eu
+            APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
+            PKG=com.castel.offlinetest
+            adb install -r "$APK"
+            adb logcat -c
+            adb shell am start -n "$PKG/.MainActivity?download" >/dev/null 2>&1 || adb shell am start -a android.intent.action.VIEW -d "https://appassets.androidplatform.net/assets/index.html?download" "$PKG"
+            sleep 8
+            adb logcat -d > /tmp/offline-download.log || true
+            if ! grep -F 'OFFLINE_TEST:DOWNLOAD_OK' /tmp/offline-download.log >/dev/null; then
+              echo "Initial persistent-data download did not complete."
+              cat /tmp/offline-download.log
+              exit 1
+            fi
+            kill "$(cat /tmp/offline-server.pid)"
+            adb shell am force-stop "$PKG"
+            adb logcat -c
+            adb shell am start -n "$PKG/.MainActivity"
+            sleep 8
+            adb logcat -d > /tmp/offline-relaunch.log || true
+            if ! grep -F 'OFFLINE_TEST:OFFLINE_PERSISTENCE_PASS' /tmp/offline-relaunch.log >/dev/null; then
+              echo "Persisted data was not readable after app restart/offline source."
+              cat /tmp/offline-relaunch.log
+              exit 1
+            fi
+            echo "Offline persistent storage acceptance passed."
