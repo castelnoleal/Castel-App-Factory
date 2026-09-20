@@ -152,6 +152,8 @@ jobs:
             test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
             test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
             file generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'PNG image'
+            identify -format '%[channels]' generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'a'
+            identify -format '%[channels]' generated-app/app/src/main/res/drawable-nodpi/app_icon.png | grep -qi 'a'
           fi
 
       - name: "Update stage: compiling APK and AAB"
