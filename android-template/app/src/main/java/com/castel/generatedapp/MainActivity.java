@@ -14,7 +14,16 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.JavascriptInterface;
 import android.widget.TextView;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
@@ -27,6 +36,10 @@ public class MainActivity extends ComponentActivity {
     private WebView webView;
     private WebViewAssetLoader assetLoader;
     private ValueCallback<Uri[]> fileChooserCallback;
+    private final ExecutorService dataExecutor = Executors.newSingleThreadExecutor();
+    private File offlineDataDir;
+    private static final boolean OFFLINE_STORAGE = __OFFLINE_STORAGE__;
+    private static final int CACHE_MODE = __CACHE_MODE__;
 
     private static final boolean ALLOW_EXTERNAL_LINKS = false;
     private static final boolean ENABLE_ZOOM = false;
@@ -63,10 +76,23 @@ public class MainActivity extends ComponentActivity {
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setSupportMultipleWindows(false);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(CACHE_MODE);
+        offlineDataDir = new File(getFilesDir(), "offline-data");
+        if (OFFLINE_STORAGE) offlineDataDir.mkdirs();
+        webView.addJavascriptInterface(new OfflineStorageBridge(), "CastelApp");
 
         assetLoader = new WebViewAssetLoader.Builder()
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+                .addPathHandler("/data/", path -> {
+                    if (!OFFLINE_STORAGE) return null;
+                    try {
+                        String safe = path.replace('\\', '/');
+                        if (safe.contains("..") || safe.startsWith("/")) return null;
+                        File f = new File(offlineDataDir, safe);
+                        if (!f.isFile()) return null;
+                        return new WebResourceResponse("application/octet-stream", null, new FileInputStream(f));
+                    } catch (Exception ignored) { return null; }
+                })
                 .build();
 
         webView.setWebViewClient(new WebViewClientCompat() {
@@ -142,6 +168,51 @@ public class MainActivity extends ComponentActivity {
         webView.post(() -> webView.loadUrl("__TARGET_URL__"));
     }
 
+    private class OfflineStorageBridge {
+        @JavascriptInterface public boolean enabled() { return OFFLINE_STORAGE; }
+        @JavascriptInterface public boolean hasData(String key) { return OFFLINE_STORAGE && fileForKey(key).isFile(); }
+        @JavascriptInterface public String dataUrl(String key) {
+            return hasData(key) ? "https://appassets.androidplatform.net/data/" + safeKey(key) : "";
+        }
+        @JavascriptInterface public String metadata(String key) {
+            File f = fileForKey(key);
+            return f.isFile() ? Long.toString(f.lastModified()) + ":" + Long.toString(f.length()) : "";
+        }
+        @JavascriptInterface public void deleteData(String key) { if (OFFLINE_STORAGE) fileForKey(key).delete(); }
+        @JavascriptInterface public void downloadData(String url, String key, String callback) {
+            if (!OFFLINE_STORAGE) { callJs(callback, false, "Offline storage is disabled"); return; }
+            dataExecutor.execute(() -> {
+                try {
+                    if (!url.matches("https?://.+")) throw new IllegalArgumentException("Only HTTP/HTTPS downloads are supported");
+                    File target = fileForKey(key);
+                    File temp = new File(offlineDataDir, "." + safeKey(key) + ".download");
+                    HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+                    c.setConnectTimeout(20000); c.setReadTimeout(60000); c.setInstanceFollowRedirects(true);
+                    int code = c.getResponseCode();
+                    if (code < 200 || code >= 300) throw new IllegalStateException("HTTP " + code);
+                    try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                        byte[] buf = new byte[8192]; int n;
+                        while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+                    } finally { c.disconnect(); }
+                    if (!temp.renameTo(target)) { temp.delete(); throw new IllegalStateException("Could not save downloaded data"); }
+                    callJs(callback, true, "");
+                } catch (Exception e) { callJs(callback, false, e.getMessage() == null ? "Download failed" : e.getMessage()); }
+            });
+        }
+    }
+
+    private File fileForKey(String key) { return new File(offlineDataDir, safeKey(key)); }
+    private String safeKey(String key) {
+        String k = key == null ? "" : key.replaceAll("[^A-Za-z0-9._-]", "_");
+        return k.isEmpty() ? "data" : k;
+    }
+    private void callJs(String callback, boolean ok, String error) {
+        if (webView == null || callback == null || !callback.matches("[A-Za-z_$][A-Za-z0-9_$.]*")) return;
+        String safe = error.replace("\\", "\\\\").replace(""", "\\"");
+        String js = callback + "(" + ok + ","" + safe + "")";
+        runOnUiThread(() -> { if (webView != null) webView.evaluateJavascript(js, null); });
+    }
+
     private void showLaunchError(Throwable error) {
         TextView message = new TextView(this);
         message.setTextColor(Color.WHITE);
@@ -187,6 +258,7 @@ public class MainActivity extends ComponentActivity {
 
     @Override
     protected void onDestroy() {
+        dataExecutor.shutdownNow();
         if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
         if (webView != null) {
             webView.stopLoading();
