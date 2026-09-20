@@ -38,8 +38,8 @@ public class MainActivity extends ComponentActivity {
     private ValueCallback<Uri[]> fileChooserCallback;
     private final ExecutorService dataExecutor = Executors.newSingleThreadExecutor();
     private File offlineDataDir;
-    private static final boolean OFFLINE_STORAGE = __OFFLINE_STORAGE__;
-    private static final int CACHE_MODE = __CACHE_MODE__;
+    private static final boolean OFFLINE_STORAGE = false;
+    private static final int CACHE_MODE = WebSettings.LOAD_DEFAULT;
 
     private static final boolean ALLOW_EXTERNAL_LINKS = false;
     private static final boolean ENABLE_ZOOM = false;
