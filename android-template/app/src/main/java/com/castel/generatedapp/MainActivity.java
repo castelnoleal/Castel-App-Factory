@@ -208,8 +208,8 @@ public class MainActivity extends ComponentActivity {
     }
     private void callJs(String callback, boolean ok, String error) {
         if (webView == null || callback == null || !callback.matches("[A-Za-z_$][A-Za-z0-9_$.]*")) return;
-        String safe = error.replace("\\", "\\\\").replace(""", "\\"");
-        String js = callback + "(" + ok + ","" + safe + "")";
+        String safe = error == null ? "" : error.replace("\\", "\\\\").replace("\"", "\\\"");
+        String js = callback + "(" + ok + ",\"" + safe + "\")";
         runOnUiThread(() -> { if (webView != null) webView.evaluateJavascript(js, null); });
     }
 
