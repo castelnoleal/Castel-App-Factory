@@ -118,6 +118,7 @@ def install_app_icon(icon_file, icon_file_name, output):
         # resolves the generated density-specific PNGs above on every API level.
         for xml_path in (
             res / "mipmap-anydpi" / "ic_launcher.xml",
+            res / "mipmap-anydpi" / "ic_launcher_round.xml",
             res / "mipmap-anydpi-v26" / "ic_launcher.xml",
             res / "mipmap-anydpi-v26" / "ic_launcher_round.xml",
         ):
