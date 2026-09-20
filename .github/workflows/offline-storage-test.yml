@@ -7,6 +7,7 @@ on:
       - '.github/workflows/offline-storage-test.yml'
       - 'android-template/**'
       - 'scripts/generate-app.py'
+      - 'offline-test/payload.txt'
   workflow_dispatch:
 
 permissions:
@@ -81,33 +82,32 @@ jobs:
           };
           function done(ok, err) {
             if (ok) out("DOWNLOAD_OK");
-            else { out("DOWNLOAD_FAIL:" + err); window.CastelTestFailed = true; }
+            else { out("DOWNLOAD_FAIL:" + err); }
           }
           function verifyStored() {
             if (!window.CastelApp || !CastelApp.enabled()) {
-              out("BRIDGE_DISABLED"); window.CastelTestFailed = true; return;
+              out("BRIDGE_DISABLED"); return;
             }
             if (!CastelApp.hasData("payload.txt")) {
-              out("DATA_MISSING"); window.CastelTestFailed = true; return;
+              out("DATA_MISSING");
+              return;
             }
             const u = CastelApp.dataUrl("payload.txt");
-            if (!u) { out("DATA_URL_MISSING"); window.CastelTestFailed = true; return; }
+            if (!u) { out("DATA_URL_MISSING"); return; }
             fetch(u).then(r => r.text()).then(t => {
               if (t === "CASTEL_OFFLINE_PERSISTENCE_OK") out("OFFLINE_PERSISTENCE_PASS");
-              else { out("BAD_PAYLOAD:" + t); window.CastelTestFailed = true; }
-            }).catch(e => { out("OFFLINE_FETCH_FAIL:" + e); window.CastelTestFailed = true; });
+              else out("BAD_PAYLOAD:" + t);
+            }).catch(e => out("OFFLINE_FETCH_FAIL:" + e));
           }
-          if (location.search === "?download") {
+          if (!CastelApp.hasData("payload.txt")) {
             out("DOWNLOAD_PHASE");
-            CastelApp.downloadData("http://10.0.2.2:8765/payload.txt", "payload.txt", "done");
+            CastelApp.downloadData("https://raw.githubusercontent.com/castelnoleal/Castel-App-Factory/main/offline-test/payload.txt", "payload.txt", "done");
           } else {
             out("VERIFY_PHASE");
             verifyStored();
           }
           </script></body></html>
           HTML
-          python3 -m http.server 8765 --directory offline-test >/tmp/offline-server.log 2>&1 &
-          echo $! >/tmp/offline-server.pid
 
       - name: Generate acceptance APK
         env:
@@ -143,22 +143,23 @@ jobs:
             PKG=com.castel.offlinetest
             adb install -r "$APK"
             adb logcat -c
-            adb shell am start -n "$PKG/.MainActivity?download" >/dev/null 2>&1 || adb shell am start -a android.intent.action.VIEW -d "https://appassets.androidplatform.net/assets/index.html?download" "$PKG"
-            sleep 8
+            adb shell am start -n "$PKG/.MainActivity"
+            sleep 10
             adb logcat -d > /tmp/offline-download.log || true
             if ! grep -F 'OFFLINE_TEST:DOWNLOAD_OK' /tmp/offline-download.log >/dev/null; then
               echo "Initial persistent-data download did not complete."
               cat /tmp/offline-download.log
               exit 1
             fi
-            kill "$(cat /tmp/offline-server.pid)"
             adb shell am force-stop "$PKG"
+            adb shell cmd connectivity airplane-mode enable || true
+            sleep 2
             adb logcat -c
             adb shell am start -n "$PKG/.MainActivity"
             sleep 8
             adb logcat -d > /tmp/offline-relaunch.log || true
             if ! grep -F 'OFFLINE_TEST:OFFLINE_PERSISTENCE_PASS' /tmp/offline-relaunch.log >/dev/null; then
-              echo "Persisted data was not readable after app restart/offline source."
+              echo "Persisted data was not readable after app restart/offline mode."
               cat /tmp/offline-relaunch.log
               exit 1
             fi
