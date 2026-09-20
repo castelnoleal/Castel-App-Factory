@@ -149,6 +149,7 @@ jobs:
             done
             test -s generated-app/app/src/main/res/drawable-nodpi/app_icon.png
             test ! -e generated-app/app/src/main/res/mipmap-anydpi/ic_launcher.xml
+            test ! -e generated-app/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml
             test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
             test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
             file generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'PNG image'
