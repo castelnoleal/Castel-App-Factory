@@ -114,6 +114,26 @@ def install_app_icon(icon_file, icon_file_name, output):
             round_target = folder / "ic_launcher_round.png"
             shutil.copy2(target, round_target)
 
+        # Generate a true adaptive launcher icon for Android 8+ with a transparent
+        # background. The source remains transparent as the foreground layer.
+        drawable = res / "drawable-nodpi"
+        drawable.mkdir(parents=True, exist_ok=True)
+        adaptive_foreground = drawable / "ic_launcher_foreground.png"
+        subprocess.run([
+            "convert", str(source),
+            "-auto-orient",
+            "-alpha", "on",
+            "-background", "none",
+            "-thumbnail", "288x288^",
+            "-gravity", "center",
+            "-extent", "288x288",
+            "-strip",
+            "-background", "none",
+            "-gravity", "center",
+            "-extent", "432x432",
+            "PNG32:" + str(adaptive_foreground),
+        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+
         # Remove the template's adaptive/vector launcher definitions so Android
         # resolves the generated density-specific PNGs above on every API level.
         for xml_path in (
@@ -124,6 +144,17 @@ def install_app_icon(icon_file, icon_file_name, output):
         ):
             if xml_path.exists():
                 xml_path.unlink()
+
+        adaptive_dir = res / "mipmap-anydpi-v26"
+        adaptive_dir.mkdir(parents=True, exist_ok=True)
+        adaptive_xml = '''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/transparent" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>
+'''
+        (adaptive_dir / "ic_launcher.xml").write_text(adaptive_xml, encoding="utf-8")
+        (adaptive_dir / "ic_launcher_round.xml").write_text(adaptive_xml, encoding="utf-8")
 
         # Keep common app assets for future generated screens/features.
         common = res / "drawable-nodpi"
