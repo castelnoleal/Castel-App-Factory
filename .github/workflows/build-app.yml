@@ -150,8 +150,12 @@ jobs:
             test -s generated-app/app/src/main/res/drawable-nodpi/app_icon.png
             test ! -e generated-app/app/src/main/res/mipmap-anydpi/ic_launcher.xml
             test ! -e generated-app/app/src/main/res/mipmap-anydpi/ic_launcher_round.xml
-            test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
-            test ! -e generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+            test -f generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+            test -f generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
+            grep -F '<background android:drawable="@android:color/transparent"' generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+            grep -F '<foreground android:drawable="@drawable/ic_launcher_foreground"' generated-app/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+            test -f generated-app/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png
+            identify -format '%[channels]' generated-app/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png | grep -E 'a|A'
             file generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'PNG image'
             identify -format '%[channels]' generated-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png | grep -qi 'a'
             identify -format '%[channels]' generated-app/app/src/main/res/drawable-nodpi/app_icon.png | grep -qi 'a'
