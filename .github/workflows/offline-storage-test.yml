@@ -81,8 +81,9 @@ jobs:
             console.log("OFFLINE_TEST:" + m);
           };
           function done(ok, err) {
-            if (ok) out("DOWNLOAD_OK");
-            else { out("DOWNLOAD_FAIL:" + err); }
+            if (!ok) { out("DOWNLOAD_FAIL:" + err); return; }
+            out("DOWNLOAD_OK");
+            CastelApp.downloadBundle("http://10.0.2.2:8765/bundle.zip", "card-bundle", "", "bundleDone");
           }
           function verifyStored() {
             if (!window.CastelApp || !CastelApp.enabled()) { out("BRIDGE_DISABLED"); return; }
@@ -165,6 +166,8 @@ jobs:
             set -eu
             APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
             PKG=com.castel.offlinetest
+            (cd offline-test/server && python3 -m http.server 8765 --bind 0.0.0.0 >/tmp/offline-bundle-server.log 2>&1 &)
+            sleep 2
             adb install -r "$APK"
             adb logcat -c
             adb shell am start -n "$PKG/.MainActivity"
@@ -175,8 +178,6 @@ jobs:
               cat /tmp/offline-download.log
               exit 1
             fi
-            (cd offline-test/server && python3 -m http.server 8765 --bind 0.0.0.0 >/tmp/offline-bundle-server.log 2>&1 &) 
-            sleep 2
             adb shell am force-stop "$PKG"
             adb shell cmd connectivity airplane-mode enable || true
             sleep 2
