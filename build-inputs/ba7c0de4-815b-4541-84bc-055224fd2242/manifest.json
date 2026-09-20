@@ -1,0 +1,25 @@
+{
+  "buildId": "ba7c0de4-815b-4541-84bc-055224fd2242",
+  "appName": "Kodex",
+  "packageName": "com.castelmei.kodex",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "html",
+  "orientation": "portrait",
+  "sourceType": "Uploaded HTML",
+  "sourceFileName": "Kodex_offline_download_fixed-2.html",
+  "sourceUrl": null,
+  "backNavigation": false,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": true,
+  "sourceChunkCount": 1,
+  "iconChunkCount": 1,
+  "iconFileName": "50708.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-09-20T03:04:32.585Z"
+}
