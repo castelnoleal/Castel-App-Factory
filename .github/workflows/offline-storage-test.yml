@@ -85,29 +85,53 @@ jobs:
             else { out("DOWNLOAD_FAIL:" + err); }
           }
           function verifyStored() {
-            if (!window.CastelApp || !CastelApp.enabled()) {
-              out("BRIDGE_DISABLED"); return;
-            }
-            if (!CastelApp.hasData("payload.txt")) {
-              out("DATA_MISSING");
-              return;
-            }
+            if (!window.CastelApp || !CastelApp.enabled()) { out("BRIDGE_DISABLED"); return; }
+            if (!CastelApp.hasData("payload.txt")) { out("DATA_MISSING"); return; }
             const u = CastelApp.dataUrl("payload.txt");
             if (!u) { out("DATA_URL_MISSING"); return; }
             fetch(u).then(r => r.text()).then(t => {
-              if (t === "CASTEL_OFFLINE_PERSISTENCE_OK") out("OFFLINE_PERSISTENCE_PASS");
-              else out("BAD_PAYLOAD:" + t);
+              if (t !== "CASTEL_OFFLINE_PERSISTENCE_OK") { out("BAD_PAYLOAD:" + t); return; }
+              const imageUrl = CastelApp.bundleUrl("card-bundle", "card.png");
+              const rulingUrl = CastelApp.bundleUrl("card-bundle", "ruling.txt");
+              if (!imageUrl || !rulingUrl) { out("BUNDLE_URL_MISSING"); return; }
+              const img = new Image();
+              img.onload = () => fetch(rulingUrl).then(r => r.text()).then(rt => {
+                if (rt === "CASTEL_OFFLINE_RULING_OK") out("OFFLINE_PERSISTENCE_PASS");
+                else out("BAD_RULING:" + rt);
+              }).catch(e => out("RULING_FETCH_FAIL:" + e));
+              img.onerror = () => out("IMAGE_LOAD_FAIL");
+              img.src = imageUrl;
             }).catch(e => out("OFFLINE_FETCH_FAIL:" + e));
+          }
+          function bundleDone(ok, err) {
+            if (!ok) { out("BUNDLE_DOWNLOAD_FAIL:" + err); return; }
+            out("BUNDLE_DOWNLOAD_OK");
+            verifyStored();
           }
           if (!CastelApp.hasData("payload.txt")) {
             out("DOWNLOAD_PHASE");
             CastelApp.downloadData("https://raw.githubusercontent.com/castelnoleal/Castel-App-Factory/main/offline-test/payload.txt", "payload.txt", "done");
+          } else if (!CastelApp.bundleUrl("card-bundle", "card.png")) {
+            out("BUNDLE_DOWNLOAD_PHASE");
+            CastelApp.downloadBundle("http://10.0.2.2:8765/bundle.zip", "card-bundle", "", "bundleDone");
           } else {
             out("VERIFY_PHASE");
             verifyStored();
           }
           </script></body></html>
           HTML
+          mkdir -p offline-test/server/bundle
+          printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' | base64 -d > offline-test/server/bundle/card.png
+          printf 'CASTEL_OFFLINE_RULING_OK' > offline-test/server/bundle/ruling.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root = Path("offline-test/server/bundle")
+          with zipfile.ZipFile("offline-test/server/bundle.zip", "w", zipfile.ZIP_DEFLATED) as z:
+              for p in root.rglob("*"):
+                  if p.is_file():
+                      z.write(p, p.relative_to(root).as_posix())
+          PY
 
       - name: Generate acceptance APK
         env:
@@ -146,11 +170,13 @@ jobs:
             adb shell am start -n "$PKG/.MainActivity"
             sleep 10
             adb logcat -d > /tmp/offline-download.log || true
-            if ! grep -F 'OFFLINE_TEST:DOWNLOAD_OK' /tmp/offline-download.log >/dev/null; then
-              echo "Initial persistent-data download did not complete."
+            if ! grep -F 'OFFLINE_TEST:BUNDLE_DOWNLOAD_OK' /tmp/offline-download.log >/dev/null; then
+              echo "Initial persistent-data/bundle download did not complete."
               cat /tmp/offline-download.log
               exit 1
             fi
+            (cd offline-test/server && python3 -m http.server 8765 --bind 0.0.0.0 >/tmp/offline-bundle-server.log 2>&1 &) 
+            sleep 2
             adb shell am force-stop "$PKG"
             adb shell cmd connectivity airplane-mode enable || true
             sleep 2
