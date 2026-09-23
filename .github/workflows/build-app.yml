@@ -260,6 +260,11 @@ jobs:
           unzip -t "$APK" >/dev/null
           unzip -t "$AAB" >/dev/null
           unzip -l "$APK" | grep -q 'classes.dex'
+          if [ "$(jq -r '.signing // false' "build-inputs/${BUILD_ID}/manifest.json")" = "true" ]; then
+            jarsigner -verify -strict "$AAB" >/tmp/castel-aab-signature.txt 2>&1
+            grep -q "jar verified" /tmp/castel-aab-signature.txt
+            echo "Release AAB signature verification passed."
+          fi
           sha256sum "$APK" "$AAB"
       - name: Upload generated artifacts
         if: success()
@@ -309,10 +314,11 @@ jobs:
           build_apk_url="https://api.castelmei.com/download/${BUILD_ID}/apk"
           build_aab_url="https://api.castelmei.com/download/${BUILD_ID}/aab"
           test_build=$(jq -r '.testBuild // false' "build-inputs/${BUILD_ID}/manifest.json")
+          signing=$(jq -r '.signing // false' "build-inputs/${BUILD_ID}/manifest.json")
           test_apk_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.apk"
           test_aab_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.aab"
           sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
-          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --arg buildApkUrl "$build_apk_url" --arg buildAabUrl "$build_aab_url" --argjson artifactId "$artifact_id" --arg testApkUrl "$test_apk_url" --arg testAabUrl "$test_aab_url" --argjson testBuild "$test_build" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,buildApkUrl:$buildApkUrl,buildAabUrl:$buildAabUrl,testBuild:$testBuild,testApkUrl:(if $testBuild then $testApkUrl else null end),testAabUrl:(if $testBuild then $testAabUrl else null end),apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
+          payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --arg buildApkUrl "$build_apk_url" --arg buildAabUrl "$build_aab_url" --argjson artifactId "$artifact_id" --arg testApkUrl "$test_apk_url" --arg testAabUrl "$test_aab_url" --argjson testBuild "$test_build" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,buildApkUrl:$buildApkUrl,buildAabUrl:$buildAabUrl,testBuild:$testBuild,signing:$signing,testApkUrl:(if $testBuild then $testApkUrl else null end),testAabUrl:(if $testBuild then $testAabUrl else null end),apk:"app-debug.apk",aab:"app-release.aab",updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
       - name: Mark build failed
         if: failure()
