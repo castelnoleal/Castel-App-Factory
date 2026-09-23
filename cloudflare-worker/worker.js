@@ -12,7 +12,14 @@ const MAX_SOURCE_BASE64 = 28_000_000;
 const MAX_ICON_BASE64 = 8_000_000;
 const CHUNK_CHARS = 800_000;
 const BUILD_BRIDGE_REVISION = "app-assets-v1";
+const SIGNING_ACCESS_HEADER = "X-Castel-Signing-Access";
 
+async function signingTokenMatches(candidate, expected) {
+  const a = new TextEncoder().encode(String(candidate || ""));
+  const b = new TextEncoder().encode(String(expected || ""));
+  if (a.byteLength !== b.byteLength) return false;
+  return crypto.subtle.timingSafeEqual(a, b);
+}
 function headers() {
   return {
     "Access-Control-Allow-Origin": ORIGIN,
@@ -106,6 +113,9 @@ export default {
         const iconBase64 = String(b.iconBase64 || "");
         const iconFileName = String(b.iconFileName || "").trim();
         const testBuild = Boolean(b.testBuild);
+        const signingRequested = Boolean(b.signing);
+        const signingAccess = String(b.signingAccessToken || request.headers.get(SIGNING_ACCESS_HEADER) || "");
+        const signing = signingRequested && Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN) && await signingTokenMatches(signingAccess, env.CASTEL_SIGNING_ACCESS_TOKEN);
         if (!appName || appName.length > 40) return reply({ok:false,error:"Invalid app name."},400);
         if (!validPkg(packageName)) return reply({ok:false,error:"Invalid Android package ID."},400);
         if (!/^\d+(\.\d+){0,2}$/.test(versionName)) return reply({ok:false,error:"Invalid version name."},400);
@@ -117,6 +127,7 @@ export default {
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
         if (iconBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(iconBase64)) return reply({ok:false,error:"App icon encoding is invalid."},400);
         if (iconBase64 && !/\.(png|jpe?g|webp)$/i.test(iconFileName)) return reply({ok:false,error:"App icon must be PNG, JPG, JPEG, or WebP."},400);
+        if (signingRequested && !signing) return reply({ok:false,error:"Release signing is not authorized. Configure the factory signing access token first."},403);
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
@@ -124,14 +135,14 @@ export default {
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
         const iconChunks = [];
         if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
+        const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
         for (let i=0;i<iconChunks.length;i++) await putFile(env, `${base}/icon-${String(i).padStart(4,"0")}.bin`, iconChunks[i], `Queue build ${buildId} icon ${i+1}/${iconChunks.length}`);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
         await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:"main",inputs:{build_id:buildId}})});
-        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
+        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
       } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
     }
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);
