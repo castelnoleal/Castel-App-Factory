@@ -1,0 +1,115 @@
+name: Release Signing Acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android-template/app/build.gradle'
+      - 'scripts/generate-app.py'
+      - '.github/workflows/build-app.yml'
+      - '.github/workflows/release-signing-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout factory
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android API 36
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Install ImageMagick
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Create signing fixture
+        run: |
+          set -euo pipefail
+          mkdir -p build-inputs/signing-test
+          printf '%s\n' '<!doctype html><html><body>Castel signing acceptance</body></html>' > build-inputs/signing-test/index.html
+          cat > build-inputs/signing-test/manifest.json <<'JSON'
+          {
+            "buildId": "signing-test",
+            "appName": "Castel Signing Acceptance",
+            "packageName": "com.castel.signingtest",
+            "versionName": "1.0.0",
+            "versionCode": 1,
+            "sourceType": "Uploaded HTML",
+            "sourceMode": "html",
+            "sourceFileName": "index.html",
+            "sourceUrl": "",
+            "backNavigation": true,
+            "zoom": false,
+            "fullscreen": false,
+            "externalLinks": false,
+            "offlineStorage": false,
+            "autoUpdate": false,
+            "cacheMode": "standard",
+            "iconChunkCount": 0,
+            "iconFileName": "",
+            "signing": true
+          }
+          JSON
+
+      - name: Generate Android project
+        env:
+          BUILD_MANIFEST: build-inputs/signing-test/manifest.json
+          BUILD_OUTPUT: generated-app
+          SOURCE_FILE: build-inputs/signing-test/index.html
+          ICON_FILE: ''
+        run: |
+          set -euo pipefail
+          python3 scripts/generate-app.py
+
+      - name: Generate ephemeral acceptance upload key
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/castel-signing"
+          keytool -genkeypair -v             -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks"             -storetype PKCS12             -storepass "AcceptanceStorePassword-2026"             -keypass "AcceptanceKeyPassword-2026"             -alias upload             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Castel Signing Acceptance"
+          chmod 600 "$RUNNER_TEMP/castel-signing/upload-key.jks"
+          echo "CASTEL_RELEASE_STORE_FILE=$RUNNER_TEMP/castel-signing/upload-key.jks" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_STORE_PASSWORD=AcceptanceStorePassword-2026" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_KEY_ALIAS=upload" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_KEY_PASSWORD=AcceptanceKeyPassword-2026" >> "$GITHUB_ENV"
+
+      - name: Build release AAB
+        run: |
+          set -euo pipefail
+          gradle -p generated-app bundleRelease --no-daemon --stacktrace
+
+      - name: Verify AAB is cryptographically signed
+        run: |
+          set -euo pipefail
+          AAB=generated-app/app/build/outputs/bundle/release/app-release.aab
+          test -s "$AAB"
+          unzip -t "$AAB" >/dev/null
+          jarsigner -verify -strict "$AAB" >/tmp/castel-aab-signature.txt 2>&1
+          grep -q "jar verified" /tmp/castel-aab-signature.txt
+          keytool -list -printcert -jarfile "$AAB" | grep -E 'Owner:|SHA256:'
+          echo "Release signing acceptance passed."
