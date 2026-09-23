@@ -171,6 +171,38 @@ jobs:
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Compiling APK and AAB" --argjson progress 45 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Compiling APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
 
+      - name: Determine release signing mode
+        id: signing_gate
+        env:
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          enabled=$(jq -r '.signing // false' "build-inputs/${BUILD_ID}/manifest.json")
+          if [ "$enabled" != "true" ]; then enabled=false; fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Play release signing
+        if: steps.signing_gate.outputs.enabled == 'true'
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.CASTEL_RELEASE_KEYSTORE_B64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.CASTEL_RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.CASTEL_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.CASTEL_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_KEYSTORE_B64"
+          test -n "$RELEASE_STORE_PASSWORD"
+          test -n "$RELEASE_KEY_ALIAS"
+          test -n "$RELEASE_KEY_PASSWORD"
+          mkdir -p "$RUNNER_TEMP/castel-signing"
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/castel-signing/upload-key.jks"
+          chmod 600 "$RUNNER_TEMP/castel-signing/upload-key.jks"
+          echo "CASTEL_RELEASE_STORE_FILE=$RUNNER_TEMP/castel-signing/upload-key.jks" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_STORE_PASSWORD=$RELEASE_STORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "CASTEL_RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+          keytool -list -v -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" | grep -E 'Alias name:|Valid from:|SHA256:' | head -n 3
+
       - name: Lint and build debug APK + release AAB
         run: |
           set -euo pipefail
