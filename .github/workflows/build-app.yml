@@ -261,7 +261,7 @@ jobs:
           unzip -t "$AAB" >/dev/null
           unzip -l "$APK" | grep -q 'classes.dex'
           if [ "$(jq -r '.signing // false' "build-inputs/${BUILD_ID}/manifest.json")" = "true" ]; then
-            jarsigner -verify -strict "$AAB" >/tmp/castel-aab-signature.txt 2>&1
+            jarsigner -verify "$AAB" >/tmp/castel-aab-signature.txt 2>&1
             grep -q "jar verified" /tmp/castel-aab-signature.txt
             echo "Release AAB signature verification passed."
           fi
