@@ -66,7 +66,7 @@ export default {
     const u = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null,{status:204,headers:headers()});
     if (u.pathname === "/health" && request.method === "GET") {
-      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "Castel-App-Factory"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "Castel-App-Factory")),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
+      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "Castel-App-Factory"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "Castel-App-Factory")),signingConfigured: Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
     if (!env.GITHUB_TOKEN) return reply({ok:false,error:"Build bridge GitHub token is not configured. Add the GITHUB_TOKEN Worker secret."},503);
 
