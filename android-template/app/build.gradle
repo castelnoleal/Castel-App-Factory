@@ -1,6 +1,22 @@
 plugins { id 'com.android.application' }
 
+def releaseStoreFile = System.getenv("CASTEL_RELEASE_STORE_FILE")
+def releaseStorePassword = System.getenv("CASTEL_RELEASE_STORE_PASSWORD")
+def releaseKeyAlias = System.getenv("CASTEL_RELEASE_KEY_ALIAS")
+def releaseKeyPassword = System.getenv("CASTEL_RELEASE_KEY_PASSWORD")
+def releaseSigningReady = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
+    signingConfigs {
+        if (releaseSigningReady) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     namespace 'com.castel.generatedapp'
     compileSdk 36
 
@@ -18,6 +34,9 @@ android {
             minifyEnabled false
             shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (releaseSigningReady) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
