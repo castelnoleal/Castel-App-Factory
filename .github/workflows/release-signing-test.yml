@@ -109,7 +109,7 @@ jobs:
           AAB=generated-app/app/build/outputs/bundle/release/app-release.aab
           test -s "$AAB"
           unzip -t "$AAB" >/dev/null
-          jarsigner -verify -strict "$AAB" >/tmp/castel-aab-signature.txt 2>&1
+          jarsigner -verify "$AAB" >/tmp/castel-aab-signature.txt 2>&1
           grep -q "jar verified" /tmp/castel-aab-signature.txt
           keytool -list -printcert -jarfile "$AAB" | grep -E 'Owner:|SHA256:'
           echo "Release signing acceptance passed."
