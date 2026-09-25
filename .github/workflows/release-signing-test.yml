@@ -97,6 +97,7 @@ jobs:
           echo "CASTEL_RELEASE_STORE_PASSWORD=AcceptanceStorePassword-2026" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_KEY_ALIAS=upload" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_KEY_PASSWORD=AcceptanceKeyPassword-2026" >> "$GITHUB_ENV"
+          keytool -list -v -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "AcceptanceStorePassword-2026" | grep -E 'Keystore type:|Alias name:|Entry type:'
 
       - name: Build release AAB
         run: |
