@@ -200,6 +200,20 @@ jobs:
           echo "CASTEL_RELEASE_STORE_FILE=$RUNNER_TEMP/castel-signing/upload-key.jks" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_STORE_PASSWORD=$RELEASE_STORE_PASSWORD" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          # Validate that the configured password can actually unlock the private key.
+          # If this keystore intentionally uses one password for both store and key,
+          # automatically fall back to the store password.
+          if ! keytool -certreq -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -keypass "$RELEASE_KEY_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -file "$RUNNER_TEMP/castel-signing/key-check.csr" >/dev/null 2>&1; then
+            if keytool -certreq -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -keypass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" -file "$RUNNER_TEMP/castel-signing/key-check-storepass.csr" >/dev/null 2>&1; then
+              echo "Configured key password did not unlock the private key; using the store password because this keystore uses one password for both."
+              RELEASE_KEY_PASSWORD="$RELEASE_STORE_PASSWORD"
+            else
+              echo "Release signing credentials are invalid: the keystore opens, but the configured key password cannot unlock alias '$RELEASE_KEY_ALIAS'."
+              echo "Update CASTEL_RELEASE_KEY_PASSWORD in GitHub Actions Secrets with the private-key password for this alias. Do not replace the keystore."
+              exit 1
+            fi
+          fi
+          rm -f "$RUNNER_TEMP/castel-signing/key-check.csr" "$RUNNER_TEMP/castel-signing/key-check-storepass.csr"
           echo "CASTEL_RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
           keytool -list -v -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/tmp/castel-keystore-info.txt
           grep -E 'Alias name:|Valid from:|SHA256:' /tmp/castel-keystore-info.txt | head -n 3
