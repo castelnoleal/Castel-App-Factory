@@ -4,6 +4,7 @@ def releaseStoreFile = System.getenv("CASTEL_RELEASE_STORE_FILE")
 def releaseStorePassword = System.getenv("CASTEL_RELEASE_STORE_PASSWORD")
 def releaseKeyAlias = System.getenv("CASTEL_RELEASE_KEY_ALIAS")
 def releaseKeyPassword = System.getenv("CASTEL_RELEASE_KEY_PASSWORD")
+def releaseStoreType = System.getenv("CASTEL_RELEASE_STORE_TYPE")
 def releaseSigningReady = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
 
 android {
@@ -14,6 +15,9 @@ android {
                 storePassword releaseStorePassword
                 keyAlias releaseKeyAlias
                 keyPassword releaseKeyPassword
+                if (releaseStoreType) {
+                    storeType releaseStoreType
+                }
             }
         }
     }
