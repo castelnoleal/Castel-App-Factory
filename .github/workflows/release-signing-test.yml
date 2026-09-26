@@ -91,7 +91,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/castel-signing"
-          keytool -genkeypair -v             -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks"             -storetype JKS             -storepass "AcceptanceStorePassword-2026"             -keypass "AcceptanceKeyPassword-2026"             -alias upload             -keyalg RSA             -keysize 2048             -validity 10000             -dname "CN=Castel Signing Acceptance"
+          keytool -genkeypair -v \
+            -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" \
+            -storetype JKS \
+            -storepass "AcceptanceStorePassword-2026" \
+            -keypass "AcceptanceKeyPassword-2026" \
+            -alias upload \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -dname "CN=Castel Signing Acceptance"
           chmod 600 "$RUNNER_TEMP/castel-signing/upload-key.jks"
           echo "CASTEL_RELEASE_STORE_FILE=$RUNNER_TEMP/castel-signing/upload-key.jks" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_STORE_PASSWORD=AcceptanceStorePassword-2026" >> "$GITHUB_ENV"
@@ -110,10 +119,24 @@ jobs:
           AAB=generated-app/app/build/outputs/bundle/release/app-release.aab
           test -s "$AAB"
           unzip -t "$AAB" >/dev/null
+
+          # jarsigner can return a non-zero status for a self-signed fixture
+          # even when the archive's cryptographic signatures verify. Capture
+          # the status so we can validate the actual "jar verified" result.
+          set +e
           jarsigner -verify -verbose -certs "$AAB" >/tmp/castel-aab-signature.txt 2>&1
-          grep -qi "jar verified" /tmp/castel-aab-signature.txt
+          JARSIGNER_STATUS=$?
+          set -e
+          cat /tmp/castel-aab-signature.txt
+
+          grep -qi "jar verified" /tmp/castel-aab-signature.txt || {
+            echo "AAB cryptographic signature verification failed (jarsigner exit $JARSIGNER_STATUS)." >&2
+            exit 1
+          }
+
           keytool -list -printcert -jarfile "$AAB" >/tmp/castel-aab-cert.txt 2>&1
           grep -Eq 'Owner:|SHA-?256:' /tmp/castel-aab-cert.txt
+
           echo "Release AAB signature verification passed."
           echo "Certificate summary:"
           grep -E 'Owner:|SHA-?256:' /tmp/castel-aab-cert.txt | head -n 5
