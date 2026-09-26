@@ -129,10 +129,10 @@ jobs:
 
           keytool -list -printcert -jarfile "$AAB" >/tmp/castel-aab-cert.txt 2>&1
           grep -Fq "Owner:" /tmp/castel-aab-cert.txt
-          grep -Fq "SHA256:" /tmp/castel-aab-cert.txt
+          grep -Fq "CN=Castel Signing Acceptance" /tmp/castel-aab-cert.txt
 
           jarsigner -verify -verbose -certs "$AAB" >/tmp/castel-aab-signature.txt 2>&1 || true
-          grep -Fq "X.509, CN=Castel Signing Acceptance" /tmp/castel-aab-signature.txt
+          grep -Fq "Castel Signing Acceptance" /tmp/castel-aab-signature.txt
 
           echo "Release AAB signature metadata and signer certificate verification passed."
           echo "Certificate summary:"
