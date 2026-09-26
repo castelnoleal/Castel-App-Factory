@@ -127,18 +127,10 @@ jobs:
           unzip -l "$AAB" | grep -F "META-INF/UPLOAD.SF"
           unzip -l "$AAB" | grep -F "META-INF/UPLOAD.RSA"
 
-          keytool -list -printcert -jarfile "$AAB" >/tmp/castel-aab-cert.txt 2>&1
-          echo "Embedded signer certificate:"
-          cat /tmp/castel-aab-cert.txt
-
-          # The AAB is intentionally signed with a self-signed acceptance
-          # certificate. Verify the certificate identity directly; do not
-          # depend on PKIX trust-chain output from jarsigner.
-          grep -Fq "Owner: CN=Castel Signing Acceptance" /tmp/castel-aab-cert.txt
-
-          # Ask jarsigner to perform the actual JAR-signature verification.
-          # A self-signed certificate may still produce a trust-chain warning,
-          # so only the cryptographic verification result is required.
+          # Verify the AAB's JAR signature directly. AAB files are ZIP/JAR
+          # archives; do not use keytool -printcert -jarfile here because
+          # that command is intended for JARs and is not a reliable way to
+          # inspect Android App Bundles.
           set +e
           jarsigner -verify -verbose -certs "$AAB" >/tmp/castel-aab-signature.txt 2>&1
           JARSIGNER_STATUS=$?
@@ -146,9 +138,9 @@ jobs:
           echo "jarsigner exit status: $JARSIGNER_STATUS"
           cat /tmp/castel-aab-signature.txt
 
-          # A valid signed archive reports verified signature entries ("s =").
+          # Require the acceptance signer and verified signature entries.
+          grep -Fq "Castel Signing Acceptance" /tmp/castel-aab-signature.txt
           grep -Eq '^[[:space:]]*s[[:space:]]' /tmp/castel-aab-signature.txt
 
           echo "Release AAB signature metadata and cryptographic verification passed."
-          echo "Certificate summary:"
-          grep -F "Owner:" /tmp/castel-aab-cert.txt | head -n 5
+ /tmp/castel-aab-cert.txt | head -n 5
