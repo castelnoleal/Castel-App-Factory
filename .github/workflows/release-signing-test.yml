@@ -1,4 +1,5 @@
 name: Release Signing Acceptance
+# Acceptance workflow: build and cryptographically verify a signed AAB.
 
 on:
   push:
