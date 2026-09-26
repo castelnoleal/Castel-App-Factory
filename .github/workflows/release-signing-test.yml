@@ -143,4 +143,3 @@ jobs:
           grep -Eq '^[[:space:]]*s[[:space:]]' /tmp/castel-aab-signature.txt
 
           echo "Release AAB signature metadata and cryptographic verification passed."
- /tmp/castel-aab-cert.txt | head -n 5
