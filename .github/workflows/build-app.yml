@@ -201,7 +201,15 @@ jobs:
           echo "CASTEL_RELEASE_STORE_PASSWORD=$RELEASE_STORE_PASSWORD" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
           echo "CASTEL_RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
-          keytool -list -v -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" | grep -E 'Alias name:|Valid from:|SHA256:' | head -n 3
+          keytool -list -v -keystore "$RUNNER_TEMP/castel-signing/upload-key.jks" -storepass "$RELEASE_STORE_PASSWORD" -alias "$RELEASE_KEY_ALIAS" >/tmp/castel-keystore-info.txt
+          grep -E 'Alias name:|Valid from:|SHA256:' /tmp/castel-keystore-info.txt | head -n 3
+          store_type=$(awk -F': ' '/^Keystore type:/{print $2; exit}' /tmp/castel-keystore-info.txt)
+          case "$store_type" in
+            JKS|PKCS12) ;;
+            *) echo "Unsupported release keystore type: $store_type"; exit 1 ;;
+          esac
+          echo "CASTEL_RELEASE_STORE_TYPE=$store_type" >> "$GITHUB_ENV"
+          echo "Release keystore type detected: $store_type"
 
       - name: Lint and build debug APK + release AAB
         run: |
