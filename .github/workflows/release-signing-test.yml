@@ -124,7 +124,8 @@ jobs:
           # The acceptance certificate is intentionally self-signed, so PKIX
           # trust-chain warnings from jarsigner are expected.
           unzip -l "$AAB" | grep -F "META-INF/"
-          unzip -l "$AAB" | grep -E "\.(SF|RSA|DSA|EC)$"
+          unzip -l "$AAB" | grep -F "META-INF/UPLOAD.SF"
+          unzip -l "$AAB" | grep -F "META-INF/UPLOAD.RSA"
 
           keytool -list -printcert -jarfile "$AAB" >/tmp/castel-aab-cert.txt 2>&1
           grep -Fq "Owner:" /tmp/castel-aab-cert.txt
