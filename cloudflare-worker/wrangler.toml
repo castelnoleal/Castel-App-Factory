@@ -7,3 +7,6 @@ workers_dev = true
 GITHUB_OWNER = "castelnoleal"
 GITHUB_REPO = "Castel-App-Factory"
 GITHUB_WORKFLOW = "build-app.yml"
+
+[secrets]
+required = ["GITHUB_TOKEN", "CASTEL_SIGNING_ACCESS_TOKEN"]
