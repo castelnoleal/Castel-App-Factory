@@ -1,6 +1,7 @@
 // Optional AI supervision is advisory. Keep the Worker self-contained so a
 // missing optional module can never block production deployment.
 // Deployment marker: website-source-v3 bridge.
+// Production bridge deployment smoke trigger: 2026-09-27.
 async function superviseBuild(env, context = {}) {
   if (!env?.OPENAI_API_KEY) return { enabled: false, reason: "OPENAI_API_KEY is not configured" };
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
