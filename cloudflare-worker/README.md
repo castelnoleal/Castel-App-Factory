@@ -12,15 +12,16 @@ Text variables:
 
 Secrets:
 
-- `GITHUB_TOKEN` = a fine-grained GitHub token scoped to `castelnoleal/castel-app-factory`.
-- `OPENAI_API_KEY` = OpenAI API key used by the server-side AI build supervisor.
+- `GITHUB_TOKEN` = a new fine-grained GitHub token scoped to `castelnoleal/Castel-App-Factory`.
+- `CASTEL_SIGNING_ACCESS_TOKEN` = a strong random secret shared only with the Factory UI operator; required for release signing.
+- `OPENAI_API_KEY` = optional OpenAI API key used by the server-side AI build supervisor.
 
 Required GitHub token permissions:
 
 - **Actions: Read and write** — required to dispatch `build-app.yml`.
 - **Contents: Read and write** — required to create `build-inputs/<build-id>/manifest.json`, `status.json`, and source chunks.
 
-The OpenAI key is server-side only. Never put either credential in `factory/index.html` or any public repository file.
+The OpenAI key and both required secrets are server-side only. Never put any credential in `factory/index.html` or any public repository file.
 
 ## AI build supervisor
 
