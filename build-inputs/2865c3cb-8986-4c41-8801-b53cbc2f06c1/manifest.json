@@ -1,0 +1,29 @@
+{
+  "buildId": "2865c3cb-8986-4c41-8801-b53cbc2f06c1",
+  "appName": "KodeX by MEIOCG",
+  "packageName": "com.kodex.meiocg",
+  "versionName": "1.1.1",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "",
+  "sourceUrl": "https://kodex.meiocg.org/",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": true,
+  "externalLinks": false,
+  "offlineStorage": false,
+  "autoUpdate": true,
+  "cacheMode": "standard",
+  "signing": true,
+  "sourceChunkCount": 0,
+  "iconChunkCount": 1,
+  "iconFileName": "50708.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-10-10T21:23:15.049Z"
+}
