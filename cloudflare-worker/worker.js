@@ -58,10 +58,10 @@ async function gh(env, path, options={}) {
   return data;
 }
 function repoPath(env, p) { return `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${p}`; }
-async function putFile(env, path, contentBase64, message) {
-  return gh(env, repoPath(env, path), {method:"PUT", body:JSON.stringify({message,content:contentBase64,branch:"main"})});
+async function putFile(env, path, contentBase64, message, branch="main") {
+  return gh(env, repoPath(env, path), {method:"PUT", body:JSON.stringify({message,content:contentBase64,branch})});
 }
-async function getFile(env, path) { return gh(env, repoPath(env, path) + "?ref=main"); }
+async function getFile(env, path, ref="main") { return gh(env, repoPath(env, path) + "?ref=" + encodeURIComponent(ref)); }
 
 export default {
   async fetch(request, env) {
@@ -142,23 +142,26 @@ export default {
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
+        const buildBranch = `build-${buildId}`;
+        const mainRef = await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/git/ref/heads/main`);
+        await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/git/refs`, {method:"POST", body:JSON.stringify({ref:`refs/heads/${buildBranch}`, sha:mainRef.object.sha})});
         const chunks = [];
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
         const iconChunks = [];
         if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
         const manifest = {buildId, appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
-        await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`);
-        await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`);
-        for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`);
-        for (let i=0;i<iconChunks.length;i++) await putFile(env, `${base}/icon-${String(i).padStart(4,"0")}.bin`, iconChunks[i], `Queue build ${buildId} icon ${i+1}/${iconChunks.length}`);
+        await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`, buildBranch);
+        await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`, buildBranch);
+        for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`, buildBranch);
+        for (let i=0;i<iconChunks.length;i++) await putFile(env, `${base}/icon-${String(i).padStart(4,"0")}.bin`, iconChunks[i], `Queue build ${buildId} icon ${i+1}/${iconChunks.length}`, buildBranch);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
-        await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:"main",inputs:{build_id:buildId}})});
-        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions."},202);
+        await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:buildBranch,inputs:{build_id:buildId}})});
+        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions.",queueMode:"isolated-concurrent"},202);
       } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
     }
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);
     if (match && request.method === "GET") {
-      try { const id = match[1]; const f = await getFile(env, `build-inputs/${id}/status.json`); const raw = atob(String(f.content || "").replace(/\n/g,"")); const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0)); return reply(JSON.parse(new TextDecoder().decode(bytes))); }
+      try { const id = match[1]; const f = await getFile(env, `build-inputs/${id}/status.json`, `build-${id}`); const raw = atob(String(f.content || "").replace(/\n/g,"")); const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0)); return reply(JSON.parse(new TextDecoder().decode(bytes))); }
       catch (e) { return reply({ok:false,error:"Build ID not found or status unavailable."},404); }
     }
     return reply({ok:false,error:"Endpoint not found."},404);
