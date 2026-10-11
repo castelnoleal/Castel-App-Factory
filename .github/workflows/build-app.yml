@@ -49,13 +49,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "build-inputs/${BUILD_ID}"
-          gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/manifest.json?ref=main" --jq .content | tr -d '\n' | base64 -d > "build-inputs/${BUILD_ID}/manifest.json"
+          gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/manifest.json?ref=build-${BUILD_ID}" --jq .content | tr -d '\n' | base64 -d > "build-inputs/${BUILD_ID}/manifest.json"
           chunk_count=$(jq -r '.sourceChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
           : > "build-inputs/${BUILD_ID}/source.bin"
           if [ "$chunk_count" -gt 0 ]; then
             for ((i=0; i<chunk_count; i++)); do
               name=$(printf 'source-%04d.bin' "$i")
-              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/source.bin"
+              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=build-${BUILD_ID}" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/source.bin"
             done
           fi
           icon_chunk_count=$(jq -r '.iconChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
@@ -63,7 +63,7 @@ jobs:
           if [ "$icon_chunk_count" -gt 0 ]; then
             for ((i=0; i<icon_chunk_count; i++)); do
               name=$(printf 'icon-%04d.bin' "$i")
-              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=main" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
+              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=build-${BUILD_ID}" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
             done
           fi
       - name: Mark build running
@@ -72,18 +72,18 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"running",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Mark build $BUILD_ID running" -f content="$payload" -f sha="$sha" -f branch="build-${BUILD_ID}" >/dev/null
       - name: "Update stage: generating Android project"
         env:
           GH_TOKEN: ${{ github.token }}
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Generating Android project" --argjson progress 20 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Generating Android project" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Generating Android project" -f content="${payload}" -f sha="${sha}" -f branch="build-${BUILD_ID}" >/dev/null
 
       - name: Install image asset tooling
         run: |
@@ -167,9 +167,9 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Compiling APK and AAB" --argjson progress 45 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Compiling APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Compiling APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch="build-${BUILD_ID}" >/dev/null
 
       - name: Determine release signing mode
         id: signing_gate
@@ -246,9 +246,9 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Starting Android emulator runtime test" --argjson progress 78 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Starting Android emulator runtime test" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Starting Android emulator runtime test" -f content="${payload}" -f sha="${sha}" -f branch="build-${BUILD_ID}" >/dev/null
 
       - name: Runtime smoke test generated APK
         uses: reactivecircus/android-emulator-runner@v2
@@ -285,9 +285,9 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Verifying generated APK and AAB" --argjson progress 92 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Verifying generated APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Verifying generated APK and AAB" -f content="${payload}" -f sha="${sha}" -f branch="build-${BUILD_ID}" >/dev/null
 
       - name: Verify artifacts and apply app-specific filenames
         env:
@@ -369,11 +369,11 @@ jobs:
           signing=$(jq -r '.signing // false' "build-inputs/${BUILD_ID}/manifest.json")
           test_apk_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.apk"
           test_aab_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/test-latest/Castel-App-Factory-Test.aab"
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha)
           app_name=$(jq -r '.appName' "build-inputs/${BUILD_ID}/manifest.json")
           safe_name=$(printf '%s' "$app_name" | sed 's/[^A-Za-z0-9._ -]/_/g; s/^[ ._-]*//; s/[ ._-]*$//')
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --arg buildApkUrl "$build_apk_url" --arg buildAabUrl "$build_aab_url" --argjson artifactId "$artifact_id" --arg testApkUrl "$test_apk_url" --arg testAabUrl "$test_aab_url" --argjson testBuild "$test_build" --argjson signing "$signing" --arg apkName "${safe_name}.apk" --arg aabName "${safe_name}.aab" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,buildApkUrl:$buildApkUrl,buildAabUrl:$buildAabUrl,testBuild:$testBuild,signing:$signing,testApkUrl:(if $testBuild then $testApkUrl else null end),testAabUrl:(if $testBuild then $testAabUrl else null end),apk:$apkName,aab:$aabName,updatedAt:(now|todateiso8601)}' | base64 -w0)
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null
+          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch="build-${BUILD_ID}" >/dev/null
       - name: Mark build failed
         if: failure()
         env:
@@ -381,8 +381,8 @@ jobs:
           BUILD_ID: ${{ inputs.build_id }}
         run: |
           set -euo pipefail
-          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=main" --jq .sha || true)
+          sha=$(gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json?ref=build-${BUILD_ID}" --jq .sha || true)
           if [ -n "$sha" ]; then
             payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:"failed",runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
-            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch=main >/dev/null || true
+            gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID failed" -f content="$payload" -f sha="$sha" -f branch="build-${BUILD_ID}" >/dev/null || true
           fi
