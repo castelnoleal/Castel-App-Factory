@@ -225,6 +225,14 @@ jobs:
             JKS|PKCS12) ;;
             *) echo "Unsupported release keystore type: $store_type"; exit 1 ;;
           esac
+          # PKCS12 stores use the store password to protect private keys.
+          # Normalize the Gradle key password to the store password to avoid
+          # Android Gradle signing failures when a different key password was supplied.
+          if [ "$store_type" = "PKCS12" ]; then
+            RELEASE_KEY_PASSWORD="$RELEASE_STORE_PASSWORD"
+            echo "CASTEL_RELEASE_KEY_PASSWORD=$RELEASE_KEY_PASSWORD" >> "$GITHUB_ENV"
+            echo "PKCS12 detected; using the keystore password for the private key."
+          fi
           echo "CASTEL_RELEASE_STORE_TYPE=$store_type" >> "$GITHUB_ENV"
           echo "Release keystore type detected: $store_type"
 
