@@ -250,6 +250,14 @@ jobs:
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Starting Android emulator runtime test" --argjson progress 78 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Starting Android emulator runtime test" -f content="${payload}" -f sha="${sha}" -f branch=main >/dev/null
 
+      - name: Determine smoke-test package
+        env:
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          echo "PACKAGE_NAME=$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")" >> "$GITHUB_ENV"
+          echo "APK=generated-app/app/build/outputs/apk/debug/app-debug.apk" >> "$GITHUB_ENV"
+
       - name: Runtime smoke test generated APK
         uses: reactivecircus/android-emulator-runner@v2
         env:
@@ -266,9 +274,6 @@ jobs:
           disable-animations: true
           script: |
             set -eu
-            PACKAGE_NAME="$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")"
-            APK="generated-app/app/build/outputs/apk/debug/app-debug.apk"
-            # This runner evaluates script lines separately; keep compound shell commands on one line.
             sleep 15
             adb shell cmd package list packages >/dev/null 2>&1 || sleep 20
             adb install -r "$APK" || (adb kill-server; adb start-server; adb wait-for-device; sleep 15; adb install -r "$APK")
