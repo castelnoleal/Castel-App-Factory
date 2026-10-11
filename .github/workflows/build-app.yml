@@ -268,48 +268,10 @@ jobs:
             set -eu
             PACKAGE_NAME="$(jq -r '.packageName' "build-inputs/${BUILD_ID}/manifest.json")"
             APK="generated-app/app/build/outputs/apk/debug/app-debug.apk"
-
-            # Wait for Android's package manager to become responsive; boot-complete
-            # alone does not guarantee that system services are ready on slow CI VMs.
-            package_ready=false
-            for attempt in $(seq 1 60); do
-              if adb shell cmd package list packages >/dev/null 2>&1; then
-                package_ready=true
-                break
-              fi
-              sleep 2
-            done
-            if [ "$package_ready" != true ]; then
-              echo "Android package manager did not become ready after emulator boot."
-              adb devices -l || true
-              adb logcat -d -t 500 || true
-              exit 1
-            fi
-
-            # Retry transient ADB/package-service failures instead of failing on the first attempt.
-            installed=false
-            for attempt in 1 2 3; do
-              if adb install -r "$APK"; then
-                installed=true
-                break
-              fi
-              echo "APK install attempt $attempt failed; restarting ADB and retrying."
-              adb kill-server || true
-              adb start-server || true
-              adb wait-for-device || true
-              sleep 5
-              for readiness_attempt in $(seq 1 12); do
-                if adb shell cmd package list packages >/dev/null 2>&1; then break; fi
-                sleep 2
-              done
-            done
-            if [ "$installed" != true ]; then
-              echo "APK installation failed after retries."
-              adb devices -l || true
-              adb logcat -d -t 500 || true
-              exit 1
-            fi
-
+            # This runner evaluates script lines separately; keep compound shell commands on one line.
+            sleep 15
+            adb shell cmd package list packages >/dev/null 2>&1 || sleep 20
+            adb install -r "$APK" || (adb kill-server; adb start-server; adb wait-for-device; sleep 15; adb install -r "$APK")
             adb logcat -c
             adb shell am force-stop "$PACKAGE_NAME" || true
             adb shell am start -n "$PACKAGE_NAME/.MainActivity"
