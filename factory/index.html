@@ -296,7 +296,7 @@ async function buildBridge(payload,onLog){
     }catch(e){
       pollErrors++;
       if(pollErrors===1)onLog("Connection interrupted; retrying build status without restarting the build");
-      if(pollErrors>=12)throw new Error("Could not reconnect to build status after several attempts. Your build may still be running. Build ID: "+queued.buildId+". Check the GitHub Actions run before retrying.");
+      if(pollErrors>=12){const pendingError=new Error("Build status connection is unavailable. The build ID has been saved; use Check build in Projects instead of restarting.");pendingError.pendingBuildId=queued.buildId;throw pendingError;}
       await sleep(Math.min(15000,pollErrors*2000));
       continue;
     }
