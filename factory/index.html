@@ -494,10 +494,10 @@ function renderProjects(){
   if(!P.length){el.innerHTML='<p style="color:var(--m)">No projects yet. Start one from Create.</p>';return}
   el.innerHTML=P.map(p=>`<div class="pc" data-id="${p.id}">${p.icon?`<img src="${p.icon}" alt="">`:'<div class="ph"></div>'}
   <div class="i"><b>${esc(p.name||"Untitled")}${p.status==="built"?'<span class="tag ok">Built</span>':p.status==="failed"?'<span class="tag err">Failed</span>':""}</b><small>${esc(p.pkg||"No package ID")} · v${esc(p.vname)} · ${new Date(p.updated).toLocaleDateString()}</small></div>
-  <div class="acts"><button class="btn sm" data-a="open">Open</button><button class="btn sm" data-a="dup">Duplicate</button><button class="btn sm dng" data-a="del">Delete</button></div></div>`).join("");
+  <div class="acts"><button class="btn sm" data-a="open">Open</button>${p.buildId&&p.status==="built"?`<button class="btn sm" data-a="apk">APK</button>${p.aabUrl||p.buildId?`<button class="btn sm" data-a="aab">AAB</button>`:""}`:""}<button class="btn sm" data-a="dup">Duplicate</button><button class="btn sm dng" data-a="del">Delete</button></div></div>`).join("");
 }
 $("#plist").onclick=e=>{
-  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);
+  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved build ID.");const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}
   if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
   if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
