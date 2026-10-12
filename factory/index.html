@@ -476,7 +476,7 @@ $("#buildBtn").onclick=async()=>{
       backNavigation:Boolean(S.back),zoom:Boolean(S.zoom),fullscreen:Boolean(S.full),externalLinks:Boolean(S.ext),
       offlineStorage:Boolean(S.offline),autoUpdate:Boolean(S.update),
       cacheMode:({off:"off",std:"standard",first:"offline",aggr:"aggressive"})[S.cache]||"standard",
-      signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",testBuild:false
+      signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false
     };
     const res=await buildBridge(payload,log);
     $("#progBar").style.width="100%";
