@@ -374,6 +374,19 @@ jobs:
           safe_name=$(printf '%s' "$app_name" | sed 's/[^A-Za-z0-9._ -]/_/g; s/^[ ._-]*//; s/[ ._-]*$//')
           payload=$(jq -n --arg id "$BUILD_ID" --argjson runId "$GITHUB_RUN_ID" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" --arg artifactUrl "$artifact_url" --arg buildApkUrl "$build_apk_url" --arg buildAabUrl "$build_aab_url" --argjson artifactId "$artifact_id" --arg testApkUrl "$test_apk_url" --arg testAabUrl "$test_aab_url" --argjson testBuild "$test_build" --argjson signing "$signing" --arg apkName "${safe_name}.apk" --arg aabName "${safe_name}.aab" '{buildId:$id,status:"success",runId:$runId,runUrl:$runUrl,artifactId:$artifactId,artifactUrl:$artifactUrl,buildApkUrl:$buildApkUrl,buildAabUrl:$buildAabUrl,testBuild:$testBuild,signing:$signing,testApkUrl:(if $testBuild then $testApkUrl else null end),testAabUrl:(if $testBuild then $testAabUrl else null end),apk:$apkName,aab:$aabName,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build $BUILD_ID succeeded" -f content="$payload" -f sha="$sha" -f branch="build-${BUILD_ID}" >/dev/null
+      - name: Replace previous app build release after successful update
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          previous_id=$(jq -r '.previousBuildId // ""' "build-inputs/${BUILD_ID}/manifest.json")
+          if [[ "$previous_id" =~ ^[0-9a-fA-F-]{36}$ ]] && [ "$previous_id" != "$BUILD_ID" ]; then
+            # Only remove the prior release after this update has built, passed tests,
+            # and its replacement release/status have been published successfully.
+            gh release delete "build-${previous_id}" --yes --cleanup-tag >/dev/null 2>&1 || true
+          fi
       - name: Mark build failed
         if: failure()
         env:
