@@ -161,8 +161,35 @@ export default {
     }
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);
     if (match && request.method === "GET") {
-      try { const id = match[1]; const f = await getFile(env, `build-inputs/${id}/status.json`, `build-${id}`); const raw = atob(String(f.content || "").replace(/\n/g,"")); const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0)); return reply(JSON.parse(new TextDecoder().decode(bytes))); }
-      catch (e) { return reply({ok:false,error:"Build ID not found or status unavailable."},404); }
+      const id = match[1];
+      try {
+        const f = await getFile(env, `build-inputs/${id}/status.json`, `build-${id}`);
+        const raw = atob(String(f.content || "").replace(/\n/g,""));
+        const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
+        const status = JSON.parse(new TextDecoder().decode(bytes));
+        // GitHub Actions is authoritative; recover from a stale/intermediate failure status.
+        if (status.status === "failed" && status.runId) {
+          try {
+            const run = await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/runs/${status.runId}`);
+            if (run.status !== "completed") return reply({...status,status:"running",message:"Verifying build result with GitHub Actions",progress:status.progress || 90});
+            if (run.conclusion === "success") {
+              const rr = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/releases/tags/build-${id}`, {headers:{Accept:"application/vnd.github+json","User-Agent":"castel-app-factory-api","X-GitHub-Api-Version":API_VERSION}});
+              if (rr.ok) {
+                const release = await rr.json();
+                const apk = (release.assets || []).find(a => String(a.name || "").toLowerCase().endsWith(".apk"));
+                const aab = (release.assets || []).find(a => String(a.name || "").toLowerCase().endsWith(".aab"));
+                if (apk || aab) return reply({...status,status:"success",runUrl:run.html_url || status.runUrl,buildApkUrl:`https://${u.host}/download/${id}/apk`,buildAabUrl:`https://${u.host}/download/${id}/aab`,apk:apk?.name,aab:aab?.name,message:"Build succeeded; result recovered from GitHub Actions."});
+              }
+            }
+            if (run.status === "completed" && run.conclusion !== "success") return reply({...status,status:"failed",error:status.error || `GitHub Actions concluded: ${run.conclusion || "failure"}.`,runUrl:run.html_url || status.runUrl});
+          } catch (verifyError) { return reply({...status,status:"running",message:"Reconnecting to verify the build result",progress:status.progress || 90}); }
+        }
+        return reply(status);
+      } catch (e) {
+        const message = String(e?.message || "");
+        const notFound = /GitHub 404: Not Found|Not Found/.test(message);
+        return reply({ok:false,error:notFound ? "Build ID not found." : "Build status temporarily unavailable; retry the request."},notFound ? 404 : 503);
+      }
     }
     return reply({ok:false,error:"Endpoint not found."},404);
   }
