@@ -484,7 +484,7 @@ $("#buildBtn").onclick=async()=>{
     if(res.aabUrl&&S.sign){$("#aab").href=res.aabUrl;$("#aab").hidden=false}
     if(res.apkUrl||res.aabUrl){$("#dl").style.display="flex";log("Build complete","ok")}
     S.status="built";S.vcode=+S.vcode;S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";persist();bind();
-  }catch(e){log(e.message,"err");S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}
+  }catch(e){log(e.message,"err");if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
   clearInterval(tick);building=false;btn.disabled=false;btn.textContent="Build APK and AAB";
 };
 
