@@ -280,7 +280,7 @@ const STEPS=["Source","Details","Icon","Offline","Preview","Check","Build"];
 const KEY={p:"castel.projects",g:"castel.settings"};
 /* Production build bridge: submit, then poll the unique build ID until artifacts are ready. */
 async function buildBridge(payload,onLog){
-  const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\\/+$/,"");
+  const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
@@ -423,7 +423,7 @@ function checks(){
   const pk=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(S.pkg);
   add("Package ID",pk?"ok":"fail",pk?"":"Use lowercase words separated by dots, like com.company.app.");
   const vc=Number.isInteger(+S.vcode)&&+S.vcode>0;
-  add("Version",vc&&/^\\d+(\\.\\d+){0,2}$/.test(S.vname)?"ok":"fail",vc&&/^\\d+(\\.\\d+){0,2}$/.test(S.vname)?"":"Use a numeric version name and a whole-number version code.");
+  add("Version",vc&&/^\d+(\.\d+){0,2}$/.test(S.vname)?"ok":"fail",vc&&/^\d+(\.\d+){0,2}$/.test(S.vname)?"":"Use a numeric version name and a whole-number version code.");
   add("Launcher icon",!S.icon?"warn":S.iconSize<512?"warn":"ok",!S.icon?"No icon. Android will use a default.":S.iconSize<512?"Icon is smaller than 512 px and may look soft.":"");
   if(S.sign)add("Signing token",$("#token").value.trim()?"ok":"fail",$("#token").value.trim()?"":"Enter your signing access token or turn signing off.");
   return r;
