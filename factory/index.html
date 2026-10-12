@@ -458,7 +458,7 @@ $("#buildBtn").onclick=async()=>{
       orientation:S.orient==="auto"?"unspecified":S.orient,
       sourceMode:S.stype==="url"?"website":"html",sourceType:S.stype==="url"?"website":"html",
       sourceFileName:S.fileName||"",sourceUrl:S.stype==="url"?normUrl(S.url):"",
-      sourceBase64:S.stype==="file"?(srcFile&&/\.zip$/i.test(srcFile.name)?await b64(srcFile):(S.html?btoa(unescape(encodeURIComponent(S.html))):"")):"",
+      sourceBase64:S.stype==="file"?(srcFile&&/\.zip$/i.test(srcFile.name)?await b64(srcFile):(S.fileName&&/\.zip$/i.test(S.fileName)?await zipBase64(S.id):(S.html?btoa(unescape(encodeURIComponent(S.html))):""))):"",
       iconBase64:S.icon?S.icon.split(",")[1]:"",iconFileName:S.icon?"app-icon.png":"",
       backNavigation:Boolean(S.back),zoom:Boolean(S.zoom),fullscreen:Boolean(S.full),externalLinks:Boolean(S.ext),
       offlineStorage:Boolean(S.offline),autoUpdate:Boolean(S.update),
