@@ -277,7 +277,7 @@ async function buildBridge(payload,onLog){
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
-  if(typeof payload.onQueued==="function")payload.onQueued(queued.buildId);
+  if(typeof S!=="undefined"&&String(S.id||"")===String(payload.projectId||"")){S.pendingBuildId=queued.buildId;S.status=S.buildId?"built":"pending";persist();bind()}
   try{localStorage.setItem("castel.activeBuild."+String(payload.projectId||""),JSON.stringify({buildId:queued.buildId,projectId:String(payload.projectId||""),startedAt:Date.now()}))}catch{}
   onLog("Build queued: "+queued.buildId);
   onLog("Waiting for Android project generation and compilation");
@@ -497,10 +497,29 @@ function renderProjects(){
   if(!P.length){el.innerHTML='<p style="color:var(--m)">No projects yet. Start one from Create.</p>';return}
   el.innerHTML=P.map(p=>`<div class="pc" data-id="${p.id}">${p.icon?`<img src="${p.icon}" alt="">`:'<div class="ph"></div>'}
   <div class="i"><b>${esc(p.name||"Untitled")}${p.status==="built"?'<span class="tag ok">Built</span>':p.status==="failed"?'<span class="tag err">Failed</span>':""}</b><small>${esc(p.pkg||"No package ID")} · v${esc(p.vname)} · ${new Date(p.updated).toLocaleDateString()}</small></div>
-  <div class="acts"><button class="btn sm" data-a="open">Open</button>${p.buildId&&p.status==="built"?`<button class="btn sm" data-a="apk">APK</button>${p.aabUrl||p.buildId?`<button class="btn sm" data-a="aab">AAB</button>`:""}`:""}<button class="btn sm" data-a="dup">Duplicate</button><button class="btn sm dng" data-a="del">Delete</button></div></div>`).join("");
+  <div class="acts"><button class="btn sm" data-a="open">Open</button>${p.buildId&&p.status==="built"?`<button class="btn sm" data-a="apk">APK</button><button class="btn sm" data-a="aab">AAB</button>`:""}${p.pendingBuildId?`<button class="btn sm" data-a="check">Check build</button>`:""}<button class="btn sm" data-a="dup">Duplicate</button><button class="btn sm dng" data-a="del">Delete</button></div></div>`).join("");
+}
+async function checkProjectBuild(p){
+  if(!p?.pendingBuildId)return toast("No pending build is saved for this project.");
+  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\\/+$/,"");
+  toast("Checking saved build status…");
+  try{
+    const r=await fetch(ep+"/build/"+encodeURIComponent(buildId)+"?t="+Date.now(),{cache:"no-store"});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||("Status check returned HTTP "+r.status));
+    if(d.status==="success"||d.status==="completed"){
+      if(!d.buildApkUrl&&!d.buildAabUrl)throw new Error("Build completed but download metadata is missing.");
+      p.buildId=buildId;p.apkUrl=d.buildApkUrl||"";p.aabUrl=d.buildAabUrl||"";p.status="built";p.pendingBuildId="";p.updated=Date.now();save(KEY.p,P);renderProjects();
+      if(S.id===p.id){S=structuredClone(p);bind()}
+      try{localStorage.removeItem("castel.activeBuild."+p.id)}catch{}
+      return toast("Build complete. APK and AAB are ready in Projects.");
+    }
+    if(d.status==="failed"||d.status==="error"){p.pendingBuildId="";if(!p.buildId)p.status="failed";save(KEY.p,P);renderProjects();return toast(d.error||"This build failed. Any previous successful build is preserved.")}
+    toast(d.message||"Build is still running. Check again shortly.");
+  }catch(e){toast("Could not confirm build yet. It is saved; retry Check build later.")}
 }
 $("#plist").onclick=e=>{
-  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved build ID.");const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}
+  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}if(a==="check"){checkProjectBuild(p);return}
   if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
   if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
