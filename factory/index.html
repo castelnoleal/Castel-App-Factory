@@ -18,7 +18,7 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--a);outline-offset:2px}
 .app{display:grid;grid-template-rows:auto 1fr;min-height:100vh;min-height:100dvh}
 header{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:14px 24px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--s);border-bottom:1px solid var(--b)}
-.logo{width:34px;height:34px;border-radius:9px;background:var(--p);display:grid;place-items:center;flex:none}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--p);display:grid;place-items:center;flex:none;font-size:21px;line-height:1}
 .logo svg{width:20px;height:20px;fill:none;stroke:var(--pt);stroke-width:1.8;stroke-linejoin:round}
 header h1{font-size:17px;letter-spacing:-.01em}
 header p{font-size:12.5px;color:var(--m)}
@@ -140,7 +140,7 @@ h2{font-size:24px}
 <body>
 <div class="app">
 <header>
-  <div class="logo" aria-label="Castel sealed-box logo"><svg viewBox="0 0 24 24" role="img" aria-hidden="true"><path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.8 7.7 12 12l8.2-4.3M12 12v8.6M8.2 5l8.5 4.6M10 11v-4.8"/></svg></div>
+  <div class="logo" aria-label="Original box logo" role="img">📦</div>
   <div><h1>Castel App Factory</h1><p>Turn a web page into an Android app</p></div>
   <span class="pill" id="status">Draft</span>
 </header>
