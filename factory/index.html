@@ -424,7 +424,7 @@ function checks(){
   const hasSrc=S.stype==="url"?!!normUrl(S.url):!!(S.html||srcFile);
   add("Source added",hasSrc?"ok":"fail",hasSrc?"":"Upload a file or enter a website address.");
   if(srcFile&&srcFile.size>20*1024*1024)add("Source size","fail","Keep uploaded HTML or ZIP files under 20 MB.");
-  if(S.stype==="file"&&srcFile&&!/\\.(html?|zip)$/i.test(srcFile.name))add("Source format","fail","Use an HTML, HTM, or ZIP file.");
+  if(S.stype==="file"&&srcFile&&!/\.(html?|zip)$/i.test(srcFile.name))add("Source format","fail","Use an HTML, HTM, or ZIP file.");
   if(S.stype==="url"&&S.url&&/^http:\/\//i.test(S.url))add("Secure address","warn","This site uses http. Android may block it. Use https.");
   add("App name",S.name.trim().length>=2?"ok":"fail",S.name.trim().length>=2?"":"Give your app a name.");
   const pk=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(S.pkg);
