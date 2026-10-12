@@ -305,6 +305,15 @@ const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}cat
 let G=Object.assign({theme:"system",layout:"steps",prefix:"com.castel",endpoint:"https://castel-app-factory-api.nolealtohka.workers.dev"},load(KEY.g,{}));
 let P=load(KEY.p,[]);
 let S=blank(),step=0,srcFile=null,pkgTouched=false,building=false;
+const SOURCE_DB="castel.factory.sources",SOURCE_STORE="zipFiles";
+function openSourceDB(){return new Promise((resolve,reject)=>{if(!("indexedDB" in window))return reject(new Error("This browser does not support persistent source storage."));const q=indexedDB.open(SOURCE_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(SOURCE_STORE))q.result.createObjectStore(SOURCE_STORE)};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error||new Error("Could not open source storage."))})}
+async function sourceDB(mode,fn){const db=await openSourceDB();return new Promise((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,mode),store=tx.objectStore(SOURCE_STORE);let req;try{req=fn(store)}catch(e){db.close();reject(e);return}tx.oncomplete=()=>{db.close();resolve(req?.result)};tx.onerror=tx.onabort=()=>{const e=tx.error||req?.error||new Error("Source storage failed.");db.close();reject(e)}})}
+const putZip=(id,blob)=>sourceDB("readwrite",s=>s.put(blob,id));
+const getZip=id=>sourceDB("readonly",s=>s.get(id));
+const delZip=id=>sourceDB("readwrite",s=>s.delete(id));
+async function zipBase64(id){const blob=await getZip(id);if(!blob)return "";return await b64(new File([blob],"source.zip",{type:"application/zip"}))}
+function base64Blob(data){const raw=atob(data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Blob([bytes],{type:"application/zip"})}
+
 
 function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now()}}
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2400)}
@@ -373,14 +382,17 @@ const normUrl=u=>{u=u.trim();return !u?"":/^https?:\/\//i.test(u)?u:"https://"+u
 async function takeFile(f){
   if(!f)return;const zip=/\.zip$/i.test(f.name);
   if(!zip&&!/\.html?$/i.test(f.name))return toast("Choose an HTML, HTM or ZIP file.");
+  if(f.size>20*1024*1024)return toast("Keep uploaded HTML or ZIP files under 20 MB.");
   srcFile=f;S.fileName=f.name;S.html=zip?"":await f.text();
+  if(zip){try{await putZip(S.id,f)}catch(e){srcFile=null;return toast("Could not save this ZIP on your device. Try a smaller file or another browser.")}}
+  else {try{await delZip(S.id)}catch{}}
   if(!S.name){S.name=f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ");S.pkg=G.prefix+"."+S.name.toLowerCase().replace(/[^a-z0-9]/g,"")}
-  bind();persist();toast(f.name+" added")
+  bind();persist();toast(zip?"ZIP saved for this project":"HTML added")
 }
 $("#srcFile").onchange=e=>takeFile(e.target.files[0]);
 const dz=$("#drop");["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("over")}));
 ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("over");if(ev==="drop")takeFile(e.dataTransfer.files[0])}));
-$("#clearSrc").onclick=()=>{S.html="";S.fileName="";S.url="";srcFile=null;bind();preview();persist()};
+$("#clearSrc").onclick=async()=>{try{await delZip(S.id)}catch{}S.html="";S.fileName="";S.url="";srcFile=null;bind();preview();persist()};
 
 /* ============ ICON ============ */
 $("#iconFile").onchange=e=>{
@@ -473,13 +485,13 @@ function renderProjects(){
 }
 $("#plist").onclick=e=>{
   const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);
-  if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create")}
-  if(a==="dup"){const c=structuredClone(p);c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")}
+  if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
+  if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
 };
 $("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;$("#log").innerHTML="";$("#dl").style.display="none";bind();go(0);view("create")};
-$("#exp").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(P)],{type:"application/json"}));a.download="castel-projects.json";a.click()};
-$("#imp").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d))throw 0;const ids=new Set(P.map(p=>p.id));P=[...d.filter(p=>p&&p.id&&!ids.has(p.id)),...P];save(KEY.p,P);renderProjects();toast("Imported "+d.length+" projects")}catch{toast("Invalid project export.")}};
+$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(copy.fileName&&/\.zip$/i.test(copy.fileName)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="castel-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
+$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&p.fileName&&/\.zip$/i.test(p.fileName))await putZip(p.id,base64Blob(zip));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid Castel project backup.")}finally{e.target.value=""}};
 $("#copyDev").onclick=async()=>{try{await navigator.clipboard.writeText($("#devCode").textContent);toast("Copied")}catch{toast("Clipboard access is unavailable in this browser.")}};
 
 /* ============ INIT ============ */
