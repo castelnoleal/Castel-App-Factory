@@ -30,8 +30,9 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare static site
         run: |
-          mkdir -p _site
+          mkdir -p _site _site/factory
           cp -R factory/. _site/
+          cp -R factory/. _site/factory/
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
