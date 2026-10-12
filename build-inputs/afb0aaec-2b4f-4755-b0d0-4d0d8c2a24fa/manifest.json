@@ -1,0 +1,29 @@
+{
+  "buildId": "afb0aaec-2b4f-4755-b0d0-4d0d8c2a24fa",
+  "appName": "Castefy",
+  "packageName": "com.castelmei.castefy",
+  "versionName": "1.2.0",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "index.html",
+  "sourceUrl": "https://factory.castelmei.com/factory/index.html",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": false,
+  "externalLinks": true,
+  "offlineStorage": true,
+  "autoUpdate": true,
+  "cacheMode": "standard",
+  "signing": true,
+  "sourceChunkCount": 0,
+  "iconChunkCount": 1,
+  "iconFileName": "app-icon.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-10-12T10:42:36.659Z"
+}
