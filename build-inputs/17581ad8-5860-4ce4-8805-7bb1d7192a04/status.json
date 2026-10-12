@@ -1,9 +1,9 @@
 {
   "buildId": "17581ad8-5860-4ce4-8805-7bb1d7192a04",
   "status": "running",
-  "message": "Generating Android project",
-  "progress": 20,
+  "message": "Compiling APK and AAB",
+  "progress": 45,
   "runId": 38281520879,
   "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/38281520879",
-  "updatedAt": "2026-10-12T17:02:51Z"
+  "updatedAt": "2026-10-12T17:03:06Z"
 }
