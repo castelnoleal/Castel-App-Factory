@@ -277,6 +277,8 @@ async function buildBridge(payload,onLog){
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
+  if(typeof payload.onQueued==="function")payload.onQueued(queued.buildId);
+  try{localStorage.setItem("castel.activeBuild."+String(payload.projectId||""),JSON.stringify({buildId:queued.buildId,projectId:String(payload.projectId||""),startedAt:Date.now()}))}catch{}
   onLog("Build queued: "+queued.buildId);
   onLog("Waiting for Android project generation and compilation");
   const started=Date.now();let lastMessage="",pollErrors=0;
@@ -301,12 +303,13 @@ async function buildBridge(payload,onLog){
     if(status.status==="success"||status.status==="completed"){
       if(!status.buildApkUrl&&!status.buildAabUrl)throw new Error("Build succeeded but no download links were returned.");
       onLog("Build verified successfully","ok");
+      try{localStorage.removeItem("castel.activeBuild."+String(payload.projectId||""))}catch{}
       return {apkUrl:status.buildApkUrl||"",aabUrl:status.buildAabUrl||"",buildId:queued.buildId,signing:status.signing};
     }
     if(status.status==="failed"||status.status==="error")throw new Error(status.error||"The Android build failed. Open the build run for details.");
     if(status.message&&status.message!==lastMessage){onLog(status.message);lastMessage=status.message;}
   }
-  throw new Error("Build is taking longer than expected. Build ID: "+queued.buildId+". Check the GitHub Actions run before retrying.");
+  const pendingError=new Error("Build is still running or its status could not be confirmed. Your build ID has been saved. Use Check build in Projects; do not rebuild yet.");pendingError.pendingBuildId=queued.buildId;throw pendingError;
 }
 
 /* ============ STATE ============ */
@@ -484,7 +487,7 @@ $("#buildBtn").onclick=async()=>{
     if(res.aabUrl&&S.sign){$("#aab").href=res.aabUrl;$("#aab").hidden=false}
     if(res.apkUrl||res.aabUrl){$("#dl").style.display="flex";log("Build complete","ok")}
     S.status="built";S.vcode=+S.vcode;S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";persist();bind();
-  }catch(e){log(e.message,"err");if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
+  }catch(e){log(e.message,"err");if(e.pendingBuildId){S.pendingBuildId=e.pendingBuildId;S.status=S.buildId?"built":"pending";persist();bind();$("#status").textContent=S.buildId?"Previous build ready · update pending":"Build pending";$("#status").className=S.buildId?"pill ok":"pill run";log("Saved build ID: "+e.pendingBuildId+" — check status from Projects without restarting.","ok")}else if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
   clearInterval(tick);building=false;btn.disabled=false;btn.textContent="Build APK and AAB";
 };
 
