@@ -79,19 +79,17 @@ export default {
         const kind = downloadMatch[2].toLowerCase();
         const owner = env.GITHUB_OWNER || "castelnoleal";
         const repo = env.GITHUB_REPO || "Castel-App-Factory";
-        const releaseResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/tags/build-${buildId}`, {
-          headers: { "Accept": "application/vnd.github+json", "User-Agent": "castel-app-factory-download", "X-GitHub-Api-Version": API_VERSION }
-        });
-        if (!releaseResponse.ok) return reply({ok:false,error:`Build release lookup returned HTTP ${releaseResponse.status}.`}, releaseResponse.status);
-        const release = await releaseResponse.json();
+        // Use the authenticated GitHub API: browser_download_url can return 403
+        // when the repository/release is private, even though the Worker has access.
+        const release = await gh(env, `/repos/${owner}/${repo}/releases/tags/build-${buildId}`);
         const extension = kind === "apk" ? ".apk" : ".aab";
         const asset = (release.assets || []).find(item => String(item.name || "").toLowerCase().endsWith(extension));
         if (!asset) return reply({ok:false,error:`The ${kind.toUpperCase()} file was not found in this build release.`}, 404);
         const fileName = asset.name;
-        const upstream = await fetch(asset.browser_download_url, {
+        const upstream = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${asset.id}`, {
           method: "GET",
           redirect: "follow",
-          headers: { "Accept": "application/octet-stream", "User-Agent": "castel-app-factory-download" }
+          headers: { "Accept": "application/octet-stream", "Authorization": `Bearer ${env.GITHUB_TOKEN}`, "X-GitHub-Api-Version": API_VERSION, "User-Agent": "castel-app-factory-download" }
         });
         if (!upstream.ok) return reply({ok:false,error:`Artifact download returned HTTP ${upstream.status}.`}, upstream.status);
         const outHeaders = new Headers();
