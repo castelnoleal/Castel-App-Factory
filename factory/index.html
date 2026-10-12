@@ -279,12 +279,25 @@ async function buildBridge(payload,onLog){
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
   onLog("Build queued: "+queued.buildId);
   onLog("Waiting for Android project generation and compilation");
-  const started=Date.now();let lastMessage="";
+  const started=Date.now();let lastMessage="",pollErrors=0;
   while(Date.now()-started<35*60*1000){
     await sleep(5000);
-    const r=await fetch(ep+"/build/"+encodeURIComponent(queued.buildId)+"?t="+Date.now(),{cache:"no-store"});
-    const status=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(status.error||("Build status returned HTTP "+r.status));
+    let r,status;
+    try{
+      r=await fetch(ep+"/build/"+encodeURIComponent(queued.buildId)+"?t="+Date.now(),{cache:"no-store"});
+      status=await r.json().catch(()=>({}));
+      if(!r.ok){
+        if(r.status>=500)throw new Error("Temporary build-status server error");
+        throw new Error(status.error||("Build status returned HTTP "+r.status));
+      }
+      pollErrors=0;
+    }catch(e){
+      pollErrors++;
+      if(pollErrors===1)onLog("Connection interrupted; retrying build status without restarting the build");
+      if(pollErrors>=12)throw new Error("Could not reconnect to build status after several attempts. Your build may still be running. Build ID: "+queued.buildId+". Check the GitHub Actions run before retrying.");
+      await sleep(Math.min(15000,pollErrors*2000));
+      continue;
+    }
     if(status.status==="success"||status.status==="completed"){
       if(!status.buildApkUrl&&!status.buildAabUrl)throw new Error("Build succeeded but no download links were returned.");
       onLog("Build verified successfully","ok");
