@@ -1,9 +1,7 @@
 {
   "buildId": "17581ad8-5860-4ce4-8805-7bb1d7192a04",
-  "status": "running",
-  "message": "Starting Android emulator runtime test",
-  "progress": 78,
+  "status": "failed",
   "runId": 38281520879,
   "runUrl": "https://github.com/castelnoleal/Castel-App-Factory/actions/runs/38281520879",
-  "updatedAt": "2026-10-12T17:03:41Z"
+  "updatedAt": "2026-10-12T17:12:55Z"
 }
