@@ -260,13 +260,6 @@ CastelApp.bundleUrl(key, path)</div>
   <div class="card"><h3>Backup</h3><p class="h">Move your projects to another device.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="exp">Export projects</button><label class="btn" style="cursor:pointer">Import<input type="file" id="imp" accept=".json" hidden></label></div>
   </div>
-  <div class="card"><h3>Coming next</h3><p class="h">Spots reserved for features you can wire up.</p>
-    <div class="soon">App version bumping with each build</div>
-    <div class="soon">Keystore manager for release signing</div>
-    <div class="soon">Splash screen and theme colors</div>
-    <div class="soon">Push notifications and deep links</div>
-    <div class="soon">Team sharing and build history sync</div>
-  </div>
 </section>
 
 </main>
@@ -286,7 +279,7 @@ async function buildBridge(payload,onLog){
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
   onLog("Build queued: "+queued.buildId);
   onLog("Waiting for Android project generation and compilation");
-  const started=Date.now();
+  const started=Date.now();let lastMessage="";
   while(Date.now()-started<35*60*1000){
     await sleep(5000);
     const r=await fetch(ep+"/build/"+encodeURIComponent(queued.buildId)+"?t="+Date.now(),{cache:"no-store"});
@@ -298,7 +291,7 @@ async function buildBridge(payload,onLog){
       return {apkUrl:status.buildApkUrl||"",aabUrl:status.buildAabUrl||"",buildId:queued.buildId,signing:status.signing};
     }
     if(status.status==="failed"||status.status==="error")throw new Error(status.error||"The Android build failed. Open the build run for details.");
-    if(status.message)onLog(status.message);
+    if(status.message&&status.message!==lastMessage){onLog(status.message);lastMessage=status.message;}
   }
   throw new Error("Build is taking longer than expected. Build ID: "+queued.buildId+". Check the GitHub Actions run before retrying.");
 }
@@ -486,8 +479,8 @@ $("#plist").onclick=e=>{
 };
 $("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;$("#log").innerHTML="";$("#dl").style.display="none";bind();go(0);view("create")};
 $("#exp").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(P)],{type:"application/json"}));a.download="castel-projects.json";a.click()};
-$("#imp").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d))throw 0;const ids=new Set(P.map(p=>p.id));P=[...d.filter(p=>p&&p.id&&!ids.has(p.id)),...P];save(KEY.p,P);toast("Imported "+d.length+" projects")}catch{toast("That file isn't a valid export.")}};
-$("#copyDev").onclick=()=>navigator.clipboard?.writeText($("#devCode").textContent).then(()=>toast("Copied"));
+$("#imp").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(!Array.isArray(d))throw 0;const ids=new Set(P.map(p=>p.id));P=[...d.filter(p=>p&&p.id&&!ids.has(p.id)),...P];save(KEY.p,P);renderProjects();toast("Imported "+d.length+" projects")}catch{toast("Invalid project export.")}};
+$("#copyDev").onclick=async()=>{try{await navigator.clipboard.writeText($("#devCode").textContent);toast("Copied")}catch{toast("Clipboard access is unavailable in this browser.")}};
 
 /* ============ INIT ============ */
 applyG();bind();go(0);
