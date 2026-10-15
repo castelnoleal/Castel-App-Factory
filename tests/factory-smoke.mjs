@@ -61,8 +61,8 @@ try {
   await page.locator('#plist').getByRole('button', { name: 'Duplicate' }).click();
   await page.waitForFunction(() => document.querySelector('#plist')?.textContent.includes('Factory Smoke Test copy'));
   assert(await page.locator('#plist').getByText('Factory Smoke Test copy').count() === 1, 'Duplicate creates a separate project');
-  await page.locator('#plist').getByRole('button', { name: 'Delete' }).last().click();
   page.once('dialog', dialog => dialog.accept());
+  await page.locator('#plist').getByRole('button', { name: 'Delete' }).last().click();
   await page.waitForTimeout(100);
   if (errors.length) throw new Error('Browser console errors:\n' + errors.join('\n'));
   results.push('PASS: no uncaught browser or console errors');
