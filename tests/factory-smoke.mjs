@@ -32,7 +32,6 @@ try {
   await page.getByRole('button', { name: 'Settings' }).click();
   assert(await page.locator('#v-settings').evaluate(e => e.classList.contains('on')), 'Settings navigation responds');
   await page.getByRole('button', { name: 'Create' }).click();
-  await page.locator('#newProj').click();
   await page.locator('#srcFile').setInputFiles({ name: 'smoke-test.html', mimeType: 'text/html', buffer: Buffer.from('<!doctype html><html><body><h1>Factory Smoke Test</h1></body></html>') });
   await page.locator('[data-k="name"]').fill('Factory Smoke Test');
   await page.locator('[data-k="pkg"]').fill('com.castel.smoketest');
