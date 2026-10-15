@@ -1,0 +1,28 @@
+name: Factory Desktop Browser Smoke Test
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'factory/index.html'
+      - 'tests/factory-smoke.mjs'
+      - '.github/workflows/factory-smoke-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  desktop-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Run desktop browser interaction tests
+        run: node tests/factory-smoke.mjs
