@@ -501,7 +501,7 @@ function renderProjects(){
 }
 async function checkProjectBuild(p){
   if(!p?.pendingBuildId)return toast("No pending build is saved for this project.");
-  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\\/+$/,"");
+  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");
   toast("Checking saved build status…");
   try{
     const r=await fetch(ep+"/build/"+encodeURIComponent(buildId)+"?t="+Date.now(),{cache:"no-store"});
