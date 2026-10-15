@@ -260,10 +260,12 @@ jobs:
           profile: pixel_2
           force-avd-creation: true
           emulator-boot-timeout: 1200
-          ram-size: 4096M
+          ram-size: 2048M
           cores: 2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot-save -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
+          # Do not use the action's disable-animations hook: it issues extra adb
+          # settings commands immediately after boot, which intermittently fail
+          # with Broken pipe on the hosted emulator even when Android has booted.
           script: |
             set -eu
             sleep 15
