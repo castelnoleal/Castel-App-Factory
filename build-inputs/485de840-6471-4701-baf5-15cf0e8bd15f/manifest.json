@@ -1,0 +1,31 @@
+{
+  "buildId": "485de840-6471-4701-baf5-15cf0e8bd15f",
+  "projectId": "pmvbkwr9g",
+  "previousBuildId": "",
+  "appName": "NDR",
+  "packageName": "com.castel.ndr",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "",
+  "sourceUrl": "https://app1.nationaldebtrelief.com/portalv2/s/login/",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": false,
+  "externalLinks": true,
+  "offlineStorage": true,
+  "autoUpdate": true,
+  "cacheMode": "standard",
+  "signing": false,
+  "sourceChunkCount": 0,
+  "iconChunkCount": 1,
+  "iconFileName": "app-icon.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-10-16T23:11:38.079Z"
+}
