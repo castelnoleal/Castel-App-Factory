@@ -1,8 +1,14 @@
 package com.castel.generatedapp;
 
 import android.content.Intent;
-import android.graphics.Color;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.net.Uri;
+import android.os.Environment;
+import android.webkit.DownloadListener;
+import android.webkit.URLUtil;
+import android.widget.Toast;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -127,6 +133,38 @@ public class MainActivity extends ComponentActivity {
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceErrorCompat error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) Log.e("CastelAppFactory", "PAGE_ERROR:" + request.getUrl() + ":" + error.getErrorCode());
+            }
+        });
+
+        // WebView does not download attachment responses by itself. Route APK/AAB
+        // and other attachment downloads through Android's system DownloadManager
+        // so they appear in Downloads and survive leaving this screen.
+        webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+            try {
+                Uri uri = Uri.parse(url);
+                String scheme = uri.getScheme();
+                if (scheme == null || !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"))) {
+                    Toast.makeText(this, "This download link is not supported.", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                DownloadManager.Request request = new DownloadManager.Request(uri);
+                String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                if (fileName == null || fileName.trim().isEmpty()) fileName = "download";
+                fileName = fileName.replaceAll("[\\\\/:*?\\\"<>|]", "_");
+                request.setTitle(fileName);
+                request.setDescription("Downloading " + fileName);
+                request.setMimeType(mimeType == null || mimeType.isEmpty() ? "application/octet-stream" : mimeType);
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setAllowedOverMetered(true);
+                request.setAllowedOverRoaming(true);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+                DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                if (manager == null) throw new IllegalStateException("Android download service is unavailable");
+                manager.enqueue(request);
+                Toast.makeText(this, "Download started. Check your notifications or Downloads folder.", Toast.LENGTH_LONG).show();
+            } catch (Exception e) {
+                Log.e("CastelAppFactory", "DOWNLOAD_START_FAILED", e);
+                Toast.makeText(this, "Could not start download. Please try again.", Toast.LENGTH_LONG).show();
             }
         });
 
