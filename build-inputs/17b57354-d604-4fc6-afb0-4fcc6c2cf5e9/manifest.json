@@ -1,0 +1,31 @@
+{
+  "buildId": "17b57354-d604-4fc6-afb0-4fcc6c2cf5e9",
+  "projectId": "pmvbk7p69",
+  "previousBuildId": "",
+  "appName": "Christine App",
+  "packageName": "com.castel.christineapp",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "",
+  "sourceUrl": "https://app.nationaldebtrelief.com/login",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": false,
+  "externalLinks": true,
+  "offlineStorage": true,
+  "autoUpdate": true,
+  "cacheMode": "standard",
+  "signing": false,
+  "sourceChunkCount": 0,
+  "iconChunkCount": 1,
+  "iconFileName": "app-icon.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-10-16T22:54:21.731Z"
+}
