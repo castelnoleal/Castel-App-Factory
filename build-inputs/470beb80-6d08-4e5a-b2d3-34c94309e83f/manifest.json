@@ -1,0 +1,31 @@
+{
+  "buildId": "470beb80-6d08-4e5a-b2d3-34c94309e83f",
+  "projectId": "pmv9srnre",
+  "previousBuildId": "",
+  "appName": "KodeX by Meiocg",
+  "packageName": "com.duelsynapse.kodex",
+  "versionName": "1.3.0",
+  "versionCode": 1,
+  "sourceMode": "website",
+  "orientation": "unspecified",
+  "sourceType": "HTTPS website",
+  "sourceFileName": "",
+  "sourceUrl": "https://kodex.meiocg.org/",
+  "backNavigation": true,
+  "zoom": false,
+  "fullscreen": false,
+  "externalLinks": true,
+  "offlineStorage": true,
+  "autoUpdate": true,
+  "cacheMode": "standard",
+  "signing": true,
+  "sourceChunkCount": 0,
+  "iconChunkCount": 1,
+  "iconFileName": "app-icon.png",
+  "testBuild": false,
+  "aiSupervisor": {
+    "enabled": false,
+    "reason": "OPENAI_API_KEY is not configured"
+  },
+  "createdAt": "2026-10-16T00:17:17.853Z"
+}
