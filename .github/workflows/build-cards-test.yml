@@ -24,7 +24,7 @@ jobs:
       - name: Checkout latest main
         uses: actions/checkout@v4
         with:
-          ref: sandbox/private-downloads
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
       - name: Show source revision
         run: git rev-parse HEAD
