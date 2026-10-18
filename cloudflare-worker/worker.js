@@ -77,6 +77,21 @@ export default {
       try {
         const buildId = downloadMatch[1];
         const kind = downloadMatch[2].toLowerCase();
+        const fileKey = `builds/${buildId}/${kind}.${kind === "apk" ? "apk" : "aab"}`;
+        // Prefer private R2 objects when the bucket binding is configured. This
+        // keeps normal downloads on the Factory domain and avoids public Releases.
+        if (env.ARTIFACTS) {
+          const object = await env.ARTIFACTS.get(fileKey);
+          if (object) {
+            const safeName = String(object.customMetadata?.fileName || `castel-app.${kind}`).replace(/["\\\\\\r\\n]/g, "_");
+            const outHeaders = new Headers();
+            outHeaders.set("Content-Type", kind === "apk" ? "application/vnd.android.package-archive" : "application/octet-stream");
+            outHeaders.set("Content-Disposition", `attachment; filename="${safeName}"`);
+            outHeaders.set("Cache-Control", "private, no-store");
+            if (object.size != null) outHeaders.set("Content-Length", String(object.size));
+            return new Response(object.body, {status: 200, headers: outHeaders});
+          }
+        }
         const owner = env.GITHUB_OWNER || "castelnoleal";
         const repo = env.GITHUB_REPO || "Castel-App-Factory";
         // Use the authenticated GitHub API: browser_download_url can return 403
