@@ -321,7 +321,7 @@ jobs:
           echo "AAB_FILENAME=${safe_name}.aab" >> "$GITHUB_ENV"
           sha256sum "$APK_NAMED" "$AAB_NAMED"
       - name: Upload private artifacts to Cloudflare R2 when configured
-        if: ${{ secrets.CF_R2_ACCESS_KEY_ID != '' && secrets.CF_R2_SECRET_ACCESS_KEY != '' && secrets.CF_R2_ACCOUNT_ID != '' && secrets.CF_R2_BUCKET != '' }}
+        if: success()
         env:
           R2_ACCESS_KEY_ID: ${{ secrets.CF_R2_ACCESS_KEY_ID }}
           R2_SECRET_ACCESS_KEY: ${{ secrets.CF_R2_SECRET_ACCESS_KEY }}
@@ -332,6 +332,10 @@ jobs:
           AAB_NAMED: ${{ env.AAB_NAMED }}
         run: |
           set -euo pipefail
+          if [ -z "${R2_ACCESS_KEY_ID}" ] || [ -z "${R2_SECRET_ACCESS_KEY}" ] || [ -z "${R2_ACCOUNT_ID}" ] || [ -z "${R2_BUCKET}" ]; then
+            echo "R2 secrets are not configured; keeping legacy GitHub Release delivery for this sandbox test."
+            exit 0
+          fi
           python3 -m pip install --user awscli
           export PATH="$HOME/.local/bin:$PATH"
           export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
