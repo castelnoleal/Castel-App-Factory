@@ -2,7 +2,7 @@ name: Offline Storage Acceptance
 
 on:
   push:
-    branches: [main]
+    branches: [main, sandbox/private-downloads]
     paths:
       - '.github/workflows/offline-storage-test.yml'
       - 'android-template/**'
@@ -164,8 +164,9 @@ jobs:
           emulator-options: '-no-window -no-audio -no-boot-anim -netdelay none -netspeed full -dns-server 8.8.8.8,1.1.1.1'
           script: |
             set -eu
-            APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
+            APK="$GITHUB_WORKSPACE/generated-app/app/build/outputs/apk/debug/app-debug.apk"
             PKG=com.castel.offlinetest
+            test -s "$APK" || { echo "Acceptance APK missing at $APK"; find "$GITHUB_WORKSPACE/generated-app" -maxdepth 7 -type f -name "*.apk" -print || true; exit 1; }
             (cd offline-test/server && python3 -m http.server 8765 --bind 0.0.0.0 >/tmp/offline-bundle-server.log 2>&1 &)
             sleep 2
             adb install -r "$APK"
