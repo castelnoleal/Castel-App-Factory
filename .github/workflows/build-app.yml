@@ -20,7 +20,8 @@ jobs:
       - name: Checkout factory
         uses: actions/checkout@v4
         with:
-          ref: main
+          # Use the branch that dispatched this workflow (sandbox or production).
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
       - name: Show source revision
         run: git rev-parse HEAD
