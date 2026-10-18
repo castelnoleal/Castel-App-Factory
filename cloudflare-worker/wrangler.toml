@@ -10,3 +10,9 @@ GITHUB_WORKFLOW = "build-app.yml"
 
 [secrets]
 required = ["GITHUB_TOKEN", "CASTEL_SIGNING_ACCESS_TOKEN"]
+
+# Sandbox-only private artifact storage. Create this R2 bucket before deploying
+# this branch's Worker; do not deploy this config to production until validated.
+[[r2_buckets]]
+binding = "ARTIFACTS"
+bucket_name = "castel-app-factory-artifacts-sandbox"
