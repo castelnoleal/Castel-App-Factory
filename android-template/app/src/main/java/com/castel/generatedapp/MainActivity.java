@@ -8,6 +8,7 @@ import android.os.Environment;
 import android.webkit.DownloadListener;
 import android.webkit.URLUtil;
 import android.widget.Toast;
+import android.os.SystemClock;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -49,11 +50,12 @@ public class MainActivity extends ComponentActivity {
     private ValueCallback<Uri[]> fileChooserCallback;
     private final ExecutorService dataExecutor = Executors.newSingleThreadExecutor();
     private File offlineDataDir;
+    private long lastBackPressedAt = 0L;
     private static final boolean OFFLINE_STORAGE = false;
     private static final boolean AUTO_UPDATE = false;
     private static final int CACHE_MODE = WebSettings.LOAD_DEFAULT;
 
-    private static final boolean ALLOW_EXTERNAL_LINKS = false;
+    private static final boolean ALLOW_EXTERNAL_LINKS = true;
     private static final boolean ENABLE_ZOOM = false;
     private static final boolean FULLSCREEN = false;
     private static final boolean BACK_NAVIGATION = true;
@@ -199,11 +201,24 @@ public class MainActivity extends ComponentActivity {
             getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
                 @Override
                 public void handleOnBackPressed() {
-                    if (webView != null && webView.canGoBack()) {
-                        webView.goBack();
-                    } else {
+                    WebView currentWebView = webView;
+                    if (currentWebView != null && currentWebView.canGoBack()) {
+                        currentWebView.goBack();
+                        lastBackPressedAt = 0L;
+                        return;
+                    }
+
+                    // Do not immediately close the app when there is no WebView
+                    // history (common on the initial screen or in single-page apps).
+                    long now = SystemClock.elapsedRealtime();
+                    if (now - lastBackPressedAt < 2000L) {
                         setEnabled(false);
                         getOnBackPressedDispatcher().onBackPressed();
+                    } else {
+                        lastBackPressedAt = now;
+                        Toast.makeText(MainActivity.this,
+                                "You're at the start. Press Back again to exit.",
+                                Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -405,24 +420,41 @@ public class MainActivity extends ComponentActivity {
 
     private boolean handleNavigation(Uri uri) {
         String scheme = uri.getScheme();
-        if (scheme == null) return false;
-        if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
-            if (ALLOW_EXTERNAL_LINKS) {
-                String host = uri.getHost();
-                Uri current = Uri.parse(webView.getUrl() == null ? "" : webView.getUrl());
-                String currentHost = current.getHost();
-                if (currentHost != null && host != null && host.equalsIgnoreCase(currentHost)) return false;
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
-                    return true;
-                } catch (Exception ignored) { return false; }
-            }
+        if (scheme == null) return true;
+
+        // Keep app-bundled pages and offline assets inside the WebView.
+        if (scheme.equalsIgnoreCase("https") &&
+                "appassets.androidplatform.net".equalsIgnoreCase(uri.getHost())) {
             return false;
         }
+        if (scheme.equalsIgnoreCase("file") || scheme.equalsIgnoreCase("about")) {
+            return false;
+        }
+
+        // Open web links in the user's browser or the installed app registered
+        // for that URL (for example, social, video, or deep links). Never silently
+        // navigate ordinary HTTP(S) links inside the wrapper WebView.
+        if (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                startActivity(intent);
+                return true;
+            } catch (Exception e) {
+                Log.w("CastelAppFactory", "EXTERNAL_LINK_OPEN_FAILED:" + uri, e);
+                Toast.makeText(this, "No app is available to open this link.", Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        }
+
+        // Hand off mailto:, tel:, geo:, and supported custom app schemes.
         try {
             startActivity(new Intent(Intent.ACTION_VIEW, uri));
             return true;
-        } catch (Exception ignored) { return false; }
+        } catch (Exception e) {
+            Log.w("CastelAppFactory", "LINK_SCHEME_UNSUPPORTED:" + scheme, e);
+            Toast.makeText(this, "This link cannot be opened on this device.", Toast.LENGTH_SHORT).show();
+            return true;
+        }
     }
 
     @Override
