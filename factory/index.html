@@ -204,7 +204,7 @@ h2{font-size:24px}
     <div class="seg" data-k="cache"><button data-v="off">Off</button><button data-v="std" class="on">Standard</button><button data-v="first">Offline first</button><button data-v="aggr">Aggressive</button></div>
   </div>
   <div class="card">
-    <h3>CastelApp for developers</h3><p class="h">Your HTML can save files and ZIP bundles to private storage that works offline.</p>
+    <h3>instApped SDK for developers</h3><p class="h">Your HTML can save files and ZIP bundles to private storage that works offline.</p>
     <div class="dev" id="devCode">CastelApp.downloadData(url, key, callback)
 CastelApp.downloadBundle(url, key, sha256, callback)
 CastelApp.bundleUrl(key, path)</div>
@@ -525,8 +525,8 @@ $("#plist").onclick=e=>{
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
 };
 $("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;$("#log").innerHTML="";$("#dl").style.display="none";bind();go(0);view("create")};
-$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(copy.fileName&&/\.zip$/i.test(copy.fileName)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="castel-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
-$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&p.fileName&&/\.zip$/i.test(p.fileName))await putZip(p.id,base64Blob(zip));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid Castel project backup.")}finally{e.target.value=""}};
+$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(copy.fileName&&/\.zip$/i.test(copy.fileName)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="instapped-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
+$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&p.fileName&&/\.zip$/i.test(p.fileName))await putZip(p.id,base64Blob(zip));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid instApped project backup.")}finally{e.target.value=""}};
 $("#copyDev").onclick=async()=>{try{await navigator.clipboard.writeText($("#devCode").textContent);toast("Copied")}catch{toast("Clipboard access is unavailable in this browser.")}};
 
 /* ============ INIT ============ */
