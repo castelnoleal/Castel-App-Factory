@@ -1,4 +1,4 @@
-name: Generic HTML and ZIP Acceptance Tests
+name: instApped HTML and ZIP Acceptance Tests
 
 on:
   workflow_dispatch:
