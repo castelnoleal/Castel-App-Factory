@@ -1,4 +1,4 @@
-# Castel App Factory Build Bridge
+# instApped Build Bridge
 
 The Worker source in `worker.js` is intended for the Cloudflare Worker at `api.castelmei.com`.
 
@@ -7,7 +7,7 @@ The Worker source in `worker.js` is intended for the Cloudflare Worker at `api.c
 Text variables:
 
 - `GITHUB_OWNER=castelnoleal`
-- `GITHUB_REPO=castel-app-factory`
+- `GITHUB_REPO=instapped`
 - `GITHUB_WORKFLOW=build-app.yml`
 
 Secrets:
