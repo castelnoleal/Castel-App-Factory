@@ -43,7 +43,7 @@ async function poll(id){
  try{
   const r=await fetch(API+'/build/'+id+'?t='+Date.now());const s=await r.json();
   if(s.status==='success'){
-   const url=s.testApkUrl||'https://github.com/castelnoleal/instApped/releases/download/instapped-test-latest/app-debug.apk';
+   const url=s.testApkUrl||'https://github.com/castelnoleal/instApped/releases/download/test-latest/instApped-Test.apk';
    const dl=document.getElementById('download');dl.href=url;dl.style.display='block';document.getElementById('build').disabled=false;setStatus('Build successful. The APK has been published to the public test download.');return;
   }
   if(s.status==='failed'){document.getElementById('build').disabled=false;setStatus('Build failed. Open the GitHub Actions run to inspect the build logs.');return}
