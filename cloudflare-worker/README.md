@@ -7,7 +7,7 @@ The Worker source in `worker.js` is intended for the Cloudflare Worker at `api.c
 Text variables:
 
 - `GITHUB_OWNER=castelnoleal`
-- `GITHUB_REPO=instapped`
+- `GITHUB_REPO=Castel-App-Factory`
 - `GITHUB_WORKFLOW=build-app.yml`
 
 Secrets:
