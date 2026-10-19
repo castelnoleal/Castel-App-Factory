@@ -47,7 +47,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          SOURCE_BASE64="$(base64 -w0 test-inputs/sample-site/index.html)" \
+          SOURCE_FILE="$GITHUB_WORKSPACE/test-inputs/sample-site/index.html" \
           BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/local-html.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-html" \
           python3 scripts/generate-app.py
@@ -73,7 +73,7 @@ jobs:
           d['sourceFileName']='sample-site.zip'
           open('build/zip-manifest.json','w').write(json.dumps(d))
           PY
-          SOURCE_BASE64="$(base64 -w0 build/sample-site.zip)" \
+          SOURCE_FILE="$GITHUB_WORKSPACE/build/sample-site.zip" \
           BUILD_MANIFEST="$GITHUB_WORKSPACE/build/zip-manifest.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-zip" \
           python3 scripts/generate-app.py
