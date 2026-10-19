@@ -1,4 +1,4 @@
-name = "castel-app-factory-api"
+name = "castel-app-factory-api-sandbox"
 main = "worker.js"
 compatibility_date = "2026-08-25"
 workers_dev = true
@@ -7,12 +7,9 @@ workers_dev = true
 GITHUB_OWNER = "castelnoleal"
 GITHUB_REPO = "Castel-App-Factory"
 GITHUB_WORKFLOW = "build-app.yml"
+GITHUB_BASE_BRANCH = "sandbox/private-downloads"
+REQUIRE_PRIVATE_ARTIFACTS = "true"
 
-[secrets]
-required = ["GITHUB_TOKEN", "CASTEL_SIGNING_ACCESS_TOKEN"]
-
-# Sandbox-only private artifact storage. Create this R2 bucket before deploying
-# this branch's Worker; do not deploy this config to production until validated.
 [[r2_buckets]]
 binding = "ARTIFACTS"
 bucket_name = "castel-app-factory-artifacts-sandbox"
