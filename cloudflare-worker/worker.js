@@ -7,13 +7,13 @@ async function superviseBuild(env, context = {}) {
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
 }
 
-const ORIGIN = "https://factory.castelmei.com";
+const ORIGIN = "*"; // Public browser API; requests use no cookies or browser credentials.
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
 const MAX_ICON_BASE64 = 8_000_000;
 const CHUNK_CHARS = 800_000;
 // Re-deploy to verify the live GitHub and signing secret configuration.
-const BUILD_BRIDGE_REVISION = "app-assets-v1";
+const BUILD_BRIDGE_REVISION = "instapped-domain-cors-v1";
 const SIGNING_ACCESS_HEADER = "X-Castel-Signing-Access";
 
 async function signingTokenMatches(candidate, expected) {
