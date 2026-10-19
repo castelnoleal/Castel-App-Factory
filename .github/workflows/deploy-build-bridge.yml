@@ -44,7 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           sleep 5
-          body=$(curl --fail --silent --show-error --retry 3 https://castel-app-factory-api.nolealtohka.workers.dev/health)
+          body=$(curl --fail --silent --show-error --retry 3 https://api.instapped.com/health)
           echo "$body"
           echo "$body" | grep -q '"status":"online"'
           echo "$body" | grep -q '"revision":"instapped-domain-cors-v1"'
