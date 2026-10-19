@@ -1,6 +1,6 @@
-# Castel App Factory
+# instApped
 
-Commercial-grade HTML/website → Android app factory.
+Commercial-grade HTML/website → Android app builder, branded instApped.
 
 ## Goals
 
@@ -24,7 +24,7 @@ The exact versions are centralized so the build template can be upgraded deliber
 
 ## Repository layout
 
-- `factory/` — browser control panel and project-generation logic.
+- `factory/` — instApped browser control panel and project-generation logic.
 - `android-template/` — clean Android WebView application template.
 - `scripts/` — validation utilities.
 - `.github/workflows/` — clean-build and release pipelines.

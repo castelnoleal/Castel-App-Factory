@@ -1,4 +1,4 @@
-name: Deploy Castel Build Bridge
+name: Deploy instApped Build Bridge
 # Production deployment trigger: 2026-09-27.
 
 on:

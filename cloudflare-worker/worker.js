@@ -47,7 +47,7 @@ async function gh(env, path, options={}) {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${env.GITHUB_TOKEN}`,
       "X-GitHub-Api-Version": API_VERSION,
-      "User-Agent": "castel-app-factory-api",
+      "User-Agent": "instapped-api",
       "Content-Type": "application/json",
       ...(options.headers || {})
     }
@@ -68,7 +68,7 @@ export default {
     const u = new URL(request.url);
     if (request.method === "OPTIONS") return new Response(null,{status:204,headers:headers()});
     if (u.pathname === "/health" && request.method === "GET") {
-      return reply({ok:true,service:"Castel App Factory API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "Castel-App-Factory"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "Castel-App-Factory")),signingConfigured: Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
+      return reply({ok:true,service:"instApped API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "instApped"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "instApped")),signingConfigured: Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
     if (!env.GITHUB_TOKEN) return reply({ok:false,error:"Build bridge GitHub token is not configured. Add the GITHUB_TOKEN Worker secret."},503);
 
@@ -78,7 +78,7 @@ export default {
         const buildId = downloadMatch[1];
         const kind = downloadMatch[2].toLowerCase();
         const owner = env.GITHUB_OWNER || "castelnoleal";
-        const repo = env.GITHUB_REPO || "Castel-App-Factory";
+        const repo = env.GITHUB_REPO || "instApped";
         // Use the authenticated GitHub API: browser_download_url can return 403
         // when the repository/release is private, even though the Worker has access.
         const release = await gh(env, `/repos/${owner}/${repo}/releases/tags/build-${buildId}`);
@@ -89,7 +89,7 @@ export default {
         const upstream = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/assets/${asset.id}`, {
           method: "GET",
           redirect: "follow",
-          headers: { "Accept": "application/octet-stream", "Authorization": `Bearer ${env.GITHUB_TOKEN}`, "X-GitHub-Api-Version": API_VERSION, "User-Agent": "castel-app-factory-download" }
+          headers: { "Accept": "application/octet-stream", "Authorization": `Bearer ${env.GITHUB_TOKEN}`, "X-GitHub-Api-Version": API_VERSION, "User-Agent": "instapped-download" }
         });
         if (!upstream.ok) return reply({ok:false,error:`Artifact download returned HTTP ${upstream.status}.`}, upstream.status);
         const outHeaders = new Headers();
@@ -173,7 +173,7 @@ export default {
             const run = await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/runs/${status.runId}`);
             if (run.status !== "completed") return reply({...status,status:"running",message:"Verifying build result with GitHub Actions",progress:status.progress || 90});
             if (run.conclusion === "success") {
-              const rr = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/releases/tags/build-${id}`, {headers:{Accept:"application/vnd.github+json","User-Agent":"castel-app-factory-api","X-GitHub-Api-Version":API_VERSION}});
+              const rr = await fetch(`https://api.github.com/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/releases/tags/build-${id}`, {headers:{Accept:"application/vnd.github+json","User-Agent":"instapped-api","X-GitHub-Api-Version":API_VERSION}});
               if (rr.ok) {
                 const release = await rr.json();
                 const apk = (release.assets || []).find(a => String(a.name || "").toLowerCase().endsWith(".apk"));
