@@ -1,4 +1,4 @@
-name: Deploy App Factory UI
+name: Deploy instApped UI
 
 on:
   push:
