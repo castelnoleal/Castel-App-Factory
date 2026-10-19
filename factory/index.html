@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101a2e">
-<title>Castel App Factory</title>
+<title>instApped</title>
 <style>
 :root{--bg:#f2f3f6;--s:#fff;--s2:#e9ebf0;--b:#dcdfe7;--t:#101a2e;--m:#5f6a80;--p:#101a2e;--pt:#fff;--a:#b8862b;--ok:#17724f;--w:#9a5b08;--e:#b3261e;--r:12px;--nav:64px;color-scheme:light}
 :root[data-theme=dark]{--bg:#0b101d;--s:#141b2d;--s2:#1c2540;--b:#263050;--t:#e8ebf3;--m:#94a0b8;--p:#e0b050;--pt:#1a1405;--a:#e0b050;--ok:#5ccf9e;--w:#e8b04a;--e:#ff8a80;color-scheme:dark}
@@ -141,7 +141,7 @@ h2{font-size:24px}
 <div class="app">
 <header>
   <div class="logo" aria-label="Original box logo" role="img">📦</div>
-  <div><h1>Castel App Factory</h1><p>Turn a web page into an Android app</p></div>
+  <div><h1>instApped</h1><p>Turn a website into your Android app</p></div>
   <span class="pill" id="status">Draft</span>
 </header>
 <div class="shell">
@@ -318,7 +318,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{toast("Storage is full. Export your projects.");return false}};
-let G=Object.assign({theme:"system",layout:"steps",prefix:"com.castel",endpoint:"https://castel-app-factory-api.nolealtohka.workers.dev"},load(KEY.g,{}));
+let G=Object.assign({theme:"system",layout:"steps",prefix:"com.instapped",endpoint:"https://castel-app-factory-api.nolealtohka.workers.dev"},load(KEY.g,{}));
 let P=load(KEY.p,[]);
 let S=blank(),step=0,srcFile=null,pkgTouched=false,building=false;
 const SOURCE_DB="castel.factory.sources",SOURCE_STORE="zipFiles";
