@@ -1,4 +1,4 @@
-# Castel App Factory Build Bridge
+# instApped Build Bridge
 
 The Worker source in `worker.js` is intended for the Cloudflare Worker at `api.castelmei.com`.
 
@@ -7,12 +7,12 @@ The Worker source in `worker.js` is intended for the Cloudflare Worker at `api.c
 Text variables:
 
 - `GITHUB_OWNER=castelnoleal`
-- `GITHUB_REPO=castel-app-factory`
+- `GITHUB_REPO=instApped`
 - `GITHUB_WORKFLOW=build-app.yml`
 
 Secrets:
 
-- `GITHUB_TOKEN` = a new fine-grained GitHub token scoped to `castelnoleal/Castel-App-Factory`.
+- `GITHUB_TOKEN` = a new fine-grained GitHub token scoped to `castelnoleal/instApped`.
 - `CASTEL_SIGNING_ACCESS_TOKEN` = a strong random secret shared only with the Factory UI operator; required for release signing.
 - `OPENAI_API_KEY` = optional OpenAI API key used by the server-side AI build supervisor.
 
