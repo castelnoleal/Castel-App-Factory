@@ -273,7 +273,7 @@ const STEPS=["Source","Details","Icon","Offline","Preview","Check","Build"];
 const KEY={p:"castel.projects",g:"castel.settings"};
 /* Production build bridge: submit, then poll the unique build ID until artifacts are ready. */
 async function buildBridge(payload,onLog){
-  const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");
+  const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
@@ -318,7 +318,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{toast("Storage is full. Export your projects.");return false}};
-let G=Object.assign({theme:"system",layout:"steps",prefix:"com.instapped",endpoint:"https://castel-app-factory-api.nolealtohka.workers.dev"},load(KEY.g,{}));
+let G=Object.assign({theme:"system",layout:"steps",prefix:"com.instapped",endpoint:"https://api.instapped.com"},load(KEY.g,{}));
+// Migrate a previously saved legacy API endpoint without disturbing other saved preferences.
+if(G.endpoint==="https://castel-app-factory-api.nolealtohka.workers.dev"){G.endpoint="https://api.instapped.com";save(KEY.g,G);}
 let P=load(KEY.p,[]);
 let S=blank(),step=0,srcFile=null,pkgTouched=false,building=false;
 const SOURCE_DB="castel.factory.sources",SOURCE_STORE="zipFiles";
@@ -501,7 +503,7 @@ function renderProjects(){
 }
 async function checkProjectBuild(p){
   if(!p?.pendingBuildId)return toast("No pending build is saved for this project.");
-  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");
+  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
   toast("Checking saved build status…");
   try{
     const r=await fetch(ep+"/build/"+encodeURIComponent(buildId)+"?t="+Date.now(),{cache:"no-store"});
@@ -519,7 +521,7 @@ async function checkProjectBuild(p){
   }catch(e){toast("Could not confirm build yet. It is saved; retry Check build later.")}
 }
 $("#plist").onclick=e=>{
-  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");const ep=String(G.endpoint||"https://castel-app-factory-api.nolealtohka.workers.dev").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}if(a==="check"){checkProjectBuild(p);return}
+  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}if(a==="check"){checkProjectBuild(p);return}
   if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
   if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
