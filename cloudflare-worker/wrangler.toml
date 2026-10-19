@@ -5,7 +5,7 @@ workers_dev = true
 
 [vars]
 GITHUB_OWNER = "castelnoleal"
-GITHUB_REPO = "Castel-App-Factory"
+GITHUB_REPO = "instApped"
 GITHUB_WORKFLOW = "build-app.yml"
 
 [secrets]
