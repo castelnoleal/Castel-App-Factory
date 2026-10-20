@@ -520,8 +520,36 @@ async function checkProjectBuild(p){
     toast(d.message||"Build is still running. Check again shortly.");
   }catch(e){toast("Could not confirm build yet. It is saved; retry Check build later.")}
 }
+async function downloadBuildArtifact(buildId,kind,button){
+  const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
+  const url=ep+"/download/"+encodeURIComponent(buildId)+"/"+kind;
+  if(button){button.disabled=true;button.textContent="Preparing…"}
+  try{
+    // Fetch the artifact into a Blob so the WebView triggers a download instead
+    // of navigating to the API/Worker URL in a separate browser tab.
+    const response=await fetch(url,{method:"GET",cache:"no-store"});
+    if(!response.ok)throw new Error("Download service returned HTTP "+response.status);
+    const blob=await response.blob();
+    if(!blob.size)throw new Error("The downloaded file was empty.");
+    const objectUrl=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=objectUrl;
+    link.download=(S?.name||"app").replace(/[^a-z0-9._-]+/gi,"_")+"."+(kind==="apk"?"apk":"aab");
+    link.style.display="none";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(()=>URL.revokeObjectURL(objectUrl),120000);
+    toast((kind==="apk"?"APK":"AAB")+" download started");
+  }catch(error){
+    console.error("Artifact download failed",error);
+    toast("Download could not start. Check the API download endpoint and CORS settings, then try again.");
+  }finally{
+    if(button){button.disabled=false;button.textContent=kind.toUpperCase()}
+  }
+}
 $("#plist").onclick=e=>{
-  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");location.href=ep+"/download/"+encodeURIComponent(p.buildId)+"/"+a;return}if(a==="check"){checkProjectBuild(p);return}
+  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");downloadBuildArtifact(p.buildId,a,e.target);return}if(a==="check"){checkProjectBuild(p);return}
   if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
   if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
   if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
