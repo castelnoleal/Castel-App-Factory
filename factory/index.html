@@ -529,7 +529,7 @@ async function downloadBuildArtifact(buildId,kind,button){
     // Android WebView's DownloadListener only supports HTTP(S), not blob: URLs.
     // Let the native WebView download handler receive the real Worker URL; use
     // Blob downloads only in ordinary browsers.
-    const isAndroidApp=!!(window.CatelApp || /; wv\)|\bwv\b/i.test(navigator.userAgent));
+    const isAndroidApp=!!(window.CastelApp || window.CatelApp || /; wv\)|\bwv\b/i.test(navigator.userAgent));
     if(isAndroidApp){
       const link=document.createElement("a");
       link.href=url;
