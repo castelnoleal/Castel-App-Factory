@@ -93,6 +93,13 @@ export default {
         });
         if (!upstream.ok) return reply({ok:false,error:`Artifact download returned HTTP ${upstream.status}.`}, upstream.status);
         const outHeaders = new Headers();
+        // File responses need the same CORS permission as JSON responses; otherwise
+        // fetch() from the factory/WebView fails before it can create a download.
+        outHeaders.set("Access-Control-Allow-Origin", ORIGIN);
+        outHeaders.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+        outHeaders.set("Access-Control-Allow-Headers", "Content-Type");
+        outHeaders.set("Access-Control-Expose-Headers", "Content-Disposition, Content-Length");
+        outHeaders.set("Vary", "Origin");
         outHeaders.set("Content-Type", kind === "apk" ? "application/vnd.android.package-archive" : "application/octet-stream");
         outHeaders.set("Content-Disposition", `attachment; filename="${fileName.replace(/["\\\\\\r\\n]/g, "_")}"`);
         outHeaders.set("Cache-Control", "private, no-store");
