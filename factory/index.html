@@ -525,8 +525,22 @@ async function downloadBuildArtifact(buildId,kind,button){
   const url=ep+"/download/"+encodeURIComponent(buildId)+"/"+kind;
   if(button){button.disabled=true;button.textContent="Preparing…"}
   try{
-    // Fetch the artifact into a Blob so the WebView triggers a download instead
-    // of navigating to the API/Worker URL in a separate browser tab.
+    const fileName=(S?.name||"app").replace(/[^a-z0-9._-]+/gi,"_")+"."+(kind==="apk"?"apk":"aab");
+    // Android WebView's DownloadListener only supports HTTP(S), not blob: URLs.
+    // Let the native WebView download handler receive the real Worker URL; use
+    // Blob downloads only in ordinary browsers.
+    const isAndroidApp=!!(window.CatelApp || /; wv\)|\bwv\b/i.test(navigator.userAgent));
+    if(isAndroidApp){
+      const link=document.createElement("a");
+      link.href=url;
+      link.download=fileName;
+      link.style.display="none";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast((kind==="apk"?"APK":"AAB")+" download requested");
+      return;
+    }
     const response=await fetch(url,{method:"GET",cache:"no-store"});
     if(!response.ok)throw new Error("Download service returned HTTP "+response.status);
     const blob=await response.blob();
@@ -534,7 +548,7 @@ async function downloadBuildArtifact(buildId,kind,button){
     const objectUrl=URL.createObjectURL(blob);
     const link=document.createElement("a");
     link.href=objectUrl;
-    link.download=(S?.name||"app").replace(/[^a-z0-9._-]+/gi,"_")+"."+(kind==="apk"?"apk":"aab");
+    link.download=fileName;
     link.style.display="none";
     document.body.appendChild(link);
     link.click();
