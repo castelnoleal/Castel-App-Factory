@@ -531,15 +531,14 @@ async function downloadBuildArtifact(buildId,kind,button){
     // Blob downloads only in ordinary browsers.
     const isAndroidApp=!!(window.CastelApp || window.CatelApp || /; wv\)|\bwv\b/i.test(navigator.userAgent));
     if(isAndroidApp){
-      const link=document.createElement("a");
-      link.href=url;
-      link.download=fileName;
-      link.style.display="none";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      toast((kind==="apk"?"APK":"AAB")+" download requested");
-      return;
+      if(window.CastelApp && typeof window.CastelApp.downloadArtifact==="function"){
+        window.CastelApp.downloadArtifact(url,fileName);
+        toast((kind==="apk"?"APK":"AAB")+" download requested");
+        return;
+      }
+      // Older installed wrappers don't expose the native download bridge.
+      // Avoid navigating away to the API host; report that the app needs updating.
+      throw new Error("This installed version does not support in-app artifact downloads. Update/rebuild the instApped app.");
     }
     const response=await fetch(url,{method:"GET",cache:"no-store"});
     if(!response.ok)throw new Error("Download service returned HTTP "+response.status);
