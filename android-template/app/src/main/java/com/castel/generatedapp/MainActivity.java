@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import android.util.Base64;
 import java.security.MessageDigest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -130,6 +131,11 @@ public class MainActivity extends ComponentActivity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 Log.i("CastelAppFactory", "PAGE_LOADED:" + url);
+                // WebView's native DownloadListener cannot handle blob: URLs used by
+                // canvas/image exports. Capture download links and hand their bytes
+                // to the native bridge so exports save to Android Downloads.
+                String downloadBridgeScript = "(function(){if(window.__castelBlobDownloadsInstalled)return;window.__castelBlobDownloadsInstalled=true;document.addEventListener('click',function(ev){var a=ev.target&&ev.target.closest?ev.target.closest('a[download]'):null;if(!a)return;var href=a.href||'';if(!href.startsWith('blob:')&&!href.startsWith('data:'))return;ev.preventDefault();ev.stopImmediatePropagation();var name=a.getAttribute('download')||'download.png';var send=function(data){try{window.CastelApp.saveBase64File(data,name)}catch(e){console.error('Native save failed',e)}};if(href.startsWith('data:')){send(href);return;}fetch(href).then(function(r){return r.blob()}).then(function(blob){var reader=new FileReader();reader.onloadend=function(){send(reader.result)};reader.readAsDataURL(blob)}).catch(function(e){console.error('Blob export failed',e)});},true)})()";
+                view.evaluateJavascript(downloadBridgeScript, null);
             }
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceErrorCompat error) {
@@ -238,6 +244,28 @@ public class MainActivity extends ComponentActivity {
             return f.isFile() ? Long.toString(f.lastModified()) + ":" + Long.toString(f.length()) : "";
         }
         @JavascriptInterface public boolean autoUpdateEnabled() { return AUTO_UPDATE; }
+        @JavascriptInterface public void saveBase64File(String dataUrl, String fileName) {
+            try {
+                if (dataUrl == null || !dataUrl.startsWith("data:") || !dataUrl.contains(",")) {
+                    throw new IllegalArgumentException("Invalid data URL");
+                }
+                String meta = dataUrl.substring(0, dataUrl.indexOf(','));
+                if (!meta.toLowerCase().contains(";base64")) throw new IllegalArgumentException("Expected base64 data");
+                String payload = dataUrl.substring(dataUrl.indexOf(',') + 1);
+                if (payload.length() > 40000000) throw new IllegalArgumentException("File is too large");
+                byte[] bytes = Base64.decode(payload, Base64.DEFAULT);
+                String safeName = fileName == null ? "download.png" : fileName.replaceAll("[\\\\/:*?\\\"<>|]", "_");
+                if (safeName.trim().isEmpty()) safeName = "download.png";
+                File downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                if (!downloads.exists() && !downloads.mkdirs()) throw new IllegalStateException("Downloads folder unavailable");
+                File output = new File(downloads, safeName);
+                try (FileOutputStream stream = new FileOutputStream(output)) { stream.write(bytes); stream.flush(); }
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Image saved to Downloads.", Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                Log.e("CastelAppFactory", "BLOB_DOWNLOAD_FAILED", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not save file. Please try again.", Toast.LENGTH_LONG).show());
+            }
+        }
         @JavascriptInterface public void downloadArtifact(String url, String fileName) {
             try {
                 requireHttpUrl(url);
