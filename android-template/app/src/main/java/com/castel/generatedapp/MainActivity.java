@@ -238,6 +238,29 @@ public class MainActivity extends ComponentActivity {
             return f.isFile() ? Long.toString(f.lastModified()) + ":" + Long.toString(f.length()) : "";
         }
         @JavascriptInterface public boolean autoUpdateEnabled() { return AUTO_UPDATE; }
+        @JavascriptInterface public void downloadArtifact(String url, String fileName) {
+            try {
+                requireHttpUrl(url);
+                Uri uri = Uri.parse(url);
+                String safeName = fileName == null ? "download" : fileName.replaceAll("[\\\\/:*?\\\"<>|]", "_");
+                if (safeName.trim().isEmpty()) safeName = "download";
+                DownloadManager.Request request = new DownloadManager.Request(uri);
+                request.setTitle(safeName);
+                request.setDescription("Downloading " + safeName);
+                request.setMimeType(safeName.toLowerCase().endsWith(".apk") ? "application/vnd.android.package-archive" : "application/octet-stream");
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                request.setAllowedOverMetered(true);
+                request.setAllowedOverRoaming(true);
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, safeName);
+                DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                if (manager == null) throw new IllegalStateException("Android download service is unavailable");
+                manager.enqueue(request);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Download started. Check notifications or Downloads.", Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                Log.e("CastelAppFactory", "ARTIFACT_DOWNLOAD_FAILED", e);
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "Could not start download. Please try again.", Toast.LENGTH_LONG).show());
+            }
+        }
         @JavascriptInterface public void deleteData(String key) { if (OFFLINE_STORAGE) deleteRecursively(fileForKey(key)); }
         @JavascriptInterface public void downloadData(String url, String key, String callback) {
             if (!OFFLINE_STORAGE) { callJs(callback, false, "Offline storage is disabled"); return; }
