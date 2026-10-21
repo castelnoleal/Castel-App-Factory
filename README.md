@@ -24,6 +24,7 @@ The exact versions are centralized so the build template can be upgraded deliber
 
 ## Repository layout
 
+- `site/` — public website for instapped.com (landing, legal and support pages). Deploy this folder only.
 - `factory/` — instApped browser control panel and project-generation logic.
 - `android-template/` — clean Android WebView application template.
 - `scripts/` — validation utilities.
