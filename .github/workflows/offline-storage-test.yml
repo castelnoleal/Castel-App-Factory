@@ -162,5 +162,6 @@ jobs:
           arch: x86_64
           profile: pixel_2
           force-avd-creation: true
-          emulator-options: '-no-window -no-audio -no-boot-anim -netdelay none -netspeed full -dns-server 8.8.8.8,1.1.1.1'
+          emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
+          emulator-boot-timeout: 900
           script: bash scripts/ci/offline-emulator.sh

@@ -137,4 +137,5 @@ jobs:
           profile: pixel_2
           force-avd-creation: true
           emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
+          emulator-boot-timeout: 900
           script: bash scripts/ci/webcompat-emulator.sh

@@ -31,7 +31,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
@@ -519,32 +518,13 @@ public class MainActivity extends ComponentActivity {
     private void setupSplash(boolean restoring) {
         if (restoring) { splashHidden = true; return; }
         boolean art = "art".equals(SPLASH_MODE) && splashArtId() != 0;
-        if (!art && Build.VERSION.SDK_INT >= 31) {
-            // Android 12+ already shows the launcher icon on a splash screen. Keep
-            // that system splash up until the first page is ready (or a timeout),
-            // exactly like a normal app, instead of flashing a blank WebView.
-            final View decor = getWindow().getDecorView();
-            decor.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-                @Override
-                public boolean onPreDraw() {
-                    if (splashReady()) {
-                        splashHidden = true;
-                        decor.getViewTreeObserver().removeOnPreDrawListener(this);
-                        return true;
-                    }
-                    return false;
-                }
-            });
-            decor.postDelayed(() -> { contentReady = true; decor.invalidate(); }, SPLASH_MAX_MS);
-            return;
-        }
+        // A plain overlay, never a draw-blocking listener: holding the first frame
+        // starves the main thread's message queue and the page would never load.
+        // On Android 12+ the system splash shows the icon first and this overlay
+        // continues it seamlessly until the page is ready.
         splashView = buildSplashView(art);
         root.addView(splashView, match());
         root.postDelayed(this::forceHideSplash, SPLASH_MAX_MS);
-    }
-
-    private boolean splashReady() {
-        return (contentReady || errorShowing) && SystemClock.elapsedRealtime() - startedAt >= SPLASH_MIN_MS;
     }
 
     @SuppressWarnings("DiscouragedApi")
@@ -565,17 +545,14 @@ public class MainActivity extends ComponentActivity {
         } else {
             Drawable icon = getPackageManager().getApplicationIcon(getApplicationInfo());
             image.setImageDrawable(icon);
-            int size = dp(112);
+            int size = dp(Build.VERSION.SDK_INT >= 31 ? 160 : 112);
             splash.addView(image, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
         }
         return splash;
     }
 
     private void maybeHideSplash() {
-        if (splashView == null || splashHidden) {
-            if (Build.VERSION.SDK_INT >= 31) getWindow().getDecorView().invalidate();
-            return;
-        }
+        if (splashView == null || splashHidden) return;
         long wait = Math.max(0, SPLASH_MIN_MS - (SystemClock.elapsedRealtime() - startedAt));
         root.postDelayed(this::forceHideSplash, wait);
     }
@@ -631,7 +608,6 @@ public class MainActivity extends ComponentActivity {
         errorView.setVisibility(View.VISIBLE);
         if (swipe != null) swipe.setRefreshing(false);
         forceHideSplash();
-        if (Build.VERSION.SDK_INT >= 31) getWindow().getDecorView().invalidate();
     }
 
     private void hideError() {
