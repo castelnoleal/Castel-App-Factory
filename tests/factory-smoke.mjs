@@ -20,6 +20,8 @@ const temp = await mkdtemp(join(tmpdir(), 'factory-smoke-'));
 let context;
 try {
   context = await browser.newContext({ acceptDownloads: true, viewport: { width: 1440, height: 1000 } });
+  // Keep the test hermetic: never call the live build service.
+  await context.route('https://api.instapped.com/**', route => route.fulfill({ status: 200, headers: { 'access-control-allow-origin': '*', 'content-type': 'application/json' }, body: JSON.stringify({ ok: false }) }));
   const page = await context.newPage();
   page.on('pageerror', e => errors.push('pageerror: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
