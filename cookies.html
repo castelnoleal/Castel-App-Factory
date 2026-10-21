@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cookies and Storage — instApped</title>
+<meta name="description" content="What instApped stores in your browser and why.">
+<meta name="theme-color" content="#101a2e">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="https://instapped.com/cookies.html">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="instApped home"><span class="logo" aria-hidden="true">📦</span>instApped</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#faq">FAQ</a>
+      <a class="btn primary small" href="https://create.instapped.com/">Create your app</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap doc">
+  <nav class="doc-nav" aria-label="Policies and support">
+    <p>Legal and support</p>
+    <ul>
+      <li><a href="/terms.html">Terms of Service</a></li>
+      <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+      <li><a href="/acceptable-use.html">Acceptable Use</a></li>
+      <li><a href="/cookies.html" aria-current="page">Cookies and storage</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+    </ul>
+  </nav>
+  <article>
+<h1>Cookies and storage</h1>
+<p class="meta">Effective October 21, 2026</p>
+
+<div class="summary">
+  <h2>The short version</h2>
+  <p>We don't use advertising or analytics cookies. The app factory stores your projects in your own browser so your work is still there when you come back.</p>
+</div>
+
+<h2>1. What we store in your browser</h2>
+<p>The app factory at create.instapped.com uses your browser's built-in storage, not cookies, to keep your work on your device:</p>
+<ul>
+  <li><strong>Local storage:</strong> your project list, app settings, factory preferences such as the theme, and the ID of any build in progress so its status can resume after a reload.</li>
+  <li><strong>IndexedDB:</strong> the HTML or ZIP source files and icons you add to a project, which can be too large for local storage.</li>
+</ul>
+<p>This data stays on your device. It's sent to us only when you request a build, as described in our <a href="/privacy-policy.html">Privacy Policy</a>.</p>
+
+<h2>2. Cookies</h2>
+<p>instApped doesn't set cookies for advertising, analytics or tracking. Our hosting and security provider, Cloudflare, may set strictly necessary cookies to detect bots and protect the site from attacks. These don't identify you to us and aren't used for marketing.</p>
+
+<h2>3. Third-party content</h2>
+<p>This website loads its typeface from Google Fonts, which receives standard request information such as your IP address when the font is downloaded. The app factory may load preview content from the website address you enter; that site's own cookies and policies apply to it.</p>
+
+<h2>4. Managing storage</h2>
+<p>You can delete individual projects inside the app factory. To remove everything, clear site data for create.instapped.com in your browser settings. This deletes all saved projects on that device, so export anything you want to keep first. Blocking storage entirely will stop the app factory from saving your work.</p>
+
+<h2>5. Contact</h2>
+<p>Questions: <a href="mailto:instapped@gmail.com?subject=Cookies%20and%20storage">instapped@gmail.com</a>.</p>
+  </article>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-about">
+        <a class="brand" href="/"><span class="logo" aria-hidden="true">📦</span>instApped</a>
+        <p>Turn a website or HTML project into an Android app.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="https://create.instapped.com/">App factory</a></li>
+          <li><a href="/#how-it-works">How it works</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Legal</h2>
+        <ul>
+          <li><a href="/terms.html">Terms of Service</a></li>
+          <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="/acceptable-use.html">Acceptable Use</a></li>
+          <li><a href="/cookies.html">Cookies and storage</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Support</h2>
+        <ul>
+          <li><a href="/contact.html">Contact us</a></li>
+          <li><a href="mailto:instapped@gmail.com">instapped@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-base">
+      <p>© <span data-year>2026</span> instApped. All rights reserved.</p>
+      <p>Android and Google Play are trademarks of Google LLC. instApped is not affiliated with Google.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll("[data-year]").forEach(e=>e.textContent=new Date().getFullYear());
+const head=document.querySelector(".site-head");
+const onScroll=()=>head.classList.toggle("scrolled",scrollY>8);
+addEventListener("scroll",onScroll,{passive:true});onScroll();
+</script>
+</body>
+</html>
