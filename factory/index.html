@@ -648,7 +648,7 @@ const mimeOf=n=>MIME[(n.split(".").pop()||"").toLowerCase()]||"application/octet
 const toDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)});
 
 /* --- Source analysis (feeds the checks and the preview) --- */
-const emptyA=()=>({key:"",notes:[],zip:null,entries:[],entry:"",html:"",pvHtml:""});
+const emptyA=()=>({key:"",notes:[],zip:null,entries:[],entry:"",html:"",pvHtml:"",code:""});
 let A=emptyA();
 function htmlNotes(text,notes){
   if(!/<meta[^>]+name=["']?viewport/i.test(text))notes.push({l:"Mobile viewport",st:"warn",d:'No viewport meta tag, so the page may look zoomed out on phones. Add <meta name="viewport" content="width=device-width,initial-scale=1">.'});
@@ -664,7 +664,7 @@ async function analyze(force){
     try{
       if(!isZipName(S.fileName)){
         if(S.html)a.html=S.html;else{const b=await sourceBlob();if(b)a.html=await b.text();else a.notes.push({l:"Source file",st:"fail",d:"The saved HTML isn't on this device any more. Upload it again."})}
-        if(a.html)htmlNotes(a.html,a.notes);
+        if(a.html){htmlNotes(a.html,a.notes);a.code=a.html}
       }else{
         const b=await sourceBlob();
         if(!b)a.notes.push({l:"Source file",st:"fail",d:"The saved ZIP isn't on this device any more. Upload it again."});
@@ -690,6 +690,10 @@ async function analyze(force){
           if(real.some(e=>e.name.includes("\\")))a.notes.push({l:"Windows paths",st:"warn",d:"Some paths use backslashes. Re-zip so paths use /."});
           if(total>150*1024*1024)a.notes.push({l:"App size",st:"warn",d:"Unpacked size is "+fmtBytes(total)+". Google Play limits downloads to 200 MB."});
           try{a.html=new TextDecoder().decode(await zipData(z,real.find(e=>e.name===entry)));htmlNotes(a.html,a.notes)}catch(e){a.notes.push({l:"Start page",st:"warn",d:e.message})}
+          // Read the project's scripts so checks can spot browser features that need a setting.
+          let budget=4*1024*1024;const parts=[a.html];
+          for(const e of real.filter(e=>/\.(m?js|html?)$/i.test(e.name)&&!/(^|\/)node_modules\//.test(e.name)).slice(0,80)){if(e.usize>budget)continue;budget-=e.usize;try{parts.push(new TextDecoder().decode(await zipData(z,e)))}catch{}}
+          a.code=parts.join("\n");
         }
       }
     }catch(e){a.notes.push({l:"Source file",st:"fail",d:e.message||"Couldn't read that file."})}
@@ -868,6 +872,17 @@ function checks(){
   if(!HEX.test(S.theme))add("App colour","fail","Use a colour like #080B14.",2);
   const badHosts=String(S.hosts||"").split(",").map(h=>h.trim()).filter(Boolean).filter(h=>!/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(h.replace(/^https?:\/\//i,"").split("/")[0]));
   if(badHosts.length)add("In-app websites","warn","Not a valid domain: "+badHosts.join(", ")+". These will be ignored.",1);
+  if(S.stype==="file"&&A.code){
+    const c=A.code,need=[];
+    if(/getUserMedia|mediaDevices/.test(c)&&!S.cam&&!S.mic)need.push("camera or microphone (getUserMedia)");
+    if(/geolocation\.(getCurrentPosition|watchPosition)/.test(c)&&!S.loc)need.push("location (navigator.geolocation)");
+    if(need.length)add("Browser features","warn","Your code uses "+need.join(" and ")+". Turn these on under Permissions, or the app will block them.",1);
+    const unsupported=[];
+    if(/Notification\.requestPermission|pushManager\.subscribe|PushManager/.test(c))unsupported.push("web push notifications");
+    if(/navigator\.(bluetooth|usb|serial|hid)\b|NDEFReader/.test(c))unsupported.push("Bluetooth/USB/NFC web APIs");
+    if(/new PaymentRequest\(/.test(c))unsupported.push("the Payment Request API");
+    if(unsupported.length)add("Browser features","warn","Your code uses "+unsupported.join(", ")+", which Android apps built from web pages can't support. The rest of the page works normally.",0);
+  }
   if(S.cam||S.mic||S.loc)add("Permissions","ok","Requests "+[S.cam&&"camera",S.mic&&"microphone",S.loc&&"location"].filter(Boolean).join(", ")+". Google Play may ask you to explain why in the Data safety form.",1);
   if(S.cache==="aggr"&&S.stype==="url")add("Cache mode","warn","Aggressive caching may show old content from your live site.",3);
   if(S.cache==="first"&&!S.offline)add("Offline storage","warn","Offline first works best with Offline storage turned on.",3);

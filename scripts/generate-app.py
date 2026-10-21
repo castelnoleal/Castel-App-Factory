@@ -278,6 +278,12 @@ def write_theme(output, theme_hex, splash_hex, art_splash):
         # Hide the system splash icon so the app's splash art appears without an icon flash first.
         splash_items += '        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>\n'
     (v31 / "styles.xml").write_text(style_open + base_items + splash_items + style_close, encoding="utf-8")
+    # Night variants use a dark parent theme so pages see prefers-color-scheme: dark
+    # when the phone is in dark mode, exactly like mobile Chrome.
+    dark_open = style_open.replace("Theme.Material.Light.NoActionBar", "Theme.Material.NoActionBar")
+    for folder, items in (("values-night", base_items), ("values-night-v31", base_items + splash_items)):
+        (res / folder).mkdir(parents=True, exist_ok=True)
+        (res / folder / "styles.xml").write_text(dark_open + items + style_close, encoding="utf-8")
 
 
 def is_web_source(source_type, source_url):
@@ -378,7 +384,8 @@ def generate():
     for source in java_files:
         content = source.read_text(encoding="utf-8")
         content = re.sub(r"^package\s+[^;]+;", f"package {package_name};", content, count=1, flags=re.MULTILINE)
-        target_url = source_url if web_source else "https://appassets.androidplatform.net/assets/index.html"
+        # Local sites are served from the host root, like a normal web host.
+        target_url = source_url if web_source else "https://appassets.androidplatform.net/"
         java_url = target_url.replace("\\", "\\\\").replace('"', '\\"')
         content = content.replace("__TARGET_URL__", java_url)
         if source.name == "MainActivity.java":

@@ -17,6 +17,12 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -73,15 +79,19 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.webkit.ServiceWorkerClientCompat;
+import androidx.webkit.ServiceWorkerControllerCompat;
 import androidx.webkit.WebResourceErrorCompat;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
+import androidx.webkit.WebViewFeature;
 
 public class MainActivity extends ComponentActivity {
     private WebView webView;
@@ -139,6 +149,15 @@ public class MainActivity extends ComponentActivity {
     private boolean loadedWhileOffline = false;
     private String failedUrl = null;
     private Consumer<Map<String, Boolean>> pendingPermissionResult;
+    private Uri captureUri;
+    private FrameLayout popupLayer;
+    private WebView popupView;
+    private TextView popupTitle;
+    private final Handler linkHandler = new Handler(Looper.getMainLooper(), msg -> {
+        String url = msg.getData() == null ? null : msg.getData().getString("url");
+        openLinkFromNewWindow(url);
+        return true;
+    });
 
     private final ActivityResultLauncher<String[]> permissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -252,7 +271,11 @@ public class MainActivity extends ComponentActivity {
         settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setLoadsImagesAutomatically(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
-        settings.setSupportMultipleWindows(false);
+        // Behave like mobile Chrome: real popup windows (window.open, sign-in
+        // popups), wide viewport for pages without a viewport tag.
+        settings.setSupportMultipleWindows(true);
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
         settings.setGeolocationEnabled(ALLOW_LOCATION);
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE);
         if (!USER_AGENT_SUFFIX.isEmpty()) settings.setUserAgentString(settings.getUserAgentString() + " " + USER_AGENT_SUFFIX);
@@ -267,7 +290,6 @@ public class MainActivity extends ComponentActivity {
         registerNetworkCallback();
 
         assetLoader = new WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .addPathHandler("/data/", path -> {
                     if (!OFFLINE_STORAGE) return null;
                     try {
@@ -278,7 +300,22 @@ public class MainActivity extends ComponentActivity {
                         return new WebResourceResponse(mimeType(safe), charsetFor(safe), new FileInputStream(f));
                     } catch (Exception ignored) { return null; }
                 })
+                // Legacy start URL (/assets/index.html) keeps working for older builds.
+                .addPathHandler("/assets/", path -> serveLocalAsset(path, false))
+                // Uploaded sites are served from the root, like a normal web host, so
+                // root-relative paths (/css/app.css) and client-side routes work.
+                .addPathHandler("/", path -> serveLocalAsset(path, true))
                 .build();
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_BASIC_USAGE)
+                && WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_SHOULD_INTERCEPT_REQUEST)) {
+            // Let service workers (PWAs, offline caches) load the app's own files.
+            ServiceWorkerControllerCompat.getInstance().setServiceWorkerClient(new ServiceWorkerClientCompat() {
+                @Override
+                public WebResourceResponse shouldInterceptRequest(@NonNull WebResourceRequest request) {
+                    return assetLoader.shouldInterceptRequest(request.getUrl());
+                }
+            });
+        }
 
         webView.setWebViewClient(new WebViewClientCompat() {
             @Override
@@ -318,6 +355,8 @@ public class MainActivity extends ComponentActivity {
                 // Android WebView has no navigator.share; route it to the native share sheet.
                 String shareShim = "(function(){if(navigator.share||!window.CastelApp)return;navigator.share=function(d){d=d||{};try{window.CastelApp.share(String(d.title||''),String(d.text||''),String(d.url||''));return Promise.resolve()}catch(e){return Promise.reject(e)}};navigator.canShare=function(){return true}})()";
                 view.evaluateJavascript(shareShim, null);
+                // window.print() does nothing in WebView by default; use Android printing (also saves PDFs).
+                view.evaluateJavascript("(function(){if(!window.CastelApp||window.__castelPrint)return;window.__castelPrint=1;window.print=function(){window.CastelApp.print(document.title||'')}})()", null);
                 if (!errorShowing && url != null && !url.startsWith("about:")) {
                     contentReady = true;
                     maybeHideSplash();
@@ -374,16 +413,38 @@ public class MainActivity extends ComponentActivity {
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
                 if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
                 fileChooserCallback = callback;
-                try {
-                    Intent intent = params.createIntent();
-                    startActivityForResult(intent, 1001);
-                    return true;
-                } catch (Exception e) {
-                    fileChooserCallback = null;
-                    callback.onReceiveValue(null);
-                    Toast.makeText(MainActivity.this, "No app is available to choose a file.", Toast.LENGTH_SHORT).show();
-                    return true;
+                boolean wantsImage = acceptsType(params.getAcceptTypes(), "image/");
+                boolean wantsVideo = acceptsType(params.getAcceptTypes(), "video/");
+                if ((wantsImage || wantsVideo) && ALLOW_CAMERA
+                        && ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    // Apps that declare CAMERA must hold it before using the camera app.
+                    requestAndroidPermissions(new String[]{Manifest.permission.CAMERA}, granted ->
+                            openFileChooser(params, wantsImage, wantsVideo, granted.contains(Manifest.permission.CAMERA)));
+                } else {
+                    openFileChooser(params, wantsImage, wantsVideo, true);
                 }
+                return true;
+            }
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                WebView.HitTestResult hit = view.getHitTestResult();
+                int type = hit == null ? WebView.HitTestResult.UNKNOWN_TYPE : hit.getType();
+                if (isUserGesture && type == WebView.HitTestResult.SRC_ANCHOR_TYPE) {
+                    // <a target="_blank">: treat like a normal link tap.
+                    openLinkFromNewWindow(hit.getExtra());
+                    return false;
+                }
+                if (isUserGesture && type == WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE) {
+                    view.requestFocusNodeHref(linkHandler.obtainMessage());
+                    return false;
+                }
+                // window.open(): a real popup, so window.opener, postMessage and
+                // window.close() work for sign-in and payment popups.
+                WebView child = openPopupWindow();
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(child);
+                resultMsg.sendToTarget();
+                return true;
             }
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
@@ -413,6 +474,10 @@ public class MainActivity extends ComponentActivity {
             @Override
             public void handleOnBackPressed() {
                 if (customView != null) { exitCustomView(); return; }
+                if (popupView != null) {
+                    if (popupView.canGoBack()) popupView.goBack(); else closePopupWindow();
+                    return;
+                }
                 WebView currentWebView = webView;
                 if (BACK_NAVIGATION) {
                     if (errorShowing && currentWebView != null && currentWebView.canGoBack()) {
@@ -733,6 +798,9 @@ public class MainActivity extends ComponentActivity {
                 }
             });
         }
+        @JavascriptInterface public void print(String jobName) {
+            runOnUiThread(() -> printPage(jobName));
+        }
         @JavascriptInterface public void openExternal(String url) {
             runOnUiThread(() -> { if (url != null && url.matches("(?i)https?://.+")) openOutside(Uri.parse(url)); });
         }
@@ -856,9 +924,27 @@ public class MainActivity extends ComponentActivity {
         String p = path.toLowerCase(Locale.ROOT);
         if (p.endsWith(".html") || p.endsWith(".htm")) return "text/html";
         if (p.endsWith(".css")) return "text/css";
-        if (p.endsWith(".js")) return "application/javascript";
-        if (p.endsWith(".json")) return "application/json";
-        if (p.endsWith(".txt") || p.endsWith(".csv")) return "text/plain";
+        if (p.endsWith(".js") || p.endsWith(".mjs") || p.endsWith(".cjs")) return "text/javascript";
+        if (p.endsWith(".json") || p.endsWith(".map")) return "application/json";
+        if (p.endsWith(".webmanifest")) return "application/manifest+json";
+        if (p.endsWith(".wasm")) return "application/wasm";
+        if (p.endsWith(".xml")) return "application/xml";
+        if (p.endsWith(".txt") || p.endsWith(".md")) return "text/plain";
+        if (p.endsWith(".csv")) return "text/csv";
+        if (p.endsWith(".ico")) return "image/x-icon";
+        if (p.endsWith(".avif")) return "image/avif";
+        if (p.endsWith(".bmp")) return "image/bmp";
+        if (p.endsWith(".woff2")) return "font/woff2";
+        if (p.endsWith(".woff")) return "font/woff";
+        if (p.endsWith(".ttf")) return "font/ttf";
+        if (p.endsWith(".otf")) return "font/otf";
+        if (p.endsWith(".mp3")) return "audio/mpeg";
+        if (p.endsWith(".m4a")) return "audio/mp4";
+        if (p.endsWith(".ogg") || p.endsWith(".oga")) return "audio/ogg";
+        if (p.endsWith(".wav")) return "audio/wav";
+        if (p.endsWith(".mp4") || p.endsWith(".m4v")) return "video/mp4";
+        if (p.endsWith(".webm")) return "video/webm";
+        if (p.endsWith(".pdf")) return "application/pdf";
         if (p.endsWith(".png")) return "image/png";
         if (p.endsWith(".jpg") || p.endsWith(".jpeg")) return "image/jpeg";
         if (p.endsWith(".webp")) return "image/webp";
@@ -870,6 +956,7 @@ public class MainActivity extends ComponentActivity {
     private String charsetFor(String path) {
         String p = path.toLowerCase(Locale.ROOT);
         if (p.endsWith(".html") || p.endsWith(".htm") || p.endsWith(".css") || p.endsWith(".js") ||
+            p.endsWith(".mjs") || p.endsWith(".cjs") || p.endsWith(".map") || p.endsWith(".webmanifest") || p.endsWith(".xml") || p.endsWith(".md") ||
             p.endsWith(".json") || p.endsWith(".txt") || p.endsWith(".csv") || p.endsWith(".svg")) return "UTF-8";
         return null;
     }
@@ -986,6 +1073,220 @@ public class MainActivity extends ComponentActivity {
         setContentView(message);
     }
 
+    // ------------------------------------------------------------ local site
+
+    /**
+     * Serve the uploaded HTML/ZIP site from APK assets like a static web host:
+     * folder URLs get index.html, extensionless routes try .html, and unknown
+     * routes fall back to index.html so single-page apps can route.
+     */
+    private WebResourceResponse serveLocalAsset(String path, boolean spaFallback) {
+        String p = path == null ? "" : path.replace('\\', '/');
+        while (p.startsWith("/")) p = p.substring(1);
+        if (p.contains("..") || p.indexOf(0) >= 0) return null;
+        List<String> candidates = new ArrayList<>();
+        if (p.isEmpty() || p.endsWith("/")) {
+            candidates.add(p + "index.html");
+        } else {
+            candidates.add(p);
+            String last = p.substring(p.lastIndexOf('/') + 1);
+            if (!last.contains(".")) { candidates.add(p + ".html"); candidates.add(p + "/index.html"); }
+        }
+        for (String candidate : candidates) {
+            WebResourceResponse response = openAsset(candidate);
+            if (response != null) return response;
+        }
+        String last = p.substring(p.lastIndexOf('/') + 1);
+        if (spaFallback && !last.contains(".")) return openAsset("index.html");
+        return null;
+    }
+
+    private WebResourceResponse openAsset(String assetPath) {
+        try {
+            InputStream in = getAssets().open(assetPath, android.content.res.AssetManager.ACCESS_STREAMING);
+            return new WebResourceResponse(mimeType(assetPath), charsetFor(assetPath), in);
+        } catch (Exception notFound) {
+            return null;
+        }
+    }
+
+    // ------------------------------------------------------- files & printing
+
+    private static boolean acceptsType(String[] acceptTypes, String prefix) {
+        if (acceptTypes == null || acceptTypes.length == 0) return true;
+        boolean any = true;
+        for (String raw : acceptTypes) {
+            if (raw == null) continue;
+            for (String t : raw.split(",")) {
+                String type = t.trim().toLowerCase(Locale.ROOT);
+                if (type.isEmpty()) continue;
+                any = false;
+                if (type.equals("*/*") || type.startsWith(prefix)) return true;
+                if (prefix.equals("image/") && type.matches("\\.(jpe?g|png|gif|webp|heic|heif|bmp)")) return true;
+                if (prefix.equals("video/") && type.matches("\\.(mp4|mov|webm|3gp|mkv)")) return true;
+            }
+        }
+        return any;
+    }
+
+    private void openFileChooser(WebChromeClient.FileChooserParams params, boolean wantsImage, boolean wantsVideo, boolean cameraAllowed) {
+        captureUri = null;
+        try {
+            List<Intent> cameraIntents = new ArrayList<>();
+            if (cameraAllowed && wantsImage) {
+                Intent photo = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                Uri out = newCaptureUri(".jpg");
+                if (out != null) { photo.putExtra(MediaStore.EXTRA_OUTPUT, out); grantCapture(photo); cameraIntents.add(photo); captureUri = out; }
+            }
+            if (cameraAllowed && wantsVideo) {
+                Intent video = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+                Uri out = newCaptureUri(".mp4");
+                if (out != null) {
+                    video.putExtra(MediaStore.EXTRA_OUTPUT, out); grantCapture(video); cameraIntents.add(video);
+                    if (captureUri == null) captureUri = out;
+                }
+            }
+            Intent intent;
+            if (params.isCaptureEnabled() && cameraIntents.size() == 1) {
+                // <input capture>: go straight to the camera, like mobile Chrome.
+                intent = cameraIntents.get(0);
+            } else {
+                intent = Intent.createChooser(params.createIntent(), null);
+                if (!cameraIntents.isEmpty()) intent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Intent[0]));
+            }
+            startActivityForResult(intent, 1001);
+        } catch (Exception e) {
+            if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
+            fileChooserCallback = null;
+            Toast.makeText(this, "No app is available to choose a file.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private Uri newCaptureUri(String extension) {
+        try {
+            File dir = new File(getCacheDir(), "captures");
+            if (!dir.isDirectory() && !dir.mkdirs()) return null;
+            File file = new File(dir, "capture-" + System.currentTimeMillis() + extension);
+            return FileProvider.getUriForFile(this, getPackageName() + ".instapped.files", file);
+        } catch (Exception e) {
+            Log.w(TAG, "CAPTURE_URI_FAILED", e);
+            return null;
+        }
+    }
+
+    private static void grantCapture(Intent intent) {
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+    }
+
+    private void printPage(String jobName) {
+        try {
+            PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+            if (printManager == null || webView == null) throw new IllegalStateException("Printing unavailable");
+            WebView target = popupView != null ? popupView : webView;
+            String name = jobName == null || jobName.trim().isEmpty() ? String.valueOf(getApplicationInfo().loadLabel(getPackageManager())) : jobName.trim();
+            PrintDocumentAdapter adapter = target.createPrintDocumentAdapter(name);
+            printManager.print(name, adapter, new PrintAttributes.Builder().build());
+        } catch (Exception e) {
+            Toast.makeText(this, "Printing isn't available on this device.", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // ----------------------------------------------------------------- popups
+
+    private void openLinkFromNewWindow(String url) {
+        if (url == null || url.isEmpty() || webView == null) return;
+        Uri uri = Uri.parse(url);
+        if (!handleNavigation(uri, true, false)) webView.loadUrl(url);
+    }
+
+    private WebView openPopupWindow() {
+        closePopupWindow();
+        boolean light = isLightColor(THEME_COLOR);
+        popupLayer = new FrameLayout(this);
+        popupLayer.setBackgroundColor(Color.WHITE);
+        popupLayer.setClickable(true);
+        LinearLayout column = new LinearLayout(this);
+        column.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout bar = new LinearLayout(this);
+        bar.setOrientation(LinearLayout.HORIZONTAL);
+        bar.setGravity(Gravity.CENTER_VERTICAL);
+        bar.setBackgroundColor(THEME_COLOR);
+        bar.setPadding(dp(16), 0, dp(4), 0);
+        popupTitle = new TextView(this);
+        popupTitle.setTextColor(light ? Color.rgb(16, 26, 46) : Color.WHITE);
+        popupTitle.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        popupTitle.setSingleLine(true);
+        popupTitle.setText("Loading…");
+        Button close = new Button(this);
+        close.setText("Close");
+        close.setAllCaps(false);
+        close.setOnClickListener(v -> closePopupWindow());
+        bar.addView(popupTitle, new LinearLayout.LayoutParams(0, dp(52), 1f));
+        bar.addView(close, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        WebView child = new WebView(this);
+        WebSettings cs = child.getSettings();
+        cs.setJavaScriptEnabled(true);
+        cs.setDomStorageEnabled(true);
+        cs.setDatabaseEnabled(true);
+        cs.setAllowFileAccess(false);
+        cs.setSupportMultipleWindows(false);
+        cs.setJavaScriptCanOpenWindowsAutomatically(true);
+        cs.setUseWideViewPort(true);
+        cs.setLoadWithOverviewMode(true);
+        cs.setMediaPlaybackRequiresUserGesture(false);
+        cs.setUserAgentString(webView.getSettings().getUserAgentString());
+        CookieManager.getInstance().setAcceptThirdPartyCookies(child, true);
+        child.setWebViewClient(new WebViewClientCompat() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+            @Override
+            public boolean shouldOverrideUrlLoading(@NonNull WebView view, @NonNull WebResourceRequest request) {
+                String scheme = request.getUrl().getScheme();
+                if (scheme == null) return true;
+                scheme = scheme.toLowerCase(Locale.ROOT);
+                // Popups (sign-in, payments) keep their web pages; other schemes leave the app.
+                if (scheme.equals("http") || scheme.equals("https") || scheme.equals("about") || scheme.equals("data") || scheme.equals("blob")) return false;
+                return handleNavigation(request.getUrl(), true, false);
+            }
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                if (popupTitle != null) {
+                    String title = view.getTitle();
+                    popupTitle.setText(title == null || title.isEmpty() || title.startsWith("http") ? Uri.parse(url).getHost() : title);
+                }
+            }
+        });
+        child.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onCloseWindow(WebView window) { closePopupWindow(); }
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                if (popupTitle != null && title != null && !title.isEmpty()) popupTitle.setText(title);
+            }
+        });
+        column.addView(bar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        column.addView(child, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        popupLayer.addView(column, match());
+        content.addView(popupLayer, match());
+        popupView = child;
+        return child;
+    }
+
+    private void closePopupWindow() {
+        if (popupLayer == null) return;
+        content.removeView(popupLayer);
+        if (popupView != null) {
+            popupView.stopLoading();
+            popupView.destroy();
+        }
+        popupView = null;
+        popupLayer = null;
+        popupTitle = null;
+    }
+
     // -------------------------------------------------------------- navigation
 
     /** True for links that belong to this app and should stay inside it. */
@@ -1086,6 +1387,9 @@ public class MainActivity extends ComponentActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1001 && fileChooserCallback != null) {
             Uri[] results = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+            boolean pickedNothing = data == null || (data.getData() == null && data.getClipData() == null);
+            if (resultCode == RESULT_OK && pickedNothing && captureUri != null) results = new Uri[]{captureUri};
+            captureUri = null;
             fileChooserCallback.onReceiveValue(results);
             fileChooserCallback = null;
         }
@@ -1098,6 +1402,7 @@ public class MainActivity extends ComponentActivity {
             try { connectivity.unregisterNetworkCallback(networkCallback); } catch (Exception ignored) { }
         }
         if (fileChooserCallback != null) fileChooserCallback.onReceiveValue(null);
+        closePopupWindow();
         if (webView != null) {
             webView.stopLoading();
             webView.destroy();

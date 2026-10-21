@@ -1,0 +1,172 @@
+name: Web Compatibility Acceptance
+
+# Packages a typical modern web build (nested dist/ folder, root-relative
+# paths, ES modules, JSON, WebAssembly, a service worker, client-side routes,
+# window.open popups) and checks on an Android emulator that it behaves the
+# same way it does in mobile Chrome.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/web-compat-test.yml'
+      - 'android-template/**'
+      - 'scripts/generate-app.py'
+  pull_request:
+    paths:
+      - '.github/workflows/web-compat-test.yml'
+      - 'android-template/**'
+      - 'scripts/generate-app.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web-compat:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout factory
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools emulator'
+
+      - name: Install Android API 36
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+
+      - name: Set up Gradle 9.3.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Create test web project
+        run: |
+          set -euo pipefail
+          mkdir -p webcompat/site/dist/js webcompat/site/dist/css webcompat/site/dist/data
+          cat > webcompat/site/dist/index.html <<'HTML'
+          <!doctype html>
+          <html><head>
+          <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <title>WEBCOMPAT_INDEX</title>
+          <link rel="stylesheet" href="/css/app.css">
+          <script type="module" src="/js/main.mjs"></script>
+          </head><body><h1 id="h">Web compatibility</h1></body></html>
+          HTML
+          printf 'h1{color:rgb(1, 2, 3)}' > webcompat/site/dist/css/app.css
+          printf 'export const answer = 42;\n' > webcompat/site/dist/js/util.mjs
+          printf '{"ok":true}' > webcompat/site/dist/data/config.json
+          printf 'self.addEventListener("install",e=>self.skipWaiting());self.addEventListener("activate",e=>e.waitUntil(self.clients.claim()));' > webcompat/site/dist/sw.js
+          printf '\x00\x61\x73\x6d\x01\x00\x00\x00' > webcompat/site/dist/js/empty.wasm
+          cat > webcompat/site/dist/js/main.mjs <<'JS'
+          import { answer } from './util.mjs';
+          const results = {};
+          const log = (name, ok, detail) => { results[name] = ok; console.log('WEBCOMPAT:' + name + ':' + (ok ? 'OK' : 'FAIL') + (detail ? ':' + detail : '')); };
+          const tryStep = async (name, fn) => { try { log(name, await fn()); } catch (e) { log(name, false, String(e)); } };
+          await tryStep('MODULE_IMPORT', () => answer === 42);
+          await tryStep('ROOT_RELATIVE_CSS', () => getComputedStyle(document.getElementById('h')).color === 'rgb(1, 2, 3)');
+          await tryStep('FETCH_JSON', async () => (await (await fetch('/data/config.json')).json()).ok === true);
+          await tryStep('SPA_ROUTE_FALLBACK', async () => (await (await fetch('/deep/client/route')).text()).includes('WEBCOMPAT_INDEX'));
+          await tryStep('WASM_STREAMING', async () => !!(await WebAssembly.instantiateStreaming(fetch('/js/empty.wasm'))).instance);
+          await tryStep('LOCAL_STORAGE', () => { localStorage.setItem('k', 'v'); return localStorage.getItem('k') === 'v'; });
+          await tryStep('INDEXED_DB', () => new Promise(res => { const r = indexedDB.open('t', 1); r.onsuccess = () => res(true); r.onerror = () => res(false); }));
+          await tryStep('SERVICE_WORKER', async () => { await navigator.serviceWorker.register('/sw.js'); await navigator.serviceWorker.ready; return true; });
+          await tryStep('WINDOW_OPEN_POPUP', () => { const w = window.open('/popup.html', 'popup'); const ok = !!w; if (w) setTimeout(() => w.close(), 500); return ok; });
+          await tryStep('NAVIGATOR_SHARE', () => typeof navigator.share === 'function');
+          await tryStep('WINDOW_PRINT', () => String(window.print).includes('CastelApp'));
+          await tryStep('SECURE_CONTEXT', () => window.isSecureContext === true);
+          await tryStep('HISTORY_ROUTING', () => { history.pushState({}, '', '/settings/profile'); return location.pathname === '/settings/profile'; });
+          const all = Object.values(results).every(Boolean);
+          console.log('WEBCOMPAT:' + (all ? 'ALL_PASS' : 'SOME_FAILED') + ':' + JSON.stringify(results));
+          JS
+          printf '<!doctype html><title>popup</title><p>popup</p>' > webcompat/site/dist/popup.html
+          (cd webcompat/site && zip -qr ../site.zip dist)
+          cat > webcompat/manifest.json <<'JSON'
+          {
+            "appName": "Web Compat Test",
+            "packageName": "com.castel.webcompat",
+            "versionName": "1.0.0",
+            "versionCode": 1,
+            "sourceType": "Uploaded HTML/ZIP",
+            "sourceMode": "html",
+            "sourceFileName": "site.zip",
+            "orientation": "portrait",
+            "backNavigation": true,
+            "externalLinks": true,
+            "offlineStorage": true,
+            "cacheMode": "standard"
+          }
+          JSON
+
+      - name: Generate and build test APK
+        env:
+          BUILD_MANIFEST: webcompat/manifest.json
+          BUILD_OUTPUT: generated-app
+          SOURCE_FILE: webcompat/site.zip
+          ICON_FILE: ''
+          SPLASH_FILE: ''
+        run: |
+          set -euo pipefail
+          python3 scripts/generate-app.py
+          test -f generated-app/app/src/main/assets/index.html
+          test -f generated-app/app/src/main/assets/js/main.mjs
+          gradle -p generated-app assembleDebug --no-daemon --stacktrace
+          test -s generated-app/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Run on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          force-avd-creation: true
+          emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
+          script: |
+            set -eu
+            APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
+            PKG=com.castel.webcompat
+            adb wait-for-device
+            for attempt in 1 2 3 4 5 6 7 8; do
+              booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+              if [ "$booted" = "1" ]; then break; fi
+              sleep 5
+            done
+            adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; adb wait-for-device; sleep 10; }
+            adb install -r "$APK"
+            adb logcat -c
+            adb shell am start -n "$PKG/.MainActivity"
+            for attempt in $(seq 1 20); do
+              sleep 3
+              adb logcat -d > /tmp/webcompat.log || true
+              if grep -E 'WEBCOMPAT:(ALL_PASS|SOME_FAILED)' /tmp/webcompat.log >/dev/null; then break; fi
+            done
+            grep -F 'WEBCOMPAT:' /tmp/webcompat.log | sed 's/.*WEBCOMPAT:/WEBCOMPAT:/' | sort -u || true
+            if grep -E 'FATAL EXCEPTION' /tmp/webcompat.log >/dev/null; then echo "App crashed"; tail -n 200 /tmp/webcompat.log; exit 1; fi
+            if ! grep -F 'WEBCOMPAT:ALL_PASS' /tmp/webcompat.log >/dev/null; then
+              echo "Web compatibility checks failed."
+              tail -n 300 /tmp/webcompat.log
+              exit 1
+            fi
+            # Rotation must keep the page (no reload back to the start).
+            adb logcat -c
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 1
+            sleep 5
+            adb logcat -d > /tmp/webcompat-rotate.log || true
+            if grep -F 'WEBCOMPAT:MODULE_IMPORT' /tmp/webcompat-rotate.log >/dev/null; then echo "Page reloaded on rotation"; exit 1; fi
+            if grep -E 'FATAL EXCEPTION' /tmp/webcompat-rotate.log >/dev/null; then echo "App crashed on rotation"; tail -n 200 /tmp/webcompat-rotate.log; exit 1; fi
+            echo "Web compatibility acceptance passed."

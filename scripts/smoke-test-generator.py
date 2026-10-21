@@ -124,6 +124,8 @@ def option_case():
         colors = (output / "app" / "src" / "main" / "res" / "values" / "colors.xml").read_text(encoding="utf-8")
         assert "#123456" in colors and "#FFFFFF" in colors
         assert (output / "app" / "src" / "main" / "res" / "values-v31" / "styles.xml").is_file()
+        night = (output / "app" / "src" / "main" / "res" / "values-night" / "styles.xml").read_text(encoding="utf-8")
+        assert "Theme.Material.NoActionBar" in night and "Theme.Material.Light" not in night
 
 
 option_case()
