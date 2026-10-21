@@ -1,25 +1,35 @@
-name: Build Cards Test APK
+name: Website and Local Source Test
 
 on:
   workflow_dispatch:
   push:
     branches: [ main ]
     paths:
-      - 'test-inputs/cards-site.json'
+      - 'test-inputs/website-site.json'
       - 'test-inputs/local-html.json'
       - 'test-inputs/sample-site/**'
       - 'scripts/generate-app.py'
       - 'scripts/smoke-test-generator.py'
       - 'android-template/**'
-      - '.github/workflows/build-cards-test.yml'
-      - 'scripts/ci/cards-emulator.sh'
+      - '.github/workflows/website-source-test.yml'
+      - 'scripts/ci/website-emulator.sh'
+  pull_request:
+    paths:
+      - 'test-inputs/website-site.json'
+      - 'test-inputs/local-html.json'
+      - 'test-inputs/sample-site/**'
+      - 'scripts/generate-app.py'
+      - 'scripts/smoke-test-generator.py'
+      - 'android-template/**'
+      - '.github/workflows/website-source-test.yml'
+      - 'scripts/ci/website-emulator.sh'
 
 permissions:
   contents: write
   actions: read
 
 jobs:
-  build:
+  website-source-test:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout latest main
@@ -45,31 +55,31 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-      - name: Generate Cards Android project
+      - name: Generate website-mode Android project
         shell: bash
         run: |
           set -euo pipefail
-          BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/cards-site.json" \
-          BUILD_OUTPUT="$GITHUB_WORKSPACE/build/cards" \
+          BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/website-site.json" \
+          BUILD_OUTPUT="$GITHUB_WORKSPACE/build/website" \
           SOURCE_BASE64="" \
           python3 scripts/generate-app.py
       - name: Verify generated website target
         shell: bash
         run: |
           set -euo pipefail
-          MAIN="build/cards/app/src/main/java/org/meiocg/cards/MainActivity.java"
+          MAIN="build/website/app/src/main/java/com/instapped/websitetest/MainActivity.java"
           test -s "$MAIN"
-          grep -F 'webView.loadUrl("https://cards.meiocg.org/")' "$MAIN"
+          grep -F 'webView.loadUrl("http://10.0.2.2:8080/")' "$MAIN"
           ! grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
-      - name: Build Cards APK and AAB
+      - name: Build website-mode APK and AAB
         shell: bash
-        run: gradle -p build/cards lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
-      - name: Verify Cards artifacts
+        run: gradle -p build/website lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
+      - name: Verify website-mode artifacts
         shell: bash
         run: |
           set -euo pipefail
-          APK="build/cards/app/build/outputs/apk/debug/app-debug.apk"
-          AAB="build/cards/app/build/outputs/bundle/release/app-release.aab"
+          APK="build/website/app/build/outputs/apk/debug/app-debug.apk"
+          AAB="build/website/app/build/outputs/bundle/release/app-release.aab"
           test -s "$APK"
           test -s "$AAB"
           unzip -t "$APK" >/dev/null
@@ -91,7 +101,7 @@ jobs:
           profile: pixel_2
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           emulator-boot-timeout: 900
-          script: bash scripts/ci/cards-emulator.sh
+          script: bash scripts/ci/website-emulator.sh
 
   generic-local-source-tests:
     runs-on: ubuntu-24.04

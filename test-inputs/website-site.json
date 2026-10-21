@@ -1,0 +1,12 @@
+{
+  "appName": "instApped Website Test",
+  "packageName": "com.instapped.websitetest",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "sourceType": "HTTPS website",
+  "sourceMode": "website",
+  "sourceUrl": "http://10.0.2.2:8080/",
+  "sourceFileName": "",
+  "orientation": "portrait",
+  "allowCleartext": true
+}
