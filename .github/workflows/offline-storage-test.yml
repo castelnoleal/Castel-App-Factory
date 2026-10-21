@@ -164,6 +164,4 @@ jobs:
           force-avd-creation: true
           emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
           emulator-boot-timeout: 900
-          ram-size: 2048M
-          cores: 2
           script: bash scripts/ci/offline-emulator.sh

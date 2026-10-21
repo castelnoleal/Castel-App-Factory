@@ -3,7 +3,10 @@
 set -eu
 APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
 PKG=com.castel.offlinetest
-(cd offline-test/server && python3 -m http.server 8765 --bind 0.0.0.0 >/tmp/offline-bundle-server.log 2>&1 &)
+# Background test server; stopped on exit so the emulator step can finish.
+python3 -m http.server 8765 --bind 0.0.0.0 --directory offline-test/server >/tmp/offline-bundle-server.log 2>&1 </dev/null &
+SERVER_PID=$!
+trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 # Avoid the emulator action's post-boot animation settings; they can
 # intermittently break adb on hosted runners. Wait for Android and retry adb.
 adb wait-for-device

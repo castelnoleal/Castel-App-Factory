@@ -394,6 +394,15 @@ public class MainActivity extends ComponentActivity {
                 }
             }
             @Override
+            @androidx.annotation.RequiresApi(26)
+            public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+                // The page's renderer crashed or was killed for memory. Mobile Chrome
+                // shows an error and lets you reload; never take the whole app down.
+                Log.e(TAG, "RENDERER_GONE:crash=" + detail.didCrash());
+                recoverFromRendererLoss(view);
+                return true;
+            }
+            @Override
             public void onReceivedError(@NonNull WebView view, @NonNull WebResourceRequest request, @NonNull WebResourceErrorCompat error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
@@ -489,6 +498,12 @@ public class MainActivity extends ComponentActivity {
             }
             @Override
             public void onHideCustomView() { exitCustomView(); }
+            @Override
+            public boolean onConsoleMessage(android.webkit.ConsoleMessage message) {
+                // Page console output in logcat (adb logcat -s CastelAppFactory) for debugging.
+                Log.i(TAG, "CONSOLE:" + message.messageLevel() + ":" + message.message() + " @" + message.sourceId() + ":" + message.lineNumber());
+                return true;
+            }
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
                 if (!ALLOW_LOCATION) { callback.invoke(origin, false, false); return; }
@@ -1103,6 +1118,36 @@ public class MainActivity extends ComponentActivity {
         message.setText("The app could not start.\n\n" + error.getClass().getSimpleName() +
                 (error.getMessage() == null ? "" : "\n" + error.getMessage()));
         setContentView(message);
+    }
+
+    // -------------------------------------------------------- renderer loss
+
+    private int rendererRecoveries = 0;
+
+    private void recoverFromRendererLoss(WebView dead) {
+        if (dead == popupView) { closePopupWindow(); return; }
+        if (dead != webView) return;
+        String url = dead.getUrl();
+        // Replace the dead WebView with a fresh one using the same setup.
+        if (swipe != null) swipe.removeView(dead); else content.removeView(dead);
+        dead.destroy();
+        webView = null;
+        if (++rendererRecoveries > 3) {
+            showLaunchError(new IllegalStateException("The page keeps crashing. Close and reopen the app."));
+            return;
+        }
+        if (connectivity != null && networkCallback != null) {
+            try { connectivity.unregisterNetworkCallback(networkCallback); } catch (Exception ignored) { }
+            networkCallback = null;
+        }
+        Bundle none = null;
+        content.removeAllViews();
+        root.removeAllViews();
+        initializeWebView(getWindow(), none);
+        if (url != null && !url.isEmpty() && !url.startsWith("about:")) {
+            final String target = url;
+            webView.post(() -> { if (webView != null) webView.loadUrl(target); });
+        }
     }
 
     // ---------------------------------------------------------- update alerts
