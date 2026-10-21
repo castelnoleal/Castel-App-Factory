@@ -134,15 +134,103 @@ h2{font-size:24px}
 .row{padding:14px 0}
 .toast{bottom:calc(var(--nav) + 84px + env(safe-area-inset-bottom,0px))}
 }
+/* ---- Added: header preview button ---- */
+.hbtn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--b);background:var(--s);color:var(--t);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;min-height:32px;flex:none}
+.hbtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.hbtn.on{border-color:var(--a);color:var(--a)}
+/* ---- Added: preview panel ---- */
+.pv{position:fixed;top:0;right:0;bottom:0;width:min(400px,100%);z-index:45;background:var(--s);border-left:1px solid var(--b);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .22s ease;box-shadow:-12px 0 40px rgba(0,0,0,.12);visibility:hidden}
+.pv.on{transform:none;visibility:visible}
+.pvh{display:flex;align-items:center;gap:8px;padding:12px 14px;padding-top:calc(12px + env(safe-area-inset-top,0px));border-bottom:1px solid var(--b)}
+.pvh h3{font-size:15px;flex:1}
+.pvb{flex:1;overflow:auto;padding:16px 14px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:12px}
+.pvdim{position:fixed;inset:0;background:rgba(5,10,20,.45);z-index:44;opacity:0;pointer-events:none;transition:opacity .2s}
+.pvdim.on{opacity:1;pointer-events:auto}
+#stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+.pvtools{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pvsel{padding:6px 10px;border:1px solid var(--b);border-radius:10px;background:var(--bg);color:var(--t);font-size:13px;min-height:36px}
+.pvnote{font-size:12.5px;color:var(--m);text-align:center;max-width:340px;min-height:1em}
+.pvchk{width:100%;border-top:1px solid var(--b);padding-top:12px;font-size:13.5px}
+.pvchk .chk{padding:8px 0}
+.away{display:grid;place-items:center;gap:10px;text-align:center;color:var(--m);padding:28px 10px;font-size:13.5px}
+.phone{display:flex;flex-direction:column}
+.phone .sb{height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:11px;font-weight:600;background:#080b14;color:#fff}
+.phone iframe{flex:1;height:auto;min-height:0}
+.phone .empty{flex:1;height:auto}
+.phone.full .sb{display:none}
+.phone.small{width:min(250px,100%)}
+.phone.land{aspect-ratio:17/9;width:min(520px,100%)}
+.phone.tab{aspect-ratio:3/4;width:min(340px,100%);border-radius:22px}
+.phone.tab.land{aspect-ratio:4/3;width:min(520px,100%)}
+.splash{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#080b14;color:#fff;font-weight:700;font-size:14px;transition:opacity .35s;z-index:2}
+.splash img{width:64px;height:64px;border-radius:16px}
+.splash.out{opacity:0;pointer-events:none}
+@media(min-width:1000px) and (hover:hover){body.pv-open .app{padding-right:400px}.pvdim{display:none}}
+@media(max-width:999px),(hover:none){.pv{top:auto;left:0;width:100%;height:88vh;height:88dvh;border-left:0;border-top:1px solid var(--b);border-radius:18px 18px 0 0;transform:translateY(105%)}}
+/* ---- Added: live checks ---- */
+.steps button.bad i{background:var(--e);color:#fff}
+.chk>div{flex:1;min-width:0}
+.chk .fix{flex:none}
+/* ---- Added: projects search ---- */
+.psearch{margin-bottom:12px}
+/* ---- Added: injectable ad slot ---- */
+.app.has-ad{grid-template-rows:auto auto 1fr}
+.ad{display:flex;align-items:center;gap:12px;padding:8px 46px 8px 16px;padding-top:calc(8px + env(safe-area-inset-top,0px));min-height:46px;background:var(--ad-bg,#101a2e);color:var(--ad-fg,#fff);position:relative;font-size:14px}
+.has-ad header{padding-top:14px}
+.ad-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75;border:1px solid currentColor;border-radius:4px;padding:0 5px;flex:none}
+.ad-body{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:0 10px;align-items:baseline}
+.ad-body strong{font-weight:700}.ad-body span{opacity:.8}
+.ad-cta{flex:none;background:var(--ad-accent,#e0b050);color:#17130b;text-decoration:none;font-weight:700;font-size:13px;padding:6px 14px;border-radius:99px;white-space:nowrap}
+.ad-img{flex:1;display:block;line-height:0;text-align:center}.ad-img img{max-width:100%;max-height:var(--ad-h,90px);object-fit:contain;border-radius:6px}
+.ad-frame{flex:1;border:0;width:100%;height:var(--ad-h,90px);background:transparent}
+.ad-x{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:inherit;display:grid;place-items:center;font-size:18px;line-height:1}
+textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+@media(max-width:760px),(pointer:coarse) and (max-width:1024px){.has-ad header{padding-top:10px}.ad-body span{display:none}.hbtn span{display:none}.hbtn{padding:5px 9px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
+<!--
+  ==================== INJECTOR GUIDE: TOP AD SLOT ====================
+  Change the banner in any of these ways (highest priority first):
+   1. Settings > Advertising       preview override, this device only
+   2. instApped.ads.set({...})     runtime JS, also from an Android WebView
+      instApped.ads.hide() / .show() / .get() / .clearDismissed() / .reload()
+   3. postMessage from an allowed origin (window.INSTAPPED_CONFIG.adAllowedOrigins):
+      {type:"instapped:ad", ad:{...}}  {type:"instapped:ad-hide"}  {type:"instapped:ad-show"}
+   4. Remote JSON at window.INSTAPPED_CONFIG.adConfigUrl (re-fetched every adRefreshMinutes)
+   5. window.INSTAPPED_AD = {...} in a <script> placed before the main script
+   6. The JSON in <script id="instapped-ad"> below
+  Ad fields: enabled, id (change it to re-show after dismissal), type "text"|"image"|"html",
+   label, title, body, cta, url, newTab, image, imageMobile, alt, html (sandboxed iframe),
+   height, background, color, accent, dismissible, dismissHours, startAt, endAt (ISO dates),
+   impressionUrl, clickUrl, rotate:[{...}], rotateSeconds.
+  Links must be https:, http:, mailto: or #anchor; images https: or data:image. Text is never
+  parsed as HTML. The page fires window event "instapped:ad-render" on each change.
+  =====================================================================
+-->
+<script type="application/json" id="instapped-ad">
+{
+  "enabled": true,
+  "id": "house-2026-10",
+  "type": "text",
+  "label": "Sponsored",
+  "title": "Your ad here",
+  "body": "Reach people turning their websites into Android apps.",
+  "cta": "Advertise",
+  "url": "https://instapped.com",
+  "newTab": true,
+  "dismissible": true,
+  "dismissHours": 24
+}
+</script>
 </head>
 <body>
-<div class="app">
+<div class="app" id="app">
+<div id="ad-slot" role="complementary" aria-label="Advertisement" hidden></div>
 <header>
   <div class="logo" aria-label="Original box logo" role="img">📦</div>
   <div><h1>instApped</h1><p>Turn a web page into an Android app</p></div>
   <span class="pill" id="status">Draft</span>
+  <button class="hbtn" id="pvOpen" aria-controls="pv" aria-expanded="false" title="Preview (P)"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Preview</span></button>
 </header>
 <div class="shell">
 <nav aria-label="Main">
@@ -213,12 +301,24 @@ CastelApp.bundleUrl(key, path)</div>
 
   <div class="step" data-s="4"><div class="card">
     <h3>Preview</h3><p class="h">See your app in a phone frame.</p>
-    <div class="phone"><div class="empty" id="pEmpty">Add a source to see a preview.</div><iframe id="frame" title="App preview" sandbox="allow-scripts allow-forms" hidden></iframe></div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="btn sm" id="refresh">Refresh</button><button class="btn sm dng" id="clearSrc">Clear source</button></div>
+    <div id="stageHome">
+      <div id="stage">
+        <div class="phone" id="phone"><div class="sb" id="sb"><span id="sbT">9:41</span><span aria-hidden="true">▮▮ ●</span></div><div class="empty" id="pEmpty">Add a source to see a preview.</div><iframe id="frame" title="App preview" sandbox="allow-scripts allow-forms" hidden></iframe><div class="splash out" id="splash"><img id="spI" alt="" hidden><span id="spN"></span></div></div>
+        <div class="pvtools">
+          <select class="pvsel" id="pvDev" aria-label="Device"><option value="phone">Phone</option><option value="small">Small phone</option><option value="tab">Tablet</option></select>
+          <button class="btn sm" id="rotate" title="Rotate">Rotate</button>
+          <button class="btn sm" id="refresh">Refresh</button>
+          <button class="btn sm" id="pvTab">Open in tab</button>
+        </div>
+        <p class="pvnote" id="pvNote"></p>
+      </div>
+    </div>
+    <div class="away" id="stageAway" hidden>The preview is open in the side panel.<button class="btn sm" id="pvBack">Show it here</button></div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px"><button class="btn sm" id="pvSide">Open preview panel</button><button class="btn sm dng" id="clearSrc">Clear source</button></div>
   </div></div>
 
   <div class="step" data-s="5"><div class="card">
-    <h3>Pre-build check</h3><p class="h">We look for problems before you spend a build.</p>
+    <h3>Pre-build check</h3><p class="h">We look for problems before you spend a build. Results update as you edit.</p>
     <div id="checks"><p style="color:var(--m)">Run the check to see results.</p></div>
     <button class="btn pri" id="runCheck" style="margin-top:12px">Run check</button>
   </div></div>
@@ -239,6 +339,7 @@ CastelApp.bundleUrl(key, path)</div>
 <!-- PROJECTS -->
 <section class="view" id="v-projects">
   <h2>Projects</h2><p class="sub">Your drafts and past builds, saved on this device.</p>
+  <input class="inp psearch" type="search" id="psearch" placeholder="Search by name or package ID" aria-label="Search projects">
   <div class="card" id="plist"></div>
   <button class="btn pri" id="newProj">New project</button>
 </section>
@@ -254,8 +355,15 @@ CastelApp.bundleUrl(key, path)</div>
   </div>
   <div class="card"><h3>Defaults and connection</h3><p class="h">Used when you create a new app.</p>
     <label class="f">Package ID prefix<input type="text" data-g="prefix" placeholder="com.instapped" autocapitalize="none"></label>
-    <label class="f">Build service URL<input type="text" data-g="endpoint" placeholder="${endpoint}" autocapitalize="none"></label>
-    <p style="font-size:13px;color:var(--m)">Use the hosted build bridge URL. Leave the default unless your administrator provides another endpoint.</p>
+    <label class="f">Build service URL<input type="text" data-g="endpoint" placeholder="https://api.instapped.com" autocapitalize="none" spellcheck="false"></label>
+    <p style="font-size:13px;color:var(--m)" id="epHint">Use the hosted build bridge URL. Leave the default unless your administrator provides another endpoint.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="epTest">Test connection</button><button class="btn sm" id="epReset">Reset to default</button></div>
+    <div class="row" style="margin-top:12px;border-top:1px solid var(--b)"><span><b>Raise version code after each build</b><small>Google Play rejects an update that reuses a version code</small></span><input type="checkbox" class="sw" id="gBump"></div>
+  </div>
+  <div class="card"><h3>Advertising</h3><p class="h">The banner at the top is set by an injector (see the guide at the top of this file). Paste ad JSON here to preview it on this device only.</p>
+    <label class="f">Preview override (JSON)<textarea class="inp" id="adJson" spellcheck="false" placeholder='{"type":"text","title":"Hello","cta":"Open","url":"https://example.com"}'></textarea></label>
+    <p style="font-size:13px;color:var(--m);margin:-4px 0 10px" id="adSrc">Active source: none</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri" id="adApply">Apply on this device</button><button class="btn sm" id="adLoad">Load current ad</button><button class="btn sm" id="adClear">Remove override</button><button class="btn sm" id="adUndo">Show dismissed ad again</button></div>
   </div>
   <div class="card"><h3>Backup</h3><p class="h">Move your projects to another device.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="exp">Export projects</button><label class="btn" style="cursor:pointer">Import<input type="file" id="imp" accept=".json" hidden></label></div>
@@ -265,15 +373,23 @@ CastelApp.bundleUrl(key, path)</div>
 </main>
 </div>
 </div>
+<div class="pvdim" id="pvDim"></div>
+<aside class="pv" id="pv" aria-label="Preview panel">
+  <div class="pvh"><h3 id="pvTitle">Preview</h3><button class="btn sm" id="pvClose" aria-label="Close preview">Close</button></div>
+  <div class="pvb"><div id="pvStage" style="width:100%"></div><div class="pvchk" id="pvChecks"></div></div>
+</aside>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
 /* ============ CONFIG & BACKEND HOOKS ============ */
 const STEPS=["Source","Details","Icon","Offline","Preview","Check","Build"];
-const KEY={p:"castel.projects",g:"castel.settings"};
+const KEY={p:"castel.projects",g:"castel.settings",cur:"castel.current"};
+const DEFAULT_ENDPOINT="https://api.instapped.com";
+const CFG=Object.assign({adConfigUrl:"",adRefreshMinutes:0,adAllowedOrigins:[]},window.INSTAPPED_CONFIG||{});
+const endpoint=()=>String(G.endpoint||DEFAULT_ENDPOINT).trim().replace(/\/+$/,"");
 /* Production build bridge: submit, then poll the unique build ID until artifacts are ready. */
-async function buildBridge(payload,onLog){
-  const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
+async function buildBridge(payload,onLog,onProgress){
+  const ep=endpoint();
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
   if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
@@ -300,6 +416,7 @@ async function buildBridge(payload,onLog){
       await sleep(Math.min(15000,pollErrors*2000));
       continue;
     }
+    if(typeof status.progress==="number"&&onProgress)onProgress(status.progress);
     if(status.status==="success"||status.status==="completed"){
       if(!status.buildApkUrl&&!status.buildAabUrl)throw new Error("Build succeeded but no download links were returned.");
       onLog("Build verified successfully","ok");
@@ -316,13 +433,16 @@ async function buildBridge(payload,onLog){
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const debounce=(fn,ms)=>{let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}};
+const fmtBytes=b=>b<1024?b+" B":b<1048576?(b/1024).toFixed(1)+" KB":(b/1048576).toFixed(1)+" MB";
 const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch{toast("Storage is full. Export your projects.");return false}};
-let G=Object.assign({theme:"system",layout:"steps",prefix:"com.instapped",endpoint:"https://api.instapped.com"},load(KEY.g,{}));
+let G=Object.assign({theme:"system",layout:"steps",prefix:"com.instapped",endpoint:DEFAULT_ENDPOINT,bumpCode:true,pvDevice:"phone"},load(KEY.g,{}));
 // Migrate a previously saved legacy API endpoint without disturbing other saved preferences.
-if(G.endpoint==="https://castel-app-factory-api.nolealtohka.workers.dev"){G.endpoint="https://api.instapped.com";save(KEY.g,G);}
+if(G.endpoint==="https://castel-app-factory-api.nolealtohka.workers.dev"){G.endpoint=DEFAULT_ENDPOINT;save(KEY.g,G);}
 let P=load(KEY.p,[]);
 let S=blank(),step=0,srcFile=null,pkgTouched=false,building=false;
+const BIG_HTML=1.5*1024*1024; // larger HTML files go to IndexedDB instead of localStorage (~5 MB cap)
 const SOURCE_DB="castel.factory.sources",SOURCE_STORE="zipFiles";
 function openSourceDB(){return new Promise((resolve,reject)=>{if(!("indexedDB" in window))return reject(new Error("This browser does not support persistent source storage."));const q=indexedDB.open(SOURCE_DB,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains(SOURCE_STORE))q.result.createObjectStore(SOURCE_STORE)};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error||new Error("Could not open source storage."))})}
 async function sourceDB(mode,fn){const db=await openSourceDB();return new Promise((resolve,reject)=>{const tx=db.transaction(SOURCE_STORE,mode),store=tx.objectStore(SOURCE_STORE);let req;try{req=fn(store)}catch(e){db.close();reject(e);return}tx.oncomplete=()=>{db.close();resolve(req?.result)};tx.onerror=tx.onabort=()=>{const e=tx.error||req?.error||new Error("Source storage failed.");db.close();reject(e)}})}
@@ -330,12 +450,24 @@ const putZip=(id,blob)=>sourceDB("readwrite",s=>s.put(blob,id));
 const getZip=id=>sourceDB("readonly",s=>s.get(id));
 const delZip=id=>sourceDB("readwrite",s=>s.delete(id));
 async function zipBase64(id){const blob=await getZip(id);if(!blob)return "";return await b64(new File([blob],"source.zip",{type:"application/zip"}))}
-function base64Blob(data){const raw=atob(data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Blob([bytes],{type:"application/zip"})}
-
+function base64Blob(data,type){const raw=atob(data),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return new Blob([bytes],{type:type||"application/zip"})}
+const isZipName=n=>/\.zip$/i.test(n||"");
+const storedInDb=p=>!!(p&&p.fileName&&(isZipName(p.fileName)||p.htmlInDb));
 
 function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now()}}
-function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2400)}
-function persist(){S.updated=Date.now();const i=P.findIndex(p=>p.id===S.id);if(!S.name&&!S.html&&!S.url&&!S.icon)return;i<0?P.unshift(S):P[i]=S;save(KEY.p,P)}
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2600)}
+function persist(){S.updated=Date.now();const i=P.findIndex(p=>p.id===S.id);if(!S.name&&!S.html&&!S.url&&!S.icon&&!S.fileName)return;i<0?P.unshift(S):P[i]=S;save(KEY.p,P);try{localStorage.setItem(KEY.cur,S.id)}catch{}}
+
+const JAVA_KW=new Set("abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null".split(" "));
+function suggestPkg(name){
+  let slug=String(name||"").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g,"");
+  if(!slug)return "";
+  if(/^[0-9]/.test(slug))slug="app"+slug;
+  if(JAVA_KW.has(slug))slug+="app";
+  const prefix=String(G.prefix||"com.instapped").toLowerCase().replace(/[^a-z0-9_.]/g,"").replace(/^\.+|\.+$/g,"")||"com.instapped";
+  return prefix+"."+slug;
+}
+const niceName=f=>f.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ").replace(/\s+/g," ").trim().slice(0,30);
 
 /* ============ THEME / LAYOUT ============ */
 function applyG(){
@@ -343,15 +475,18 @@ function applyG(){
   document.documentElement.dataset.theme=dark?"dark":"light";
   $('meta[name=theme-color]').content=dark?"#141b2d":"#101a2e";
   $("#v-create").classList.toggle("all",G.layout==="all");
-  $$("[data-g]").forEach(el=>{if(el.classList.contains("seg"))el.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===G[el.dataset.g]));else el.value=G[el.dataset.g]||""});
+  $$("[data-g]").forEach(el=>{if(el.classList.contains("seg"))el.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b.dataset.v===G[el.dataset.g]));else if(document.activeElement!==el)el.value=G[el.dataset.g]||""});
+  $("#gBump").checked=!!G.bumpCode;
+  $("#pvDev").value=G.pvDevice||"phone";
   save(KEY.g,G);
 }
 $$(".seg[data-g] button").forEach(b=>b.onclick=()=>{G[b.parentNode.dataset.g]=b.dataset.v;applyG()});
-$$("input[data-g]").forEach(i=>i.oninput=()=>{G[i.dataset.g]=i.value.trim();save(KEY.g,G)});
+$$("input[data-g]").forEach(i=>i.oninput=()=>{G[i.dataset.g]=i.value.trim();save(KEY.g,G);scheduleCheck()});
+$("#gBump").onchange=e=>{G.bumpCode=e.target.checked;save(KEY.g,G)};
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",applyG);
 
 /* ============ NAVIGATION ============ */
-function view(v){$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();scrollTo(0,0)}
+function view(v){$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();scrollTo(0,0)}
 $$("nav button").forEach(b=>b.onclick=()=>view(b.dataset.view));
 function go(n){
   step=Math.max(0,Math.min(STEPS.length-1,n));
@@ -360,8 +495,9 @@ function go(n){
   $("#bar").style.width=((step+1)/STEPS.length*100)+"%";
   $("#back").style.display=step?"":"none";scrollTo(0,0);
   $("#next").style.display=step===STEPS.length-1?"none":"";
-  if(step===4)preview();
+  if(step===4)preview(true);
   if(step===5)runCheck();
+  paintStepBadges();
   const a=$("#steps .on");a&&a.scrollIntoView({inline:"center",block:"nearest"});
 }
 $("#steps").innerHTML=STEPS.map((s,i)=>`<button data-i="${i}"><i>${i+1}</i>${s}</button>`).join("");
@@ -382,128 +518,330 @@ function bind(){
   $("#dropS").textContent=S.fileName?"Tap to replace":"HTML, HTM or ZIP";
   $("#tokWrap").hidden=!S.sign;
   $("#ptitle").textContent=S.name||"New app";
-  $("#status").textContent=S.status==="built"?"Built":"Draft";$("#status").className="pill"+(S.status==="built"?" ok":"");
+  const st=S.status==="built"?["Built"," ok"]:S.status==="pending"?["Build pending"," run"]:S.status==="failed"?["Failed"," err"]:["Draft",""];
+  $("#status").textContent=st[0];$("#status").className="pill"+st[1];
   drawIcon();
+  previewChrome();
+  scheduleCheck();
 }
 $$("#v-create input[data-k],#v-create select[data-k]").forEach(el=>{
   const h=()=>{const k=el.dataset.k;S[k]=el.type==="checkbox"?el.checked:el.value;
-    if(k==="pkg")pkgTouched=true;
-    if(k==="name"){$("#ptitle").textContent=S.name||"New app";if(!pkgTouched){S.pkg=G.prefix+"."+S.name.toLowerCase().replace(/[^a-z0-9]/g,"");$('[data-k=pkg]').value=S.pkg}}
+    if(k==="pkg"){pkgTouched=true;S.pkg=S.pkg.trim()}
+    if(k==="name"){$("#ptitle").textContent=S.name||"New app";if(!pkgTouched){S.pkg=suggestPkg(S.name);$('[data-k=pkg]').value=S.pkg}}
     if(k==="sign")$("#tokWrap").hidden=!S.sign;
-    persist()};
+    persist();previewChrome();scheduleCheck();
+    if(k==="url")refreshPreviewSoon();
+  };
   el.addEventListener(el.type==="checkbox"||el.tagName==="SELECT"?"change":"input",h);
 });
-$$("#v-create .seg[data-k] button").forEach(b=>b.onclick=()=>{const k=b.parentNode.dataset.k;S[k]=b.dataset.v;bind();persist()});
+$$("#v-create .seg[data-k] button").forEach(b=>b.onclick=()=>{const k=b.parentNode.dataset.k;S[k]=b.dataset.v;bind();persist();if(k==="stype")refreshPreviewSoon()});
+$("#token").addEventListener("input",()=>scheduleCheck());
 
 /* ============ SOURCE ============ */
-const normUrl=u=>{u=u.trim();return !u?"":/^https?:\/\//i.test(u)?u:"https://"+u};
+const normUrl=u=>{u=String(u||"").trim();return !u?"":/^https?:\/\//i.test(u)?u:"https://"+u};
 async function takeFile(f){
-  if(!f)return;const zip=/\.zip$/i.test(f.name);
+  if(!f)return;const zip=isZipName(f.name);
   if(!zip&&!/\.html?$/i.test(f.name))return toast("Choose an HTML, HTM or ZIP file.");
   if(f.size>20*1024*1024)return toast("Keep uploaded HTML or ZIP files under 20 MB.");
-  srcFile=f;S.fileName=f.name;S.html=zip?"":await f.text();
-  if(zip){try{await putZip(S.id,f)}catch(e){srcFile=null;return toast("Could not save this ZIP on your device. Try a smaller file or another browser.")}}
+  const big=!zip&&f.size>BIG_HTML;
+  if(zip||big){try{await putZip(S.id,f)}catch(e){return toast(zip?"Could not save this ZIP on your device. Try a smaller file or another browser.":"Could not save this HTML on your device. Try another browser.")}}
   else {try{await delZip(S.id)}catch{}}
-  if(!S.name){S.name=f.name.replace(/\.[^.]+$/,"").replace(/[-_]+/g," ");S.pkg=G.prefix+"."+S.name.toLowerCase().replace(/[^a-z0-9]/g,"")}
-  bind();persist();toast(zip?"ZIP saved for this project":"HTML added")
+  srcFile=f;S.fileName=f.name;S.html=(zip||big)?"":await f.text();S.htmlInDb=big;
+  if(!S.name){S.name=niceName(f.name);if(!pkgTouched)S.pkg=suggestPkg(S.name)}
+  bind();persist();await analyze(true);runCheck();preview(true);
+  toast(zip?"ZIP saved for this project":"HTML added");
 }
-$("#srcFile").onchange=e=>takeFile(e.target.files[0]);
+$("#srcFile").onchange=e=>{takeFile(e.target.files[0]);e.target.value=""};
 const dz=$("#drop");["dragover","dragenter"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("over")}));
 ["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("over");if(ev==="drop")takeFile(e.dataTransfer.files[0])}));
-$("#clearSrc").onclick=async()=>{try{await delZip(S.id)}catch{}S.html="";S.fileName="";S.url="";srcFile=null;bind();preview();persist()};
+$("#clearSrc").onclick=async()=>{try{await delZip(S.id)}catch{}S.html="";S.fileName="";S.htmlInDb=false;S.url="";srcFile=null;A=emptyA();bind();preview(true);persist();runCheck()};
+
+async function sourceBlob(){
+  if(srcFile)return srcFile;
+  if(storedInDb(S)){try{const b=await getZip(S.id);if(b){srcFile=new File([b],S.fileName,{type:isZipName(S.fileName)?"application/zip":"text/html"});return srcFile}}catch{}}
+  return null;
+}
+
+/* --- Minimal ZIP reader for preview and checks (stored + deflate entries) --- */
+async function readZip(blob){
+  const buf=new Uint8Array(await blob.arrayBuffer()),dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength);
+  let eocd=-1;for(let i=buf.length-22;i>=Math.max(0,buf.length-65557);i--)if(dv.getUint32(i,true)===0x06054b50){eocd=i;break}
+  if(eocd<0)throw new Error("This doesn't look like a valid ZIP file.");
+  const count=dv.getUint16(eocd+10,true);let off=dv.getUint32(eocd+16,true);
+  if(off===0xffffffff)throw new Error("ZIP64 archives aren't supported. Re-zip with a standard tool.");
+  const td=new TextDecoder(),entries=[];
+  for(let n=0;n<count;n++){
+    if(off+46>buf.length||dv.getUint32(off,true)!==0x02014b50)break;
+    const flags=dv.getUint16(off+8,true),method=dv.getUint16(off+10,true),csize=dv.getUint32(off+20,true),usize=dv.getUint32(off+24,true);
+    const nlen=dv.getUint16(off+28,true),elen=dv.getUint16(off+30,true),clen=dv.getUint16(off+32,true),lho=dv.getUint32(off+42,true);
+    const name=td.decode(buf.subarray(off+46,off+46+nlen));
+    entries.push({name,method,csize,usize,lho,encrypted:!!(flags&1),dir:name.endsWith("/")});
+    off+=46+nlen+elen+clen;
+  }
+  return{buf,dv,entries};
+}
+async function zipData(z,e){
+  const l=e.lho,start=l+30+z.dv.getUint16(l+26,true)+z.dv.getUint16(l+28,true),data=z.buf.subarray(start,start+e.csize);
+  if(e.method===0)return data;
+  if(e.method===8){if(!("DecompressionStream" in window))throw new Error("This browser can't unpack ZIPs for preview.");return new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer())}
+  throw new Error("Unsupported ZIP compression (method "+e.method+").");
+}
+const MIME={html:"text/html",htm:"text/html",css:"text/css",js:"text/javascript",mjs:"text/javascript",json:"application/json",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",ico:"image/x-icon",woff:"font/woff",woff2:"font/woff2",ttf:"font/ttf",otf:"font/otf",mp3:"audio/mpeg",ogg:"audio/ogg",wav:"audio/wav",mp4:"video/mp4",webm:"video/webm",txt:"text/plain",xml:"application/xml",wasm:"application/wasm"};
+const mimeOf=n=>MIME[(n.split(".").pop()||"").toLowerCase()]||"application/octet-stream";
+const toDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(b)});
+
+/* --- Source analysis (feeds the checks and the preview) --- */
+const emptyA=()=>({key:"",notes:[],zip:null,entries:[],entry:"",html:"",pvHtml:""});
+let A=emptyA();
+function htmlNotes(text,notes){
+  if(!/<meta[^>]+name=["']?viewport/i.test(text))notes.push({l:"Mobile viewport",st:"warn",d:'No viewport meta tag, so the page may look zoomed out on phones. Add <meta name="viewport" content="width=device-width,initial-scale=1">.'});
+  const insecure=(text.match(/\b(?:src|href)\s*=\s*["']http:\/\/[^"']+/gi)||[]).length;
+  if(insecure)notes.push({l:"Insecure resources",st:"warn",d:insecure+" resource"+(insecure>1?"s load":" loads")+" over http://. Android blocks these by default; switch to https://."});
+  if(/\bfile:\/\//i.test(text))notes.push({l:"Local file paths",st:"warn",d:"The page references file:// paths, which won't exist on the phone."});
+}
+async function analyze(force){
+  const key=[S.stype,S.fileName,srcFile?srcFile.size:"",S.html?S.html.length:0,S.htmlInDb?1:0].join("|");
+  if(!force&&A.key===key)return A;
+  const a=emptyA();a.key=key;
+  if(S.stype==="file"&&(S.fileName||S.html)){
+    try{
+      if(!isZipName(S.fileName)){
+        if(S.html)a.html=S.html;else{const b=await sourceBlob();if(b)a.html=await b.text();else a.notes.push({l:"Source file",st:"fail",d:"The saved HTML isn't on this device any more. Upload it again."})}
+        if(a.html)htmlNotes(a.html,a.notes);
+      }else{
+        const b=await sourceBlob();
+        if(!b)a.notes.push({l:"Source file",st:"fail",d:"The saved ZIP isn't on this device any more. Upload it again."});
+        else{
+          const z=await readZip(b);a.zip=z;
+          const files=z.entries.filter(e=>!e.dir),junk=files.filter(e=>/(^|\/)(__MACOSX\/|\.DS_Store$|Thumbs\.db$)/.test(e.name)),real=files.filter(e=>!junk.includes(e));
+          a.entries=real;
+          if(!real.length)throw new Error("The ZIP is empty.");
+          if(real.some(e=>e.encrypted))throw new Error("Password-protected ZIPs aren't supported.");
+          const htmls=real.filter(e=>/\.html?$/i.test(e.name)).map(e=>e.name).sort((x,y)=>x.split("/").length-y.split("/").length||x.localeCompare(y));
+          if(!htmls.length)throw new Error("No .html file in the ZIP. The app needs an index.html.");
+          const entry=htmls.find(n=>n==="index.html")||htmls.find(n=>/^[^/]+\/index\.html$/.test(n))||htmls.find(n=>/(^|\/)index\.html$/.test(n))||htmls[0];
+          a.entry=entry;
+          const total=real.reduce((s,e)=>s+e.usize,0);
+          a.notes.push({l:"ZIP contents",st:"ok",d:real.length+" files, "+fmtBytes(total)+" unpacked. Starts at "+entry+"."});
+          if(entry!=="index.html"){
+            const ci=htmls.find(n=>n.toLowerCase()==="index.html");
+            if(ci&&ci!=="index.html")a.notes.push({l:"Start page",st:"warn",d:'Found "'+ci+'". Android paths are case-sensitive, so rename it to index.html.'});
+            else if(/\/index\.html$/.test(entry))a.notes.push({l:"Start page",st:"warn",d:'index.html is inside the "'+entry.split("/").slice(0,-1).join("/")+'/" folder. Zip the folder\'s contents, not the folder, so index.html is at the top.'});
+            else a.notes.push({l:"Start page",st:"warn",d:'No index.html at the top of the ZIP. "'+entry+'" will be used for the preview.'});
+          }
+          if(junk.length)a.notes.push({l:"System files",st:"warn",d:junk.length+" macOS/Windows system file"+(junk.length>1?"s are":" is")+" in the ZIP (__MACOSX, .DS_Store). They add size but do no harm."});
+          if(real.some(e=>e.name.includes("\\")))a.notes.push({l:"Windows paths",st:"warn",d:"Some paths use backslashes. Re-zip so paths use /."});
+          if(total>150*1024*1024)a.notes.push({l:"App size",st:"warn",d:"Unpacked size is "+fmtBytes(total)+". Google Play limits downloads to 200 MB."});
+          try{a.html=new TextDecoder().decode(await zipData(z,real.find(e=>e.name===entry)));htmlNotes(a.html,a.notes)}catch(e){a.notes.push({l:"Start page",st:"warn",d:e.message})}
+        }
+      }
+    }catch(e){a.notes.push({l:"Source file",st:"fail",d:e.message||"Couldn't read that file."})}
+  }
+  A=a;return A;
+}
 
 /* ============ ICON ============ */
 $("#iconFile").onchange=e=>{
-  const f=e.target.files[0];if(!f)return;const img=new Image();
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(!/^image\/(png|jpeg|webp)$/.test(f.type))return toast("Use a PNG, JPG or WebP image.");
+  const img=new Image(),u=URL.createObjectURL(f);
   img.onload=()=>{const c=document.createElement("canvas");c.width=c.height=512;const x=c.getContext("2d"),s=Math.min(img.width,img.height);
-    x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,512,512);S.icon=c.toDataURL("image/png");S.iconFileName="app-icon.png";S.iconSize=Math.min(img.width,img.height);bind();persist()};
-  img.src=URL.createObjectURL(f);
+    x.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,512,512);S.icon=c.toDataURL("image/png");S.iconFileName="app-icon.png";S.iconSize=Math.min(img.width,img.height);S.iconSquare=img.width===img.height;URL.revokeObjectURL(u);bind();persist()};
+  img.onerror=()=>{URL.revokeObjectURL(u);toast("That image couldn't be read. Try another file.")};
+  img.src=u;
 };
 function drawIcon(){
   $("#icons").hidden=!S.icon;$("#iconS").textContent=S.icon?"Icon added. Tap to replace.":"No icon yet";
-  if(!S.icon)return;const img=new Image();img.onload=()=>["#ic1","#ic2","#ic3"].forEach(id=>{const c=$(id);c.getContext("2d").drawImage(img,0,0,c.width,c.height)});img.src=S.icon;
+  if(!S.icon)return;const img=new Image();img.onload=()=>["#ic1","#ic2","#ic3"].forEach(id=>{const c=$(id),x=c.getContext("2d");x.clearRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height)});img.src=S.icon;
 }
 
-/* ============ PREVIEW ============ */
-function preview(){
-  const f=$("#frame");let ok=true;
-  if(S.stype==="url"&&S.url)f.removeAttribute("srcdoc"),f.src=normUrl(S.url);
-  else if(S.stype==="file"&&S.html)f.srcdoc=S.html;
-  else ok=false;
-  f.hidden=!ok;$("#pEmpty").hidden=ok;
-  if(!ok&&S.fileName.endsWith(".zip"))$("#pEmpty").textContent="ZIP files are checked during the build, so there is no preview here.";
-  else if(!ok)$("#pEmpty").textContent="Add a source to see a preview.";
+/* ============ PREVIEW (step + side panel) ============ */
+let pvOpen=false,pvRot=false,pvKey="",splashT=0;
+function placeStage(){
+  (pvOpen?$("#pvStage"):$("#stageHome")).appendChild($("#stage"));
+  $("#stageAway").hidden=!pvOpen;$("#pvSide").hidden=pvOpen;
 }
-$("#refresh").onclick=preview;
+function setPanel(on){
+  pvOpen=on;
+  $("#pv").classList.toggle("on",on);$("#pvDim").classList.toggle("on",on);
+  document.body.classList.toggle("pv-open",on);
+  $("#pvOpen").classList.toggle("on",on);$("#pvOpen").setAttribute("aria-expanded",String(on));
+  placeStage();pvKey="";if(on||step===4)preview(true);
+  if(on){renderPanelChecks();$("#pvClose").focus()}
+}
+$("#pvOpen").onclick=()=>setPanel(!pvOpen);
+$("#pvClose").onclick=$("#pvDim").onclick=$("#pvBack").onclick=()=>setPanel(false);
+$("#pvSide").onclick=()=>setPanel(true);
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&pvOpen)setPanel(false);
+  if((e.key==="p"||e.key==="P")&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))setPanel(!pvOpen);
+});
+$("#pvDev").onchange=e=>{G.pvDevice=e.target.value;save(KEY.g,G);previewChrome()};
+$("#rotate").onclick=()=>{pvRot=!pvRot;previewChrome()};
+$("#refresh").onclick=()=>preview(true);
+$("#pvTab").onclick=async()=>{
+  if(S.stype==="url"){const u=normUrl(S.url);if(u)window.open(u,"_blank","noopener");else toast("Enter a website address first.");return}
+  const html=await previewHTML();if(!html)return toast("Add a source first.");
+  const u=URL.createObjectURL(new Blob([html],{type:"text/html"}));window.open(u,"_blank","noopener");setTimeout(()=>URL.revokeObjectURL(u),60000);
+};
+function previewChrome(){
+  const ph=$("#phone");if(!ph)return;
+  const dev=G.pvDevice||"phone",land=S.orient==="landscape"?!pvRot:S.orient==="portrait"?false:pvRot;
+  ph.className="phone"+(dev==="small"?" small":dev==="tab"?" tab":"")+(land?" land":"")+(S.full?" full":"");
+  $("#rotate").disabled=S.orient==="portrait";
+  $("#rotate").title=S.orient==="portrait"?"This app is locked to portrait":"Rotate";
+  $("#sbT").textContent=new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M$/i,"");
+  $("#spN").textContent=S.name||"";
+  $("#spI").hidden=!S.icon;if(S.icon)$("#spI").src=S.icon;
+  $("#pvTitle").textContent=S.name?S.name+" · preview":"Preview";
+}
+function resolveRel(base,rel){
+  if(!rel||/^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(rel))return null;
+  try{return decodeURIComponent(new URL(rel,"https://z/"+base).pathname.slice(1))}catch{return null}
+}
+async function previewHTML(){
+  if(S.stype!=="file")return "";
+  await analyze();
+  if(!isZipName(S.fileName))return A.html||"";
+  if(!A.zip||!A.html)return "";
+  if(A.pvHtml)return A.pvHtml;
+  const z=A.zip,map=new Map();let budget=30*1024*1024;
+  const assets=A.entries.filter(e=>!/\.html?$/i.test(e.name));
+  // data: URLs, because the sandboxed preview frame can't load this page's blob: URLs
+  for(const e of assets.filter(e=>!/\.css$/i.test(e.name))){if(e.usize>budget)continue;budget-=e.usize;try{map.set(e.name,await toDataURL(new Blob([await zipData(z,e)],{type:mimeOf(e.name)})))}catch{}}
+  for(const e of assets.filter(e=>/\.css$/i.test(e.name))){try{let css=new TextDecoder().decode(await zipData(z,e));css=css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g,(m,q,p)=>{const r=resolveRel(e.name,p.trim());return r&&map.has(r)?'url("'+map.get(r)+'")':m});map.set(e.name,await toDataURL(new Blob([css],{type:"text/css"})))}catch{}}
+  const doc=new DOMParser().parseFromString(A.html,"text/html");
+  doc.querySelectorAll("[src],[href],[poster],[srcset]").forEach(n=>{
+    ["src","href","poster"].forEach(at=>{const v=n.getAttribute(at),r=resolveRel(A.entry,v);if(r&&map.has(r)&&n.tagName!=="A")n.setAttribute(at,map.get(r))});
+    const ss=n.getAttribute("srcset");if(ss)n.setAttribute("srcset",ss.split(",").map(p=>{const[u,d]=p.trim().split(/\s+/),r=resolveRel(A.entry,u);return(r&&map.has(r)?map.get(r):u)+(d?" "+d:"")}).join(", "));
+  });
+  A.pvHtml="<!doctype html>\n"+doc.documentElement.outerHTML;
+  return A.pvHtml;
+}
+async function preview(force){
+  previewChrome();
+  const f=$("#frame"),empty=$("#pEmpty"),note=$("#pvNote");
+  const key=S.stype==="url"?"url|"+normUrl(S.url):"file|"+(await analyze()).key;
+  if(!force&&key===pvKey)return;
+  pvKey=key;note.textContent="";let ok=false;
+  if(S.stype==="url"){
+    let u="";try{const x=new URL(normUrl(S.url));if(/^https?:$/.test(x.protocol)&&x.hostname.includes("."))u=x.href}catch{}
+    if(u){ok=true;f.removeAttribute("srcdoc");f.setAttribute("sandbox","allow-scripts allow-forms allow-same-origin allow-popups");f.src=u;note.textContent="Some websites refuse to load inside a frame. If it stays blank here, the app will still open it."}
+    else empty.textContent=S.url?"That website address isn't valid yet.":"Enter a website address to see a preview.";
+  }else{
+    const html=await previewHTML();
+    if(html){ok=true;f.removeAttribute("src");f.setAttribute("sandbox","allow-scripts allow-forms allow-modals");f.srcdoc=html;if(isZipName(S.fileName))note.textContent="ZIP preview is close to the real app. Files a script loads later may not appear here."}
+    else empty.textContent=A.notes.find(n=>n.st==="fail")?.d||"Add a source to see a preview.";
+  }
+  f.hidden=!ok;empty.hidden=ok;
+  const sp=$("#splash");clearTimeout(splashT);
+  if(ok){sp.classList.remove("out");splashT=setTimeout(()=>sp.classList.add("out"),900)}else sp.classList.add("out");
+}
+const refreshPreviewSoon=debounce(()=>{if(pvOpen||step===4)preview(false)},500);
 
-/* ============ PRE-BUILD CHECK ============ */
+/* ============ PRE-BUILD CHECK (live) ============ */
+let lastChecks=[];
 function checks(){
-  const r=[],add=(l,st,d)=>r.push({l,st,d});
-  const hasSrc=S.stype==="url"?!!normUrl(S.url):!!(S.html||srcFile);
-  add("Source added",hasSrc?"ok":"fail",hasSrc?"":"Upload a file or enter a website address.");
-  if(srcFile&&srcFile.size>20*1024*1024)add("Source size","fail","Keep uploaded HTML or ZIP files under 20 MB.");
-  if(S.stype==="file"&&srcFile&&!/\.(html?|zip)$/i.test(srcFile.name))add("Source format","fail","Use an HTML, HTM, or ZIP file.");
-  if(S.stype==="url"&&S.url&&/^http:\/\//i.test(S.url))add("Secure address","warn","This site uses http. Android may block it. Use https.");
-  add("App name",S.name.trim().length>=2?"ok":"fail",S.name.trim().length>=2?"":"Give your app a name.");
-  const pk=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(S.pkg);
-  add("Package ID",pk?"ok":"fail",pk?"":"Use lowercase words separated by dots, like com.company.app.");
-  const vc=Number.isInteger(+S.vcode)&&+S.vcode>0;
-  add("Version",vc&&/^\d+(\.\d+){0,2}$/.test(S.vname)?"ok":"fail",vc&&/^\d+(\.\d+){0,2}$/.test(S.vname)?"":"Use a numeric version name and a whole-number version code.");
-  add("Launcher icon",!S.icon?"warn":S.iconSize<512?"warn":"ok",!S.icon?"No icon. Android will use a default.":S.iconSize<512?"Icon is smaller than 512 px and may look soft.":"");
-  if(S.sign)add("Signing token",$("#token").value.trim()?"ok":"fail",$("#token").value.trim()?"":"Enter your signing access token or turn signing off.");
+  const r=[],add=(l,st,d,s)=>r.push({l,st,d,s});
+  if(S.stype==="url"){
+    let ok=false,url=null;try{url=new URL(normUrl(S.url));ok=/^https?:$/.test(url.protocol)&&url.hostname.includes(".")&&!/\s/.test(S.url.trim())}catch{}
+    add("Source added",ok?"ok":"fail",!S.url?"Enter a website address.":ok?"":"That website address isn't valid.",0);
+    if(ok&&url.protocol==="http:")add("Secure address","warn","This site uses http. Android may block it. Use https.",0);
+  }else{
+    const has=!!(S.html||srcFile||storedInDb(S));
+    add("Source added",has?"ok":"fail",has?"":"Upload a file or enter a website address.",0);
+    if(srcFile&&srcFile.size>20*1024*1024)add("Source size","fail","Keep uploaded HTML or ZIP files under 20 MB.",0);
+    if(S.stype==="file"&&srcFile&&!/\.(html?|zip)$/i.test(srcFile.name))add("Source format","fail","Use an HTML, HTM, or ZIP file.",0);
+    if(has)A.notes.forEach(n=>add(n.l,n.st,n.d,0));
+  }
+  const nm=S.name.trim();
+  add("App name",nm.length>=2?"ok":"fail",nm.length>=2?"":"Give your app a name.",1);
+  const pkg=S.pkg.trim(),fmt=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(pkg),kw=fmt&&pkg.split(".").find(x=>JAVA_KW.has(x)),ex=fmt&&/^(com\.example|android|com\.android)(\.|$)/.test(pkg);
+  add("Package ID",fmt&&!kw&&!ex?"ok":"fail",!fmt?"Use lowercase words separated by dots, like com.company.app.":kw?'"'+kw+'" is a reserved Java word and can\'t be part of a package ID.':ex?"Google Play rejects com.example and android.* package IDs.":"",1);
+  if(fmt&&!kw&&!ex&&P.some(p=>p.id!==S.id&&p.pkg===pkg))add("Package ID","warn","Another project uses this package ID. Installing one app will replace the other.",1);
+  const vc=Number.isInteger(+S.vcode)&&+S.vcode>0&&+S.vcode<=2100000000,vn=/^\d+(\.\d+){0,2}$/.test(S.vname);
+  add("Version",vc&&vn?"ok":"fail",vc&&vn?"":"Use a numeric version name (like 1.0.0) and a whole-number version code.",1);
+  if(vc&&S.lastBuiltCode&&+S.vcode<=S.lastBuiltCode)add("Version code","warn","Version code "+S.lastBuiltCode+" was already built. Google Play needs a higher number for each update.",1);
+  add("Launcher icon",!S.icon?"warn":S.iconSize<512?"warn":"ok",!S.icon?"No icon. Android will use a default.":S.iconSize<512?"Icon is smaller than 512 px and may look soft.":"",2);
+  if(S.icon&&S.iconSquare===false)add("Icon shape","warn","Your image wasn't square, so its edges were cropped. Check the previews.",2);
+  if(S.cache==="aggr"&&S.stype==="url")add("Cache mode","warn","Aggressive caching may show old content from your live site.",3);
+  if(S.cache==="first"&&!S.offline)add("Offline storage","warn","Offline first works best with Offline storage turned on.",3);
+  if(S.sign)add("Signing token",$("#token").value.trim()?"ok":"fail",$("#token").value.trim()?"":"Enter your signing access token or turn signing off.",6);
+  if(!String(G.endpoint||"").trim())add("Build service","fail","Set the build service URL in Settings.","settings");
   return r;
 }
+const chkHTML=c=>`<div class="chk"><span class="dot ${c.st}">${c.st==="ok"?"✓":c.st==="warn"?"!":"×"}</span><div>${esc(c.l)}${c.d?`<small>${esc(c.d)}</small>`:""}</div>${c.st!=="ok"&&c.s!==undefined&&c.s!==step?`<button class="btn sm fix" data-fix="${c.s}">Fix</button>`:""}</div>`;
 function runCheck(){
-  const r=checks();
-  $("#checks").innerHTML=r.map(c=>`<div class="chk"><span class="dot ${c.st}">${c.st==="ok"?"✓":c.st==="warn"?"!":"×"}</span><div>${esc(c.l)}${c.d?`<small>${esc(c.d)}</small>`:""}</div></div>`).join("");
+  const r=checks();lastChecks=r;
+  $("#checks").innerHTML=r.map(chkHTML).join("");
+  paintStepBadges();renderPanelChecks();
   return !r.some(c=>c.st==="fail");
 }
-$("#runCheck").onclick=()=>toast(runCheck()?"Ready to build":"Fix the items marked ×");
+function renderPanelChecks(){
+  if(!pvOpen)return;
+  const bad=lastChecks.filter(c=>c.st!=="ok");
+  const fails=bad.filter(c=>c.st==="fail").length;
+  $("#pvChecks").innerHTML=`<b>${bad.length?(fails?fails+" to fix":"")+(fails&&bad.length>fails?" · ":"")+(bad.length>fails?(bad.length-fails)+" warning"+(bad.length-fails>1?"s":""):""):"Ready to build"}</b>`+bad.slice(0,5).map(chkHTML).join("")+(bad.length>5?`<p class="pvnote" style="text-align:left">+${bad.length-5} more in Check</p>`:"");
+}
+function paintStepBadges(){$$("#steps button").forEach((b,i)=>b.classList.toggle("bad",i!==step&&lastChecks.some(c=>c.s===i&&c.st==="fail")&&i<step))}
+const scheduleCheck=debounce(async()=>{await analyze();runCheck()},150);
+document.addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(!b)return;const s=b.dataset.fix;if(window.matchMedia("(max-width:999px),(hover:none)").matches)setPanel(false);if(s==="settings")view("settings");else{view("create");go(+s)}});
+$("#runCheck").onclick=async()=>{await analyze(true);toast(runCheck()?"Ready to build":"Fix the items marked ×")};
 
 /* ============ BUILD ============ */
 const b64=f=>new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result.split(",")[1]);x.readAsDataURL(f)});
 function log(m,c){const l=$("#log");l.insertAdjacentHTML("beforeend",`<div class="${c||""}">${esc(m)}</div>`);l.scrollTop=1e9}
+function resetBuildUI(){$("#log").innerHTML="";$("#dl").style.display="none";$("#apk").hidden=$("#aab").hidden=true;$("#prog").style.display="none";$("#progBar").style.width="0"}
 $("#buildBtn").onclick=async()=>{
   if(building)return;
+  await analyze();
   if(!runCheck()){go(5);return toast("Fix the items marked × first")}
+  if(!navigator.onLine)return toast("You're offline. Connect to the internet to build.");
   building=true;const btn=$("#buildBtn");btn.disabled=true;btn.textContent="Building…";
-  $("#log").innerHTML="";$("#dl").style.display="none";$("#apk").hidden=$("#aab").hidden=true;
-  $("#prog").style.display="block";$("#progBar").style.width="8%";$("#status").textContent="Building";$("#status").className="pill run";
-  let n=0;const tick=setInterval(()=>$("#progBar").style.width=Math.min(92,8+(++n)*9)+"%",700);
+  resetBuildUI();
+  $("#prog").style.display="block";$("#status").textContent="Building";$("#status").className="pill run";
+  let shown=0;const setP=v=>{shown=Math.max(shown,Math.min(99,v));$("#progBar").style.width=shown+"%"};setP(6);
+  const tick=setInterval(()=>setP(shown<60?shown+2:shown+.25),1500);
   try{
+    const blob=S.stype==="file"?await sourceBlob():null;
     const payload={
       appName:S.name.trim(),packageName:S.pkg.trim(),versionName:S.vname,versionCode:Number(S.vcode),
       orientation:S.orient==="auto"?"unspecified":S.orient,
       sourceMode:S.stype==="url"?"website":"html",sourceType:S.stype==="url"?"website":"html",
       sourceFileName:S.fileName||"",sourceUrl:S.stype==="url"?normUrl(S.url):"",
-      sourceBase64:S.stype==="file"?(srcFile&&/\.zip$/i.test(srcFile.name)?await b64(srcFile):(S.fileName&&/\.zip$/i.test(S.fileName)?await zipBase64(S.id):(S.html?btoa(unescape(encodeURIComponent(S.html))):""))):"",
+      sourceBase64:S.stype==="file"?(blob&&(isZipName(S.fileName)||S.htmlInDb)?await b64(blob):(S.html?btoa(unescape(encodeURIComponent(S.html))):"")):"",
       iconBase64:S.icon?S.icon.split(",")[1]:"",iconFileName:S.icon?"app-icon.png":"",
       backNavigation:Boolean(S.back),zoom:Boolean(S.zoom),fullscreen:Boolean(S.full),externalLinks:Boolean(S.ext),
       offlineStorage:Boolean(S.offline),autoUpdate:Boolean(S.update),
       cacheMode:({off:"off",std:"standard",first:"offline",aggr:"aggressive"})[S.cache]||"standard",
       signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false
     };
-    const res=await buildBridge(payload,log);
+    const res=await buildBridge(payload,log,setP);
     $("#progBar").style.width="100%";
     if(res.apkUrl){$("#apk").href=res.apkUrl;$("#apk").hidden=false}
     if(res.aabUrl&&S.sign){$("#aab").href=res.aabUrl;$("#aab").hidden=false}
     if(res.apkUrl||res.aabUrl){$("#dl").style.display="flex";log("Build complete","ok")}
-    S.status="built";S.vcode=+S.vcode;S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";persist();bind();
+    S.status="built";S.vcode=+S.vcode;S.lastBuiltCode=S.vcode;S.pendingBuildId="";S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";
+    if(G.bumpCode){S.vcode=S.lastBuiltCode+1;log("Version code raised to "+S.vcode+" for your next build","ok")}
+    persist();bind();
   }catch(e){log(e.message,"err");if(e.pendingBuildId){S.pendingBuildId=e.pendingBuildId;S.status=S.buildId?"built":"pending";persist();bind();$("#status").textContent=S.buildId?"Previous build ready · update pending":"Build pending";$("#status").className=S.buildId?"pill ok":"pill run";log("Saved build ID: "+e.pendingBuildId+" — check status from Projects without restarting.","ok")}else if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
   clearInterval(tick);building=false;btn.disabled=false;btn.textContent="Build APK and AAB";
 };
 
 /* ============ PROJECTS ============ */
 function renderProjects(){
-  const el=$("#plist");
+  const el=$("#plist"),q=$("#psearch").value.trim().toLowerCase();
+  const list=[...P].sort((a,b)=>(b.updated||0)-(a.updated||0)).filter(p=>!q||((p.name||"")+" "+(p.pkg||"")).toLowerCase().includes(q));
   if(!P.length){el.innerHTML='<p style="color:var(--m)">No projects yet. Start one from Create.</p>';return}
-  el.innerHTML=P.map(p=>`<div class="pc" data-id="${p.id}">${p.icon?`<img src="${p.icon}" alt="">`:'<div class="ph"></div>'}
-  <div class="i"><b>${esc(p.name||"Untitled")}${p.status==="built"?'<span class="tag ok">Built</span>':p.status==="failed"?'<span class="tag err">Failed</span>':""}</b><small>${esc(p.pkg||"No package ID")} · v${esc(p.vname)} · ${new Date(p.updated).toLocaleDateString()}</small></div>
+  if(!list.length){el.innerHTML='<p style="color:var(--m)">No projects match your search.</p>';return}
+  el.innerHTML=list.map(p=>`<div class="pc" data-id="${esc(p.id)}">${p.icon?`<img src="${esc(p.icon)}" alt="">`:'<div class="ph"></div>'}
+  <div class="i"><b>${esc(p.name||"Untitled")}${p.id===S.id?'<span class="tag">Open</span>':""}${p.status==="built"?'<span class="tag ok">Built</span>':p.status==="failed"?'<span class="tag err">Failed</span>':p.status==="pending"?'<span class="tag">Pending</span>':""}</b><small>${esc(p.pkg||"No package ID")} · v${esc(p.vname)} (${esc(p.vcode)}) · ${new Date(p.updated).toLocaleDateString()}</small></div>
   <div class="acts"><button class="btn sm" data-a="open">Open</button>${p.buildId&&p.status==="built"?`<button class="btn sm" data-a="apk">APK</button><button class="btn sm" data-a="aab">AAB</button>`:""}${p.pendingBuildId?`<button class="btn sm" data-a="check">Check build</button>`:""}<button class="btn sm" data-a="dup">Duplicate</button><button class="btn sm dng" data-a="del">Delete</button></div></div>`).join("");
 }
+$("#psearch").oninput=debounce(renderProjects,120);
 async function checkProjectBuild(p){
   if(!p?.pendingBuildId)return toast("No pending build is saved for this project.");
-  const buildId=p.pendingBuildId,ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
+  const buildId=p.pendingBuildId,ep=endpoint();
   toast("Checking saved build status…");
   try{
     const r=await fetch(ep+"/build/"+encodeURIComponent(buildId)+"?t="+Date.now(),{cache:"no-store"});
@@ -511,7 +849,7 @@ async function checkProjectBuild(p){
     if(!r.ok)throw new Error(d.error||("Status check returned HTTP "+r.status));
     if(d.status==="success"||d.status==="completed"){
       if(!d.buildApkUrl&&!d.buildAabUrl)throw new Error("Build completed but download metadata is missing.");
-      p.buildId=buildId;p.apkUrl=d.buildApkUrl||"";p.aabUrl=d.buildAabUrl||"";p.status="built";p.pendingBuildId="";p.updated=Date.now();save(KEY.p,P);renderProjects();
+      p.buildId=buildId;p.apkUrl=d.buildApkUrl||"";p.aabUrl=d.buildAabUrl||"";p.status="built";p.pendingBuildId="";p.lastBuiltCode=+p.vcode;p.updated=Date.now();save(KEY.p,P);renderProjects();
       if(S.id===p.id){S=structuredClone(p);bind()}
       try{localStorage.removeItem("castel.activeBuild."+p.id)}catch{}
       return toast("Build complete. APK and AAB are ready in Projects.");
@@ -520,12 +858,12 @@ async function checkProjectBuild(p){
     toast(d.message||"Build is still running. Check again shortly.");
   }catch(e){toast("Could not confirm build yet. It is saved; retry Check build later.")}
 }
-async function downloadBuildArtifact(buildId,kind,button){
-  const ep=String(G.endpoint||"https://api.instapped.com").trim().replace(/\/+$/,"");
+async function downloadBuildArtifact(buildId,kind,button,name){
+  const ep=endpoint();
   const url=ep+"/download/"+encodeURIComponent(buildId)+"/"+kind;
   if(button){button.disabled=true;button.textContent="Preparing…"}
   try{
-    const fileName=(S?.name||"app").replace(/[^a-z0-9._-]+/gi,"_")+"."+(kind==="apk"?"apk":"aab");
+    const fileName=(name||S?.name||"app").replace(/[^a-z0-9._-]+/gi,"_")+"."+(kind==="apk"?"apk":"aab");
     // Android WebView's DownloadListener only supports HTTP(S), not blob: URLs.
     // Let the native WebView download handler receive the real Worker URL; use
     // Blob downloads only in ordinary browsers.
@@ -556,24 +894,146 @@ async function downloadBuildArtifact(buildId,kind,button){
     toast((kind==="apk"?"APK":"AAB")+" download started");
   }catch(error){
     console.error("Artifact download failed",error);
-    toast("Download could not start. Check the API download endpoint and CORS settings, then try again.");
+    toast(/installed version/.test(error.message)?error.message:"Download could not start. Check the API download endpoint and CORS settings, then try again.");
   }finally{
     if(button){button.disabled=false;button.textContent=kind.toUpperCase()}
   }
 }
-$("#plist").onclick=e=>{
-  const a=e.target.dataset.a,id=e.target.closest(".pc")?.dataset.id;if(!a)return;const p=P.find(x=>x.id===id);if(!p)return;if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");downloadBuildArtifact(p.buildId,a,e.target);return}if(a==="check"){checkProjectBuild(p);return}
-  if(a==="open"){S=structuredClone(p);srcFile=null;pkgTouched=true;bind();go(0);view("create");if(S.fileName&&/\.zip$/i.test(S.fileName)){getZip(S.id).then(blob=>{if(blob&&S.id===p.id)srcFile=new File([blob],S.fileName,{type:"application/zip"})}).catch(()=>toast("Saved ZIP could not be loaded. Re-import the project backup or upload the ZIP again."))}}
-  if(a==="dup"){(async()=>{const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36);c.name+=" copy";c.status="draft";c.updated=Date.now();try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its ZIP could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated")})()}
-  if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);renderProjects()}
+async function openProject(p){
+  S=structuredClone(p);srcFile=null;pkgTouched=true;A=emptyA();pvKey="";resetBuildUI();
+  try{localStorage.setItem(KEY.cur,S.id)}catch{}
+  if(storedInDb(S)){try{await sourceBlob()}catch{}if(!srcFile)toast("Saved source could not be loaded. Re-import the project backup or upload it again.")}
+  bind();await analyze(true);runCheck();
+}
+$("#plist").onclick=async e=>{
+  const btn=e.target.closest("[data-a]");if(!btn)return;
+  const a=btn.dataset.a,id=btn.closest(".pc")?.dataset.id;const p=P.find(x=>x.id===id);if(!p)return;
+  if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");downloadBuildArtifact(p.buildId,a,btn,p.name);return}
+  if(a==="check"){checkProjectBuild(p);return}
+  if(a==="open"){go(0);view("create");await openProject(p)}
+  if(a==="dup"){const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);c.name=(c.name||"Untitled")+" copy";c.status="draft";c.updated=Date.now();["buildId","pendingBuildId","apkUrl","aabUrl","lastBuiltCode"].forEach(k=>delete c[k]);try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its source file could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated. Give it its own package ID before publishing.")}
+  if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);try{await delZip(id)}catch{}if(S.id===id){S=blank();srcFile=null;pkgTouched=false;A=emptyA();bind();try{localStorage.removeItem(KEY.cur)}catch{}}renderProjects();toast("Project deleted")}
 };
-$("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;$("#log").innerHTML="";$("#dl").style.display="none";bind();go(0);view("create")};
-$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(copy.fileName&&/\.zip$/i.test(copy.fileName)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="instapped-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
-$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&p.fileName&&/\.zip$/i.test(p.fileName))await putZip(p.id,base64Blob(zip));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid instApped project backup.")}finally{e.target.value=""}};
+$("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;A=emptyA();pvKey="";resetBuildUI();try{localStorage.removeItem(KEY.cur)}catch{}bind();go(0);view("create");preview(true)};
+$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(storedInDb(copy)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="instapped-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
+$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&storedInDb(p))await putZip(p.id,base64Blob(zip,isZipName(p.fileName)?"application/zip":"text/html"));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid instApped project backup.")}finally{e.target.value=""}};
 $("#copyDev").onclick=async()=>{try{await navigator.clipboard.writeText($("#devCode").textContent);toast("Copied")}catch{toast("Clipboard access is unavailable in this browser.")}};
 
+/* ============ SETTINGS: connection ============ */
+$("#epTest").onclick=async()=>{
+  const h=$("#epHint"),ep=endpoint();h.textContent="Testing "+ep+" …";
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),8000);
+  try{const r=await fetch(ep+"/health",{cache:"no-store",signal:ctl.signal});const d=await r.json().catch(()=>({}));if(!r.ok||d.ok===false)throw new Error(d.error||"HTTP "+r.status);h.innerHTML='<span style="color:var(--ok)">Connected'+(d.revision?" · revision "+esc(d.revision):"")+(d.githubConfigured===false?" · build token not configured":"")+"</span>"}
+  catch(e){h.innerHTML='<span style="color:var(--e)">Couldn\'t reach the build service ('+esc(e.name==="AbortError"?"timed out":e.message||"network error")+").</span>"}
+  finally{clearTimeout(t)}
+};
+$("#epReset").onclick=()=>{G.endpoint=DEFAULT_ENDPOINT;applyG();$('[data-g=endpoint]').value=G.endpoint;scheduleCheck();toast("Build service URL reset")};
+
+/* ============ ADS: injectable top banner ============ */
+const Ads=(()=>{
+  const LS_D="instapped.ad.dismissed",LS_L="instapped.ad.local",slot=$("#ad-slot");
+  const layers={inline:null,global:null,remote:null,runtime:null,local:null},seen=new Set();
+  let hidden=false,rot=0,shown=null;
+  const norm=c=>{if(typeof c==="string"){try{c=JSON.parse(c)}catch{return null}}return c&&typeof c==="object"&&!Array.isArray(c)?c:null};
+  const isColor=c=>typeof c==="string"&&c.trim()&&CSS.supports("color",c);
+  function safeUrl(u,img){
+    if(typeof u!=="string"||!u.trim())return "";u=u.trim();
+    if(!img&&u.startsWith("#"))return u;
+    if(img&&/^data:image\/(png|jpe?g|gif|webp);base64,/i.test(u))return u;
+    try{const x=new URL(u,location.href);if(x.protocol==="https:"||x.protocol==="http:")return x.href;if(!img&&x.protocol==="mailto:")return x.href}catch{}
+    return "";
+  }
+  function beacon(u){u=safeUrl(u);if(!u||u.startsWith("#"))return;try{if(!(navigator.sendBeacon&&navigator.sendBeacon(u)))fetch(u,{mode:"no-cors",keepalive:true}).catch(()=>{})}catch{}}
+  const source=()=>["local","runtime","remote","global","inline"].find(k=>layers[k])||null;
+  const eff=()=>{const s=source();return s?layers[s]:null};
+  const dismissed=()=>load(LS_D,{});
+  function active(c){
+    if(!c||c.enabled===false)return false;const now=Date.now();
+    if(c.startAt&&Date.parse(c.startAt)>now)return false;
+    if(c.endAt&&Date.parse(c.endAt)<now)return false;
+    const until=dismissed()[c.id||"default"];return !(until&&until>now);
+  }
+  function draw(ad,root,idx){
+    const box=document.createElement("div");box.className="ad";
+    if(isColor(ad.background))box.style.setProperty("--ad-bg",ad.background);
+    if(isColor(ad.color))box.style.setProperty("--ad-fg",ad.color);
+    if(isColor(ad.accent))box.style.setProperty("--ad-accent",ad.accent);
+    const h=Math.min(Math.max(parseInt(ad.height,10)||0,0),250);if(h)box.style.setProperty("--ad-h",h+"px");
+    const lab=document.createElement("span");lab.className="ad-label";lab.textContent=ad.label||"Ad";box.appendChild(lab);
+    const href=safeUrl(ad.url);
+    const link=cls=>{const a=document.createElement("a");a.className=cls;if(href){a.href=href;if(!href.startsWith("#")&&ad.newTab!==false)a.target="_blank";a.rel="sponsored noopener noreferrer";a.addEventListener("click",()=>beacon(ad.clickUrl||root.clickUrl))}return a};
+    const type=ad.type||(ad.image?"image":ad.html?"html":"text");
+    if(type==="image"&&safeUrl(ad.image,true)){
+      const a=link("ad-img"),pic=document.createElement("picture"),mob=safeUrl(ad.imageMobile,true);
+      if(mob){const s=document.createElement("source");s.media="(max-width:640px)";s.srcset=mob;pic.appendChild(s)}
+      const img=document.createElement("img");img.src=safeUrl(ad.image,true);img.alt=ad.alt||ad.title||"Advertisement";pic.appendChild(img);a.appendChild(pic);box.appendChild(a);
+    }else if(type==="html"&&typeof ad.html==="string"){
+      const f=document.createElement("iframe");f.className="ad-frame";f.title=ad.title||"Advertisement";
+      f.setAttribute("sandbox","allow-scripts allow-popups allow-popups-to-escape-sandbox");f.setAttribute("referrerpolicy","no-referrer");
+      f.srcdoc='<!doctype html><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif;color:#fff;background:transparent}</style>'+ad.html;
+      box.appendChild(f);
+    }else{
+      const body=document.createElement("div");body.className="ad-body";
+      if(ad.title){const s=document.createElement("strong");s.textContent=ad.title;body.appendChild(s)}
+      if(ad.body){const s=document.createElement("span");s.textContent=ad.body;body.appendChild(s)}
+      box.appendChild(body);
+      if(href){const c=link("ad-cta");c.textContent=ad.cta||"Learn more";box.appendChild(c)}
+    }
+    if(root.dismissible!==false){
+      const x=document.createElement("button");x.className="ad-x";x.type="button";x.setAttribute("aria-label","Close ad");x.textContent="×";
+      x.onclick=()=>{const d=dismissed();d[root.id||"default"]=Date.now()+(Number(root.dismissHours)||24)*3600e3;save(LS_D,d);render()};
+      box.appendChild(x);
+    }
+    slot.replaceChildren(box);slot.hidden=false;$("#app").classList.add("has-ad");
+    const k=(root.id||"default")+":"+idx;if(!seen.has(k)){seen.add(k);beacon(ad.impressionUrl||root.impressionUrl)}
+    shown=ad;dispatchEvent(new CustomEvent("instapped:ad-render",{detail:{ad,source:source()}}));
+  }
+  function render(){
+    clearInterval(rot);const c=eff();
+    if(hidden||!active(c)){slot.hidden=true;slot.replaceChildren();$("#app").classList.remove("has-ad");shown=null;dispatchEvent(new CustomEvent("instapped:ad-render",{detail:{ad:null,source:source()}}));return}
+    const items=Array.isArray(c.rotate)&&c.rotate.length?c.rotate.map(r=>Object.assign({},c,norm(r)||{},{rotate:undefined})):[c];
+    let i=0;const next=()=>{draw(items[i%items.length],c,i%items.length);i++};next();
+    if(items.length>1)rot=setInterval(next,Math.max(3,Number(c.rotateSeconds)||8)*1000);
+  }
+  async function loadRemote(){
+    if(!CFG.adConfigUrl)return;const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),6000);
+    try{const u=new URL(CFG.adConfigUrl,location.href);u.searchParams.set("_",Date.now());const r=await fetch(u,{cache:"no-store",signal:ctl.signal});if(r.ok){layers.remote=norm(await r.json());render()}}
+    catch(e){console.warn("[instApped] remote ad failed",e)}finally{clearTimeout(t)}
+  }
+  function init(){
+    try{layers.inline=norm(JSON.parse($("#instapped-ad")?.textContent||"null"))}catch(e){console.warn("[instApped] bad ad JSON",e)}
+    layers.global=norm(window.INSTAPPED_AD);layers.local=norm(load(LS_L,null));
+    render();loadRemote();
+    if(CFG.adConfigUrl&&Number(CFG.adRefreshMinutes)>0)setInterval(loadRemote,CFG.adRefreshMinutes*60e3);
+    addEventListener("message",e=>{
+      const ok=Array.isArray(CFG.adAllowedOrigins)?CFG.adAllowedOrigins:[];
+      if(!ok.includes(e.origin)&&!ok.includes("*"))return;
+      const d=e.data||{};
+      if(d.type==="instapped:ad"){layers.runtime=norm(d.ad);hidden=false;render()}
+      else if(d.type==="instapped:ad-hide"){hidden=true;render()}
+      else if(d.type==="instapped:ad-show"){hidden=false;render()}
+    });
+  }
+  return{init,source,
+    setLocal(c){layers.local=norm(c);if(layers.local)save(LS_L,layers.local);else try{localStorage.removeItem(LS_L)}catch{}hidden=false;render()},
+    api:{set(c){layers.runtime=norm(c);hidden=false;render();return !!layers.runtime},hide(){hidden=true;render()},show(){hidden=false;render()},get(){return{source:source(),config:eff(),showing:shown}},clearDismissed(){save(LS_D,{});render()},reload(){return loadRemote()}}};
+})();
+function renderAdSettings(){$("#adSrc").textContent="Active source: "+(Ads.source()||"none")+(Ads.source()==="local"?" (override on this device)":"")}
+$("#adApply").onclick=()=>{const v=$("#adJson").value.trim();if(!v)return toast("Paste ad JSON first.");try{Ads.setLocal(JSON.parse(v));renderAdSettings();toast("Ad preview applied on this device")}catch(e){toast("That isn't valid JSON: "+e.message)}};
+$("#adLoad").onclick=()=>{$("#adJson").value=JSON.stringify(Ads.api.get().config||{},null,2)};
+$("#adClear").onclick=()=>{Ads.setLocal(null);renderAdSettings();toast("Override removed")};
+$("#adUndo").onclick=()=>{Ads.api.clearDismissed();toast("The ad will show again")};
+window.instApped=Object.assign(window.instApped||{},{ads:Ads.api,project:()=>structuredClone(S)});
+
 /* ============ INIT ============ */
-applyG();bind();go(0);
+addEventListener("online",()=>scheduleCheck());
+addEventListener("offline",()=>toast("You're offline. Editing still works; building needs a connection."));
+(async()=>{
+  Ads.init();applyG();
+  const cur=localStorage.getItem(KEY.cur),last=P.find(p=>p.id===cur);
+  if(last)await openProject(last);else bind();
+  go(0);
+})();
 </script>
 </body>
 </html>
