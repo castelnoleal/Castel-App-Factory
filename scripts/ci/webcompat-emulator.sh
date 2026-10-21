@@ -24,7 +24,13 @@ cat /tmp/webcompat-results.txt
 while IFS= read -r line; do
   case "$line" in *:FAIL*|*SOME_FAILED*) echo "::error title=Web compatibility::$line" ;; *) echo "::notice title=Web compatibility::$line" ;; esac
 done < /tmp/webcompat-results.txt
-if [ ! -s /tmp/webcompat-results.txt ]; then echo "::error title=Web compatibility::No WEBCOMPAT output in logcat (page did not run)"; grep -iE "chromium|CastelAppFactory|AndroidRuntime" /tmp/webcompat.log | tail -n 40 | while IFS= read -r l; do echo "::error title=logcat::$l"; done; fi
+if [ ! -s /tmp/webcompat-results.txt ]; then
+  # One annotation (GitHub keeps only 10 per step) with the lines that matter.
+  summary="$(grep -E 'CastelAppFactory|CONSOLE|AndroidRuntime|FATAL|LAUNCH_FAILED' /tmp/webcompat.log | sed 's/^[0-9-]* [0-9:.]* *[0-9]* *[0-9]* //' | tail -n 25 | tr '\n' '|' | cut -c1-3500)"
+  echo "::error title=Web compatibility::No WEBCOMPAT output. Log: ${summary:-no app log lines}"
+  top="$(adb shell dumpsys activity top | grep -E 'ACTIVITY|mResumed' | head -n 3 | tr '\n' ' ')"
+  echo "::error title=Activity::${top}"
+fi
 if grep -E 'FATAL EXCEPTION' /tmp/webcompat.log >/dev/null; then echo "::error title=Web compatibility::App crashed"; grep -A20 "FATAL EXCEPTION" /tmp/webcompat.log | head -n 25 | while IFS= read -r l; do echo "::error title=crash::$l"; done; exit 1; fi
 if ! grep -F 'WEBCOMPAT:ALL_PASS' /tmp/webcompat.log >/dev/null; then
   echo "Web compatibility checks failed."

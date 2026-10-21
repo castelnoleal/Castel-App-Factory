@@ -174,7 +174,7 @@ public class MainActivity extends ComponentActivity {
             configureWindow(window);
             initializeWebView(window, savedInstanceState);
         } catch (Throwable fatal) {
-            Log.e(TAG, "LAUNCH_FAILED", fatal);
+            Log.e(TAG, "LAUNCH_FAILED:" + fatal, fatal);
             showLaunchError(fatal);
         }
     }
@@ -340,6 +340,7 @@ public class MainActivity extends ComponentActivity {
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
+                Log.i("CastelAppFactory", "PAGE_STARTED:" + url);
                 if (!isOnline() && CACHE_MODE != WebSettings.LOAD_NO_CACHE) loadedWhileOffline = true;
             }
             @Override
