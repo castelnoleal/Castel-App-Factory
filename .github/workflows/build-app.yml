@@ -277,6 +277,12 @@ jobs:
           payload=$(jq -n --arg id "${BUILD_ID}" --arg status "running" --arg message "Starting Android emulator runtime test" --argjson progress 78 --argjson runId "${GITHUB_RUN_ID}" --arg runUrl "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" '{buildId:$id,status:$status,message:$message,progress:$progress,runId:$runId,runUrl:$runUrl,updatedAt:(now|todateiso8601)}' | base64 -w0)
           gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/status.json" -f message="Build ${BUILD_ID}: Starting Android emulator runtime test" -f content="${payload}" -f sha="${sha}" -f branch="build-${BUILD_ID}" >/dev/null
 
+      - name: Enable KVM for the Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -l /dev/kvm || true
       - name: Runtime smoke test generated APK
         uses: reactivecircus/android-emulator-runner@v2
         env:

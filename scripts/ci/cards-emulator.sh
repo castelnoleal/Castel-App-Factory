@@ -5,7 +5,7 @@ set -u
 PKG=org.meiocg.cards
 APK=build/cards/app/build/outputs/apk/debug/app-debug.apk
 fail() { echo "::error title=Cards runtime::$1"; exit 1; }
-adb wait-for-device
+timeout 180 adb wait-for-device || { echo "::error title=Emulator::device did not come online"; exit 1; }
 for attempt in $(seq 1 24); do
   [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
   sleep 5

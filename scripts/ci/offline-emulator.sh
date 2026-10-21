@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs inside the Android emulator job of offline-storage-test.yml.
-set -eu
+set -u
+fail() { echo "::error title=Offline storage::$1"; exit 1; }
 APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
 PKG=com.castel.offlinetest
 # Background test server; stopped on exit so the emulator step can finish.
@@ -9,15 +10,15 @@ SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
 # Avoid the emulator action's post-boot animation settings; they can
 # intermittently break adb on hosted runners. Wait for Android and retry adb.
-adb wait-for-device
+timeout 180 adb wait-for-device || { echo "::error title=Emulator::device did not come online"; exit 1; }
 for attempt in 1 2 3 4 5; do
   booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\\r' || true)"
   if [ "$booted" = "1" ]; then break; fi
   sleep 5
 done
 test "$(adb shell getprop sys.boot_completed | tr -d '\\r')" = "1"
-adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; adb wait-for-device; sleep 10; }
-adb install -r "$APK"
+adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; timeout 120 adb wait-for-device; sleep 10; }
+adb install -r "$APK" || { sleep 20; adb install -r "$APK"; } || fail "adb install failed"
 adb logcat -c
 adb shell am start -n "$PKG/.MainActivity"
 sleep 10

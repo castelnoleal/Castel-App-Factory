@@ -2,18 +2,19 @@
 # Runs inside the Android emulator job of web-compat-test.yml.
 set -u
 fail() { echo "::error title=Web compatibility::$1"; exit 1; }
-retry() { for i in 1 2 3 4; do "$@" && return 0; echo "retry $i: $*"; adb reconnect >/dev/null 2>&1 || true; sleep 15; adb wait-for-device; done; return 1; }
+retry() { for i in 1 2 3 4; do "$@" && return 0; echo "retry $i: $*"; adb reconnect >/dev/null 2>&1 || true; sleep 15; timeout 120 adb wait-for-device; done; return 1; }
 APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
 PKG=com.castel.webcompat
-adb wait-for-device
+timeout 180 adb wait-for-device || { echo "::error title=Emulator::device did not come online"; exit 1; }
 for attempt in 1 2 3 4 5 6 7 8; do
   booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
   if [ "$booted" = "1" ]; then break; fi
   sleep 5
 done
-adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; adb wait-for-device; sleep 10; }
+adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; timeout 120 adb wait-for-device; sleep 10; }
 echo "::notice title=Web compatibility::emulator ready, installing"
 retry adb install -r "$APK" || fail "adb install failed after retries"
+echo "::notice title=Web compatibility::installed, starting app"
 adb logcat -c || true
 retry adb shell am start -n "$PKG/.MainActivity" || fail "could not start the app"
 for attempt in $(seq 1 40); do
