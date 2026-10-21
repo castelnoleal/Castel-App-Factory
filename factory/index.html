@@ -333,6 +333,21 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
     <div class="seg" data-k="cache"><button data-v="off">Off</button><button data-v="std" class="on">Standard</button><button data-v="first">Offline first</button><button data-v="aggr">Aggressive</button></div>
   </div>
   <div class="card">
+    <h3>Update alerts</h3><p class="h">Let people know when a new version is out, even when the app is closed.</p>
+    <div class="row"><span><b>Tell people about updates</b><small>Shows an update prompt in the app and a notification on the phone</small></span><input type="checkbox" class="sw" data-k="upd"></div>
+    <div id="updOpts">
+      <div class="row"><span><b>Use Google Play's update prompt</b><small>For copies installed from Google Play: Play downloads and installs the update in the app</small></span><input type="checkbox" class="sw" data-k="playupd"></div>
+      <label class="f" style="margin-top:10px">Update feed URL<input type="text" inputmode="url" data-k="feed" placeholder="https://example.com/myapp/update.json" autocapitalize="none" spellcheck="false"><span class="hint2">Optional. A small JSON file you host. The app checks it in the background and notifies people of new versions and announcements. Works for any install, including APKs shared outside Play.</span></label>
+      <div class="grid">
+        <label class="f">Check the feed every<select data-k="feedh"><option value="6">6 hours</option><option value="12">12 hours</option><option value="24">Day</option><option value="48">2 days</option></select></label>
+        <label class="f">What's new in this version<input type="text" data-k="whatsnew" maxlength="300" placeholder="Faster search and new card art"></label>
+      </div>
+      <button class="btn sm" id="feedDl">Download update feed for this version</button>
+      <div class="dev" id="feedSample" style="margin-top:12px"></div>
+    </div>
+    <div class="row" style="margin-top:6px"><span><b>Let pages show notifications</b><small>The web Notification API works while the app is open (messages, reminders). Push while the app is closed needs a push service.</small></span><input type="checkbox" class="sw" data-k="pnotif"></div>
+  </div>
+  <div class="card">
     <h3>instApped SDK for developers</h3><p class="h">Your HTML can save files and ZIP bundles to private storage that works offline.</p>
     <div class="dev" id="devCode">CastelApp.downloadData(url, key, callback)
 CastelApp.downloadBundle(url, key, sha256, callback)
@@ -340,7 +355,8 @@ CastelApp.bundleUrl(key, path)
 CastelApp.share(title, text, url)   // native share sheet; navigator.share also works
 CastelApp.openExternal(url)         // open a link in the browser
 CastelApp.isOnline()                // true or false
-JSON.parse(CastelApp.appInfo())     // packageName, versionName, versionCode</div>
+JSON.parse(CastelApp.appInfo())     // packageName, versionName, versionCode
+CastelApp.checkForUpdate()          // check the update feed / Google Play now</div>
     <button class="btn sm" style="margin-top:10px" id="copyDev">Copy</button>
   </div></div>
 
@@ -499,7 +515,7 @@ function base64Blob(data,type){const raw=atob(data),bytes=new Uint8Array(raw.len
 const isZipName=n=>/\.zip$/i.test(n||"");
 const storedInDb=p=>!!(p&&p.fileName&&(isZipName(p.fileName)||p.htmlInDb));
 
-function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,http:false,ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
+function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,http:false,upd:false,playupd:true,feed:"",feedh:"12",pnotif:false,whatsnew:"",ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
 const HEX=/^#[0-9a-f]{6}$/i;
 const splashKey=id=>id+":splash";
 let splashURL="";
@@ -569,6 +585,8 @@ function bind(){
   const st=S.status==="built"?["Built"," ok"]:S.status==="pending"?["Build pending"," run"]:S.status==="failed"?["Failed"," err"]:["Draft",""];
   $("#status").textContent=st[0];$("#status").className="pill"+st[1];
   drawIcon();
+  $("#updOpts").hidden=!S.upd;
+  $("#feedSample").textContent=JSON.stringify(feedJSON(),null,2);
   $("#splashArt").hidden=S.splash!=="art";
   $("#splashRow").hidden=!S.splashName;
   $("#splashT").textContent=S.splashName?"Replace splash art":"Tap to upload splash art";
@@ -589,6 +607,7 @@ $$("#v-create input[data-k],#v-create select[data-k]").forEach(el=>{
     if(k==="sbg"||k==="theme"){S[k]=S[k].trim().toUpperCase().replace(/^([0-9A-F]{6})$/,"#$1");bind()}
     persist();previewChrome();scheduleCheck();
     if(k==="url")refreshPreviewSoon();
+    if(k==="upd"||k==="whatsnew"||k==="vcode"||k==="vname"||k==="pkg"){$("#updOpts").hidden=!S.upd;$("#feedSample").textContent=JSON.stringify(feedJSON(),null,2)}
   };
   el.addEventListener(el.type==="checkbox"||el.tagName==="SELECT"?"change":"input",h);
 });
@@ -701,6 +720,17 @@ async function analyze(force){
   }
   A=a;return A;
 }
+
+/* ============ UPDATE FEED ============ */
+function feedJSON(){
+  const code=Number(S.lastBuiltCode)||Number(S.vcode)||1;
+  return{versionCode:code,versionName:S.vname||"1.0.0",minVersionCode:0,title:"Update available",message:S.whatsnew||"",url:S.pkg?"https://play.google.com/store/apps/details?id="+S.pkg:""};
+}
+$("#feedDl").onclick=()=>{
+  const a=document.createElement("a"),u=URL.createObjectURL(new Blob([JSON.stringify(feedJSON(),null,2)],{type:"application/json"}));
+  a.href=u;a.download="update.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),30000);
+  toast("Upload update.json to your feed URL"+(S.feed?"":" and add that URL here"));
+};
 
 /* ============ SPLASH ART ============ */
 $("#sbgPick").oninput=e=>{S.sbg=e.target.value.toUpperCase();$('[data-k=sbg]').value=S.sbg;bind();persist()};
@@ -877,12 +907,20 @@ function checks(){
     const c=A.code,need=[];
     if(/getUserMedia|mediaDevices/.test(c)&&!S.cam&&!S.mic)need.push("camera or microphone (getUserMedia)");
     if(/geolocation\.(getCurrentPosition|watchPosition)/.test(c)&&!S.loc)need.push("location (navigator.geolocation)");
-    if(need.length)add("Browser features","warn","Your code uses "+need.join(" and ")+". Turn these on under Permissions, or the app will block them.",1);
     const unsupported=[];
-    if(/Notification\.requestPermission|pushManager\.subscribe|PushManager/.test(c))unsupported.push("web push notifications");
+    if(/pushManager\.subscribe|PushManager/.test(c))unsupported.push("web push (notifications while the app is closed)");
+    if(/Notification\.requestPermission|new Notification\(/.test(c)&&!S.pnotif)need.push("notifications (turn on Let pages show notifications under Offline)");
     if(/navigator\.(bluetooth|usb|serial|hid)\b|NDEFReader/.test(c))unsupported.push("Bluetooth/USB/NFC web APIs");
     if(/new PaymentRequest\(/.test(c))unsupported.push("the Payment Request API");
+    if(need.length)add("Browser features","warn","Your code uses "+need.join(" and ")+". Turn these on, or the app will block them.",1);
     if(unsupported.length)add("Browser features","warn","Your code uses "+unsupported.join(", ")+", which Android apps built from web pages can't support. The rest of the page works normally.",0);
+  }
+  if(S.upd){
+    const f=String(S.feed||"").trim();
+    if(f&&!/^https:\/\/[^\s"]+\.[^\s"]+/i.test(f))add("Update feed","fail","The update feed URL must start with https://.",3);
+    else if(!f&&!S.playupd)add("Update alerts","warn","Turn on Google Play's update prompt or add an update feed URL, otherwise there's nothing to check.",3);
+    else add("Update alerts","ok","",3);
+    if(f&&S.lastBuiltCode&&+S.vcode>S.lastBuiltCode)add("Update feed","ok","After this build, download the update feed and upload it so existing users are notified.",3);
   }
   if(S.cam||S.mic||S.loc)add("Permissions","ok","Requests "+[S.cam&&"camera",S.mic&&"microphone",S.loc&&"location"].filter(Boolean).join(", ")+". Google Play may ask you to explain why in the Data safety form.",1);
   if(S.cache==="aggr"&&S.stype==="url")add("Cache mode","warn","Aggressive caching may show old content from your live site.",3);
@@ -941,7 +979,7 @@ $("#buildBtn").onclick=async()=>{
       themeColor:HEX.test(S.theme)?S.theme:"#080B14",splashBackground:HEX.test(S.sbg)?S.sbg:"#080B14",
       splashMode:S.splash==="art"&&S.splashName?"art":"icon",splashFit:S.sfit==="contain"?"contain":"cover",splashMinMs:Number(S.smin)||0,
       splashFileName:"",splashBase64:"",
-      pullToRefresh:Boolean(S.ptr),keepAwake:Boolean(S.awake),allowCamera:Boolean(S.cam),allowMicrophone:Boolean(S.mic),allowLocation:Boolean(S.loc),allowCleartext:Boolean(S.http),
+      pullToRefresh:Boolean(S.ptr),keepAwake:Boolean(S.awake),allowCamera:Boolean(S.cam),allowMicrophone:Boolean(S.mic),allowLocation:Boolean(S.loc),allowCleartext:Boolean(S.http),updateAlerts:Boolean(S.upd),playUpdates:S.playupd!==false,updateFeedUrl:S.upd?String(S.feed||"").trim():"",updateCheckHours:Number(S.feedh)||12,pageNotifications:Boolean(S.pnotif),
       internalHosts:String(S.hosts||"").split(",").map(h=>h.trim().replace(/^https?:\/\//i,"").split("/")[0].toLowerCase()).filter(h=>/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(h)),
       userAgentSuffix:String(S.ua||"").trim()
     };

@@ -3,6 +3,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Update alerts and page notifications; only requested at runtime when enabled. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- OPTIONAL_PERMISSIONS: generate-app.py adds camera, microphone and location here when enabled -->
     <application
         android:allowBackup="true"

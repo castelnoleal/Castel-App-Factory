@@ -1,6 +1,7 @@
 package com.castel.generatedapp;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentValues;
@@ -67,6 +68,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -84,7 +86,22 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.activity.result.IntentSenderRequest;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.work.Constraints;
+import androidx.work.Data;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.NetworkType;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
+import com.google.android.play.core.appupdate.AppUpdateInfo;
+import com.google.android.play.core.appupdate.AppUpdateManager;
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory;
+import com.google.android.play.core.appupdate.AppUpdateOptions;
+import com.google.android.play.core.install.InstallStateUpdatedListener;
+import com.google.android.play.core.install.model.AppUpdateType;
+import com.google.android.play.core.install.model.InstallStatus;
+import com.google.android.play.core.install.model.UpdateAvailability;
 import androidx.webkit.ServiceWorkerClientCompat;
 import androidx.webkit.ServiceWorkerControllerCompat;
 import androidx.webkit.WebResourceErrorCompat;
@@ -121,6 +138,11 @@ public class MainActivity extends ComponentActivity {
     private static final int SPLASH_COLOR = 0xFF080B14;
     private static final String[] INTERNAL_HOSTS = {};
     private static final String USER_AGENT_SUFFIX = "";
+    private static final boolean UPDATE_ALERTS = false;
+    private static final boolean PLAY_UPDATES = true;
+    private static final String UPDATE_FEED_URL = "";
+    private static final int UPDATE_CHECK_HOURS = 12;
+    private static final boolean PAGE_NOTIFICATIONS = false;
     private static final String START_URL = "__TARGET_URL__";
     // ---- End of build options ----
 
@@ -149,6 +171,11 @@ public class MainActivity extends ComponentActivity {
     private String failedUrl = null;
     private Consumer<Map<String, Boolean>> pendingPermissionResult;
     private Uri captureUri;
+    private AppUpdateManager appUpdateManager;
+    private InstallStateUpdatedListener installListener;
+    private boolean updatePromptShown = false;
+    private final ActivityResultLauncher<IntentSenderRequest> playUpdateLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartIntentSenderForResult(), result -> { });
     private FrameLayout popupLayer;
     private WebView popupView;
     private TextView popupTitle;
@@ -358,9 +385,12 @@ public class MainActivity extends ComponentActivity {
                 view.evaluateJavascript(shareShim, null);
                 // window.print() does nothing in WebView by default; use Android printing (also saves PDFs).
                 view.evaluateJavascript("(function(){if(!window.CastelApp||window.__castelPrint)return;window.__castelPrint=1;window.print=function(){window.CastelApp.print(document.title||'')}})()", null);
+                if (PAGE_NOTIFICATIONS) view.evaluateJavascript(NOTIFICATION_SHIM, null);
                 if (!errorShowing && url != null && !url.startsWith("about:")) {
+                    boolean first = !contentReady;
                     contentReady = true;
                     maybeHideSplash();
+                    if (first && UPDATE_ALERTS) root.postDelayed(MainActivity.this::startUpdateChecks, SPLASH_MIN_MS + 1500);
                 }
             }
             @Override
@@ -740,6 +770,7 @@ public class MainActivity extends ComponentActivity {
     protected void onResume() {
         super.onResume();
         if (webView != null) webView.onResume();
+        if (UPDATE_ALERTS && PLAY_UPDATES) resumePlayUpdate();
     }
 
     private class OfflineStorageBridge {
@@ -776,6 +807,24 @@ public class MainActivity extends ComponentActivity {
                     Toast.makeText(MainActivity.this, "Sharing isn't available on this device.", Toast.LENGTH_SHORT).show();
                 }
             });
+        }
+        @JavascriptInterface public void notify(String title, String body, String tag) {
+            if (!PAGE_NOTIFICATIONS) return;
+            int id = 2000 + Math.abs((tag == null || tag.isEmpty() ? String.valueOf(System.currentTimeMillis()) : tag).hashCode() % 5000);
+            UpdateFeed.post(MainActivity.this, UpdateFeed.CHANNEL_MESSAGES, "Messages", id,
+                    title == null || title.isEmpty() ? UpdateFeed.appName(MainActivity.this) : title, body == null ? "" : body, "");
+        }
+        @JavascriptInterface public String notificationPermission() {
+            if (!PAGE_NOTIFICATIONS) return "denied";
+            return notificationsAllowed() ? "granted" : "default";
+        }
+        @JavascriptInterface public void requestNotificationPermission() {
+            runOnUiThread(() -> requestNotificationPermissionThen(granted -> {
+                if (webView != null) webView.evaluateJavascript("window.__castelNotifyResolve&&window.__castelNotifyResolve('" + (granted ? "granted" : "denied") + "')", null);
+            }));
+        }
+        @JavascriptInterface public void checkForUpdate() {
+            runOnUiThread(() -> { updatePromptShown = false; startUpdateChecks(); });
         }
         @JavascriptInterface public void print(String jobName) {
             runOnUiThread(() -> printPage(jobName));
@@ -1050,6 +1099,142 @@ public class MainActivity extends ComponentActivity {
         message.setText("The app could not start.\n\n" + error.getClass().getSimpleName() +
                 (error.getMessage() == null ? "" : "\n" + error.getMessage()));
         setContentView(message);
+    }
+
+    // ---------------------------------------------------------- update alerts
+
+    /** Web Notification API backed by Android notifications (while the app is running). */
+    private static final String NOTIFICATION_SHIM = "(function(){if(window.__castelNotify||!window.CastelApp)return;window.__castelNotify=1;"
+            + "function N(t,o){o=o||{};this.title=String(t);this.body=String(o.body||'');window.CastelApp.notify(this.title,this.body,String(o.tag||''));}"
+            + "N.prototype.close=function(){};N.prototype.addEventListener=function(){};"
+            + "Object.defineProperty(N,'permission',{get:function(){return window.CastelApp.notificationPermission()}});"
+            + "N.requestPermission=function(cb){return new Promise(function(res){window.__castelNotifyResolve=function(p){if(cb)cb(p);res(p)};window.CastelApp.requestNotificationPermission()})};"
+            + "window.Notification=N})()";
+
+    private boolean notificationsAllowed() {
+        if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, "android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) return false;
+        android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        return nm == null || nm.areNotificationsEnabled();
+    }
+
+    private void requestNotificationPermissionThen(Consumer<Boolean> done) {
+        if (Build.VERSION.SDK_INT < 33) { done.accept(notificationsAllowed()); return; }
+        requestAndroidPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"},
+                granted -> done.accept(granted.contains("android.permission.POST_NOTIFICATIONS")));
+    }
+
+    private void startUpdateChecks() {
+        if (!UPDATE_ALERTS || isFinishing()) return;
+        // Ask once for notification permission (Android 13+) so update alerts can be shown.
+        android.content.SharedPreferences prefs = getSharedPreferences("instapped.updates", MODE_PRIVATE);
+        if (!prefs.getBoolean("askedNotifications", false)) {
+            prefs.edit().putBoolean("askedNotifications", true).apply();
+            requestNotificationPermissionThen(granted -> { });
+        }
+        if (!UPDATE_FEED_URL.isEmpty()) {
+            try {
+                Constraints constraints = new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build();
+                PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(UpdateCheckWorker.class, Math.max(1, UPDATE_CHECK_HOURS), TimeUnit.HOURS)
+                        .setConstraints(constraints)
+                        .setInputData(new Data.Builder().putString(UpdateCheckWorker.KEY_FEED_URL, UPDATE_FEED_URL).build())
+                        .build();
+                WorkManager.getInstance(getApplicationContext())
+                        .enqueueUniquePeriodicWork(UpdateCheckWorker.UNIQUE_NAME, ExistingPeriodicWorkPolicy.UPDATE, request);
+            } catch (Exception e) {
+                Log.w(TAG, "UPDATE_SCHEDULE_FAILED", e);
+            }
+        }
+        if (PLAY_UPDATES && installedFromPlay()) checkPlayUpdate();
+        else if (!UPDATE_FEED_URL.isEmpty()) checkFeedNow();
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean installedFromPlay() {
+        try {
+            String installer = Build.VERSION.SDK_INT >= 30
+                    ? getPackageManager().getInstallSourceInfo(getPackageName()).getInstallingPackageName()
+                    : getPackageManager().getInstallerPackageName(getPackageName());
+            return "com.android.vending".equals(installer);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void checkFeedNow() {
+        dataExecutor.execute(() -> {
+            try {
+                UpdateFeed feed = UpdateFeed.fetch(UPDATE_FEED_URL);
+                if (feed == null) return;
+                runOnUiThread(() -> {
+                    if (isFinishing() || isDestroyed()) return;
+                    if (feed.hasUpdate(this)) showUpdatePrompt(feed);
+                    // Announcements still arrive as notifications.
+                    dataExecutor.execute(() -> { UpdateFeed copy = feed; copy.versionCode = 0; copy.notifyIfNew(getApplicationContext()); });
+                });
+            } catch (Exception e) {
+                Log.w(TAG, "UPDATE_FEED_FAILED", e);
+            }
+        });
+    }
+
+    private void showUpdatePrompt(UpdateFeed feed) {
+        if (updatePromptShown) return;
+        updatePromptShown = true;
+        boolean required = feed.isRequired(this);
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this)
+                .setTitle(feed.updateTitle())
+                .setMessage(required ? feed.updateMessage().replace(" Tap to update.", "") + "\n\nThis version is no longer supported. Please update to continue."
+                        : feed.updateMessage().replace(" Tap to update.", ""))
+                .setCancelable(!required)
+                .setPositiveButton("Update", (d, w) -> {
+                    openOutside(Uri.parse(feed.updateUrl(this)));
+                    if (required) finish();
+                });
+        if (!required) dialog.setNegativeButton("Later", null);
+        dialog.show();
+    }
+
+    private void checkPlayUpdate() {
+        try {
+            appUpdateManager = AppUpdateManagerFactory.create(this);
+            appUpdateManager.getAppUpdateInfo().addOnSuccessListener(info -> {
+                if (info.updateAvailability() != UpdateAvailability.UPDATE_AVAILABLE) {
+                    if (!UPDATE_FEED_URL.isEmpty()) checkFeedNow();
+                    return;
+                }
+                boolean urgent = info.updatePriority() >= 4 && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE);
+                int type = urgent || !info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE) ? AppUpdateType.IMMEDIATE : AppUpdateType.FLEXIBLE;
+                if (!info.isUpdateTypeAllowed(type)) return;
+                if (type == AppUpdateType.FLEXIBLE) {
+                    installListener = state -> { if (state.installStatus() == InstallStatus.DOWNLOADED) promptRestartForUpdate(); };
+                    appUpdateManager.registerListener(installListener);
+                }
+                appUpdateManager.startUpdateFlowForResult(info, playUpdateLauncher, AppUpdateOptions.newBuilder(type).build());
+            }).addOnFailureListener(e -> { if (!UPDATE_FEED_URL.isEmpty()) checkFeedNow(); });
+        } catch (Exception e) {
+            Log.w(TAG, "PLAY_UPDATE_CHECK_FAILED", e);
+            if (!UPDATE_FEED_URL.isEmpty()) checkFeedNow();
+        }
+    }
+
+    private void promptRestartForUpdate() {
+        if (isFinishing() || appUpdateManager == null) return;
+        new AlertDialog.Builder(this)
+                .setTitle("Update ready")
+                .setMessage("The update has downloaded. Restart the app to finish installing it.")
+                .setPositiveButton("Restart", (d, w) -> appUpdateManager.completeUpdate())
+                .setNegativeButton("Later", null)
+                .show();
+    }
+
+    private void resumePlayUpdate() {
+        if (appUpdateManager == null) return;
+        appUpdateManager.getAppUpdateInfo().addOnSuccessListener((AppUpdateInfo info) -> {
+            if (info.installStatus() == InstallStatus.DOWNLOADED) promptRestartForUpdate();
+            else if (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                appUpdateManager.startUpdateFlowForResult(info, playUpdateLauncher, AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build());
+            }
+        });
     }
 
     // ------------------------------------------------------------ local site
@@ -1377,6 +1562,9 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onDestroy() {
         dataExecutor.shutdownNow();
+        if (appUpdateManager != null && installListener != null) {
+            try { appUpdateManager.unregisterListener(installListener); } catch (Exception ignored) { }
+        }
         if (connectivity != null && networkCallback != null) {
             try { connectivity.unregisterNetworkCallback(networkCallback); } catch (Exception ignored) { }
         }

@@ -355,6 +355,13 @@ def generate():
     cache_mode = str(cfg.get("cacheMode", "standard")).lower()
     cache_value = {"off": "WebSettings.LOAD_NO_CACHE", "standard": "WebSettings.LOAD_DEFAULT", "offline": "WebSettings.LOAD_CACHE_ELSE_NETWORK", "aggressive": "WebSettings.LOAD_CACHE_ELSE_NETWORK"}.get(cache_mode, "WebSettings.LOAD_DEFAULT")
     internal_hosts = clean_hosts(cfg.get("internalHosts", []))
+    feed_url = str(cfg.get("updateFeedUrl", "") or "").strip()
+    if feed_url and not re.fullmatch(r"https://[^\s\"\\]+", feed_url):
+        fail("Update feed URL must be an https:// address")
+    try:
+        check_hours = max(1, min(168, int(cfg.get("updateCheckHours", 12))))
+    except (TypeError, ValueError):
+        check_hours = 12
     java_options = {
         "OFFLINE_STORAGE": java_bool(cfg.get("offlineStorage", False)),
         "AUTO_UPDATE": java_bool(cfg.get("autoUpdate", False)),
@@ -375,6 +382,11 @@ def generate():
         "SPLASH_COLOR": splash_int,
         "INTERNAL_HOSTS": "{" + ", ".join(java_string(h) for h in internal_hosts) + "}",
         "USER_AGENT_SUFFIX": java_string(ua_suffix),
+        "UPDATE_ALERTS": java_bool(cfg.get("updateAlerts", False)),
+        "PLAY_UPDATES": java_bool(cfg.get("playUpdates", True)),
+        "UPDATE_FEED_URL": java_string(feed_url),
+        "UPDATE_CHECK_HOURS": str(check_hours),
+        "PAGE_NOTIFICATIONS": java_bool(cfg.get("pageNotifications", False)),
     }
 
     java_root = output / "app" / "src" / "main" / "java"
