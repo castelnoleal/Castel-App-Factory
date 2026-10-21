@@ -25,6 +25,11 @@ done
 printf '%s\n' "$LOG" | grep -E 'PAGE_|FATAL' | tail -n 10 | while IFS= read -r l; do echo "::notice title=Website logcat::$l"; done
 printf '%s\n' "$LOG" | grep -q 'FATAL EXCEPTION' && fail "app crashed on launch"
 printf '%s\n' "$LOG" | grep -q 'PAGE_ERROR:' && fail "WebView reported $(printf '%s\n' "$LOG" | grep -o 'PAGE_ERROR:.*' | head -n 1)"
-printf '%s\n' "$LOG" | grep -q 'PAGE_LOADED:http://10.0.2.2' || fail "website did not load within 90 seconds"
+if ! printf '%s\n' "$LOG" | grep -q 'PAGE_LOADED:http://10.0.2.2'; then
+  echo "::error title=App log::$(printf '%s\n' "$LOG" | grep -E 'CastelAppFactory|AndroidRuntime' | sed 's/^[A-Z]\/CastelAppFactory( *[0-9]*): //' | tail -n 25 | tr '\n' '|' | cut -c1-3000)"
+  echo "::error title=Server log::$(tail -n 15 /tmp/website-server.log | tr '\n' '|' | cut -c1-1500)"
+  echo "::error title=Host reachability::$(adb shell 'toybox nc -z -w 3 10.0.2.2 8080 && echo reachable || echo unreachable' 2>&1 | tr -d '\r')"
+  fail "website did not load within 90 seconds"
+fi
 grep -q '"GET / ' /tmp/website-server.log || fail "test server never received the app's request"
 echo "Website-mode app loaded the site from the test server."
