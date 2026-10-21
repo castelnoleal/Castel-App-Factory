@@ -11,9 +11,10 @@ const ORIGIN = "https://create.instapped.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
 const MAX_ICON_BASE64 = 8_000_000;
+const MAX_SPLASH_BASE64 = 11_000_000;
 const CHUNK_CHARS = 800_000;
 // Re-deploy to verify the live GitHub and signing secret configuration.
-const BUILD_BRIDGE_REVISION = "instapped-domain-cors-v1";
+const BUILD_BRIDGE_REVISION = "instapped-splash-v1";
 const SIGNING_ACCESS_HEADER = "X-Castel-Signing-Access";
 
 async function signingTokenMatches(candidate, expected) {
@@ -128,6 +129,17 @@ export default {
         const sourceBase64 = String(b.sourceBase64 || "");
         const iconBase64 = String(b.iconBase64 || "");
         const iconFileName = String(b.iconFileName || "").trim();
+        const splashBase64 = String(b.splashBase64 || "");
+        const splashFileName = String(b.splashFileName || "").trim();
+        const hexColor = (v, d) => /^#[0-9a-f]{6}$/i.test(String(v || "").trim()) ? String(v).trim() : d;
+        const themeColor = hexColor(b.themeColor, "#080B14");
+        const splashBackground = hexColor(b.splashBackground, themeColor);
+        const splashMode = String(b.splashMode || "").toLowerCase() === "art" && splashBase64 ? "art" : "icon";
+        const splashFit = String(b.splashFit || "").toLowerCase() === "contain" ? "contain" : "cover";
+        const splashMinMs = Math.max(0, Math.min(5000, Math.round(Number(b.splashMinMs ?? 600)) || 0));
+        const internalHosts = (Array.isArray(b.internalHosts) ? b.internalHosts : String(b.internalHosts || "").split(","))
+          .map(h => String(h).trim().toLowerCase()).filter(h => /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(h)).slice(0, 20);
+        const userAgentSuffix = String(b.userAgentSuffix || "").replace(/[^A-Za-z0-9 ._\/()+-]/g, "").trim().slice(0, 60);
         const testBuild = Boolean(b.testBuild);
         const projectId = String(b.projectId || "").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0,80);
         const previousBuildId = String(b.previousBuildId || "").trim();
@@ -145,6 +157,9 @@ export default {
         if (sourceBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(sourceBase64)) return reply({ok:false,error:"Uploaded source encoding is invalid."},400);
         if (iconBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(iconBase64)) return reply({ok:false,error:"App icon encoding is invalid."},400);
         if (iconBase64 && !/\.(png|jpe?g|webp)$/i.test(iconFileName)) return reply({ok:false,error:"App icon must be PNG, JPG, JPEG, or WebP."},400);
+        if (splashBase64.length > MAX_SPLASH_BASE64) return reply({ok:false,error:"Splash art is too large. Use an image under about 8 MB."},413);
+        if (splashBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(splashBase64)) return reply({ok:false,error:"Splash art encoding is invalid."},400);
+        if (splashBase64 && !/\.(png|jpe?g|webp)$/i.test(splashFileName)) return reply({ok:false,error:"Splash art must be PNG, JPG, JPEG, or WebP."},400);
         if (signingRequested && !signing) return reply({ok:false,error:"Release signing is not authorized. Configure the factory signing access token first."},403);
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
@@ -156,11 +171,14 @@ export default {
         if (sourceBase64) for (let i=0;i<sourceBase64.length;i+=CHUNK_CHARS) chunks.push(sourceBase64.slice(i,i+CHUNK_CHARS));
         const iconChunks = [];
         if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
+        const splashChunks = [];
+        if (splashMode === "art") for (let i=0;i<splashBase64.length;i+=CHUNK_CHARS) splashChunks.push(splashBase64.slice(i,i+CHUNK_CHARS));
+        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, splashChunkCount: splashChunks.length, splashFileName: splashMode === "art" ? splashFileName : "", splashMode, splashFit, splashMinMs, splashBackground, themeColor, pullToRefresh: Boolean(b.pullToRefresh), keepAwake: Boolean(b.keepAwake), allowLocation: Boolean(b.allowLocation), allowCamera: Boolean(b.allowCamera), allowMicrophone: Boolean(b.allowMicrophone), internalHosts, userAgentSuffix, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`, buildBranch);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`, buildBranch);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`, buildBranch);
         for (let i=0;i<iconChunks.length;i++) await putFile(env, `${base}/icon-${String(i).padStart(4,"0")}.bin`, iconChunks[i], `Queue build ${buildId} icon ${i+1}/${iconChunks.length}`, buildBranch);
+        for (let i=0;i<splashChunks.length;i++) await putFile(env, `${base}/splash-${String(i).padStart(4,"0")}.bin`, splashChunks[i], `Queue build ${buildId} splash ${i+1}/${splashChunks.length}`, buildBranch);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
         await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:buildBranch,inputs:{build_id:buildId}})});
         return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions.",queueMode:"isolated-concurrent"},202);

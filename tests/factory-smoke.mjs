@@ -25,7 +25,7 @@ try {
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   await page.goto('http://127.0.0.1:4173/', { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(150);
-  assert(await page.title() === 'Castel App Factory', 'desktop page loads');
+  assert(/instApped/.test(await page.title()), 'desktop page loads');
   assert(await page.locator('#v-create').evaluate(e => e.classList.contains('on')), 'Create view initializes');
   await page.getByRole('button', { name: 'Projects' }).click();
   assert(await page.locator('#v-projects').evaluate(e => e.classList.contains('on')), 'Projects navigation responds');
@@ -33,6 +33,7 @@ try {
   assert(await page.locator('#v-settings').evaluate(e => e.classList.contains('on')), 'Settings navigation responds');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.locator('#srcFile').setInputFiles({ name: 'smoke-test.html', mimeType: 'text/html', buffer: Buffer.from('<!doctype html><html><body><h1>Factory Smoke Test</h1></body></html>') });
+  await page.locator('#steps button[data-i="1"]').click();
   await page.locator('[data-k="name"]').fill('Factory Smoke Test');
   await page.locator('[data-k="pkg"]').fill('com.castel.smoketest');
   await page.locator('[data-k="vname"]').fill('1.0.0');
@@ -41,6 +42,7 @@ try {
   assert((await page.locator('#dropT').textContent()).includes('smoke-test.html'), 'HTML source upload and binding work');
   await page.getByRole('button', { name: 'Projects' }).click();
   assert(await page.locator('#plist').getByText('Factory Smoke Test').count() === 1, 'project auto-saves and renders in Projects');
+  await page.getByRole('button', { name: 'Settings' }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.locator('#exp').click();
   const download = await downloadPromise;

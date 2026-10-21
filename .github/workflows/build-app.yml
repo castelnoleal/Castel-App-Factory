@@ -66,6 +66,14 @@ jobs:
               gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=build-${BUILD_ID}" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/icon.bin"
             done
           fi
+          splash_chunk_count=$(jq -r '.splashChunkCount // 0' "build-inputs/${BUILD_ID}/manifest.json")
+          : > "build-inputs/${BUILD_ID}/splash.bin"
+          if [ "$splash_chunk_count" -gt 0 ]; then
+            for ((i=0; i<splash_chunk_count; i++)); do
+              name=$(printf 'splash-%04d.bin' "$i")
+              gh api "repos/${GITHUB_REPOSITORY}/contents/build-inputs/${BUILD_ID}/${name}?ref=build-${BUILD_ID}" --jq .content | tr -d '\n' | base64 -d >> "build-inputs/${BUILD_ID}/splash.bin"
+            done
+          fi
       - name: Mark build running
         env:
           GH_TOKEN: ${{ github.token }}
@@ -97,10 +105,12 @@ jobs:
           BUILD_OUTPUT: generated-app
           SOURCE_FILE: ''
           ICON_FILE: ''
+          SPLASH_FILE: ''
         run: |
           set -euo pipefail
           if test -s "build-inputs/${BUILD_ID}/source.bin"; then export SOURCE_FILE="build-inputs/${BUILD_ID}/source.bin"; fi
           if test -s "build-inputs/${BUILD_ID}/icon.bin"; then export ICON_FILE="build-inputs/${BUILD_ID}/icon.bin"; fi
+          if test -s "build-inputs/${BUILD_ID}/splash.bin"; then export SPLASH_FILE="build-inputs/${BUILD_ID}/splash.bin"; fi
           python3 scripts/generate-app.py
       - name: Validate generated project
         env:
@@ -161,6 +171,23 @@ jobs:
             identify -format '%[channels]' generated-app/app/src/main/res/drawable-nodpi/app_icon.png | grep -qi 'a'
           fi
 
+      - name: Verify splash and build options
+        env:
+          BUILD_ID: ${{ inputs.build_id }}
+        run: |
+          set -euo pipefail
+          java_file=$(find generated-app/app/src/main/java -name MainActivity.java -print -quit)
+          for option in ALLOW_EXTERNAL_LINKS ENABLE_ZOOM FULLSCREEN BACK_NAVIGATION SPLASH_MODE THEME_COLOR; do
+            grep -q "private static final .* ${option} = " "$java_file"
+          done
+          expect_bool() { grep -q "private static final boolean $1 = $2;" "$java_file" || { echo "$1 does not match the manifest"; exit 1; }; }
+          expect_bool ALLOW_EXTERNAL_LINKS "$(jq -r '.externalLinks // false' "build-inputs/${BUILD_ID}/manifest.json")"
+          expect_bool ENABLE_ZOOM "$(jq -r '.zoom // false' "build-inputs/${BUILD_ID}/manifest.json")"
+          expect_bool FULLSCREEN "$(jq -r '.fullscreen // false' "build-inputs/${BUILD_ID}/manifest.json")"
+          if [ "$(jq -r '.splashMode // "icon"' "build-inputs/${BUILD_ID}/manifest.json")" = "art" ]; then
+            test -s generated-app/app/src/main/res/drawable-nodpi/splash_art.jpg
+            grep -q 'SPLASH_MODE = "art";' "$java_file"
+          fi
       - name: "Update stage: compiling APK and AAB"
         env:
           GH_TOKEN: ${{ github.token }}

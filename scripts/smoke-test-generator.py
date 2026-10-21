@@ -85,3 +85,46 @@ with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as z:
 run_case("Smoke ZIP", "com.castel.smokezip", "Uploaded HTML/ZIP", zip_buffer.getvalue(), "smoke.zip", build=True)
 run_case("Smoke Website", "com.castel.smokeweb", "HTTPS website", build=True)
 print("Generator tests passed: HTML generation + APK/AAB build, nested ZIP extraction, and HTTPS website mode.")
+
+
+def option_case():
+    """Every factory switch must change the generated app (regression guard)."""
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        manifest = tmp / "manifest.json"
+        output = tmp / "generated"
+        manifest.write_text(json.dumps({
+            "appName": "Options Check", "packageName": "com.castel.optionscheck",
+            "versionName": "1.0.0", "versionCode": 1,
+            "sourceType": "HTTPS website", "sourceMode": "website", "sourceUrl": "http://plain.example.com/",
+            "externalLinks": False, "zoom": True, "fullscreen": True, "backNavigation": False,
+            "pullToRefresh": True, "keepAwake": True, "allowCamera": True, "allowLocation": True,
+            "themeColor": "#FFFFFF", "splashBackground": "#123456", "splashMode": "art", "splashMinMs": 1200,
+            "internalHosts": ["accounts.example.com", "not a host"], "userAgentSuffix": "Check/1",
+        }), encoding="utf-8")
+        env = os.environ.copy()
+        env.update(BUILD_MANIFEST=str(manifest), BUILD_OUTPUT=str(output), SOURCE_FILE="", ICON_FILE="", SPLASH_FILE="")
+        subprocess.run(["python3", str(GENERATOR)], cwd=ROOT, env=env, check=True)
+        text = next((output / "app" / "src" / "main" / "java").rglob("MainActivity.java")).read_text(encoding="utf-8")
+        for expected in (
+            "ALLOW_EXTERNAL_LINKS = false;", "ENABLE_ZOOM = true;", "FULLSCREEN = true;", "BACK_NAVIGATION = false;",
+            "PULL_TO_REFRESH = true;", "KEEP_AWAKE = true;", "ALLOW_CAMERA = true;", "ALLOW_LOCATION = true;",
+            "THEME_COLOR = 0xFFFFFFFF;", "SPLASH_COLOR = 0xFF123456;", "SPLASH_MIN_MS = 1200;",
+            # No splash file supplied, so the app must fall back to the icon splash.
+            'SPLASH_MODE = "icon";',
+            'INTERNAL_HOSTS = {"accounts.example.com"};', 'USER_AGENT_SUFFIX = "Check/1";',
+            'START_URL = "http://plain.example.com/";',
+        ):
+            assert expected in text, f"generated MainActivity is missing: {expected}"
+        manifest_xml = (output / "app" / "src" / "main" / "AndroidManifest.xml").read_text(encoding="utf-8")
+        assert "android.permission.CAMERA" in manifest_xml
+        assert "android.permission.ACCESS_FINE_LOCATION" in manifest_xml
+        assert 'android:usesCleartextTraffic="true"' in manifest_xml
+        assert "OPTIONAL_PERMISSIONS" not in manifest_xml
+        colors = (output / "app" / "src" / "main" / "res" / "values" / "colors.xml").read_text(encoding="utf-8")
+        assert "#123456" in colors and "#FFFFFF" in colors
+        assert (output / "app" / "src" / "main" / "res" / "values-v31" / "styles.xml").is_file()
+
+
+option_case()
+print("Generator option checks passed")

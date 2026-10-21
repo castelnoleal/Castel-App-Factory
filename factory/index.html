@@ -171,6 +171,15 @@ h2{font-size:24px}
 .steps button.bad i{background:var(--e);color:#fff}
 .chk>div{flex:1;min-width:0}
 .chk .fix{flex:none}
+/* ---- Added: splash + options ---- */
+.hint2{display:block;font-size:12.5px;color:var(--m);margin-top:5px}
+.colorpick{display:flex;gap:8px;margin-top:5px}
+.colorpick input[type=color]{width:46px;height:46px;flex:none;padding:3px;border:1px solid var(--b);border-radius:10px;background:var(--bg);cursor:pointer}
+.colorpick input[type=text]{margin-top:0!important;font-family:ui-monospace,Menlo,Consolas,monospace}
+.splashrow{display:flex;gap:16px;align-items:flex-start;margin-top:14px}
+.splashthumb{width:90px;aspect-ratio:9/16;border-radius:12px;border:1px solid var(--b);background:#080b14 center/cover no-repeat;flex:none}
+.splash .art{position:absolute;inset:0;background:center/cover no-repeat}
+.splash .art.contain{background-size:contain}
 /* ---- Added: projects search ---- */
 .psearch{margin-bottom:12px}
 /* ---- Added: injectable ad slot ---- */
@@ -271,7 +280,17 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
     <div class="row"><span><b>Android back button</b><small>Go back in the app before closing it</small></span><input type="checkbox" class="sw" data-k="back"></div>
     <div class="row"><span><b>Pinch to zoom</b><small>Let people zoom the page</small></span><input type="checkbox" class="sw" data-k="zoom"></div>
     <div class="row"><span><b>Fullscreen</b><small>Hide the status and navigation bars</small></span><input type="checkbox" class="sw" data-k="full"></div>
-    <div class="row"><span><b>Open external links</b><small>Send outside links to the browser</small></span><input type="checkbox" class="sw" data-k="ext"></div>
+    <div class="row"><span><b>Open external links</b><small>Send links to other websites to the browser. Off: they open inside the app.</small></span><input type="checkbox" class="sw" data-k="ext"></div>
+    <label class="f" style="margin-top:6px">Keep these websites inside the app<input type="text" data-k="hosts" placeholder="accounts.example.com, shop.example.com" autocapitalize="none" spellcheck="false"><span class="hint2">Optional. Your app's own website always stays inside the app; list any other domains that should too (sign-in, payments, a second site).</span></label>
+    <div class="row"><span><b>Pull to refresh</b><small>Swipe down at the top of a page to reload it</small></span><input type="checkbox" class="sw" data-k="ptr"></div>
+    <div class="row"><span><b>Keep screen on</b><small>Stop the screen from sleeping while the app is open</small></span><input type="checkbox" class="sw" data-k="awake"></div>
+  </div>
+  <div class="card">
+    <h3>Permissions</h3><p class="h">Only turn on what your pages actually use. Each one is listed on Google Play, and Android still asks the person first.</p>
+    <div class="row"><span><b>Camera</b><small>Video calls, QR scanners and photo capture in the page</small></span><input type="checkbox" class="sw" data-k="cam"></div>
+    <div class="row"><span><b>Microphone</b><small>Voice notes, calls and audio recording</small></span><input type="checkbox" class="sw" data-k="mic"></div>
+    <div class="row"><span><b>Location</b><small>Maps and "near me" features using the device location</small></span><input type="checkbox" class="sw" data-k="loc"></div>
+    <label class="f" style="margin-top:12px">App tag for your server (optional)<input type="text" data-k="ua" placeholder="MyApp/1.0" maxlength="60" autocapitalize="none" spellcheck="false"><span class="hint2">Added to the browser user agent so your website can tell when it's opened in the app.</span></label>
   </div></div>
 
   <div class="step" data-s="2"><div class="card">
@@ -282,6 +301,27 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
       <div><canvas id="ic2" width="96" height="96" style="border-radius:50%"></canvas>Round</div>
       <div><canvas id="ic3" width="48" height="48" style="border-radius:22%"></canvas>Small</div>
     </div>
+  </div>
+  <div class="card">
+    <h3>Splash screen</h3><p class="h">What people see while the app opens. With no splash art, the app shows its icon like any normal Android app.</p>
+    <div class="seg" data-k="splash"><button data-v="icon" class="on">App icon</button><button data-v="art">Splash art</button></div>
+    <div id="splashArt" hidden>
+      <label class="drop" id="splashDrop"><b id="splashT">Tap to upload splash art</b><span id="splashS">PNG, JPG or WebP · portrait, 1080×1920 or larger works best</span><input type="file" id="splashFile" accept="image/png,image/jpeg,image/webp"></label>
+      <div class="splashrow" id="splashRow" hidden>
+        <div class="splashthumb" id="splashThumb"></div>
+        <div style="flex:1;min-width:0">
+          <p style="color:var(--m);font-size:13.5px;margin-bottom:6px">How the art fits the screen</p>
+          <div class="seg" data-k="sfit"><button data-v="cover" class="on">Fill the screen</button><button data-v="contain">Show whole image</button></div>
+          <button class="btn sm dng" id="splashClear">Remove splash art</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label class="f">Splash background<span class="colorpick"><input type="color" id="sbgPick" aria-label="Pick splash background"><input type="text" data-k="sbg" placeholder="#080B14" spellcheck="false" autocapitalize="none"></span></label>
+      <label class="f">Show for at least<select data-k="smin"><option value="0">As short as possible</option><option value="600">0.6 seconds</option><option value="1000">1 second</option><option value="1500">1.5 seconds</option><option value="2000">2 seconds</option><option value="3000">3 seconds</option></select></label>
+      <label class="f">App colour<span class="colorpick"><input type="color" id="themePick" aria-label="Pick app colour"><input type="text" data-k="theme" placeholder="#080B14" spellcheck="false" autocapitalize="none"></span><span class="hint2">Status bar and offline screen.</span></label>
+    </div>
+    <button class="btn sm" id="splashPlay">Play splash in preview</button>
   </div></div>
 
   <div class="step" data-s="3"><div class="card">
@@ -295,7 +335,11 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
     <h3>instApped SDK for developers</h3><p class="h">Your HTML can save files and ZIP bundles to private storage that works offline.</p>
     <div class="dev" id="devCode">CastelApp.downloadData(url, key, callback)
 CastelApp.downloadBundle(url, key, sha256, callback)
-CastelApp.bundleUrl(key, path)</div>
+CastelApp.bundleUrl(key, path)
+CastelApp.share(title, text, url)   // native share sheet; navigator.share also works
+CastelApp.openExternal(url)         // open a link in the browser
+CastelApp.isOnline()                // true or false
+JSON.parse(CastelApp.appInfo())     // packageName, versionName, versionCode</div>
     <button class="btn sm" style="margin-top:10px" id="copyDev">Copy</button>
   </div></div>
 
@@ -330,7 +374,7 @@ CastelApp.bundleUrl(key, path)</div>
     <button class="btn pri" id="buildBtn" style="width:100%;margin-top:14px">Build APK and AAB</button>
     <div class="prog" id="prog"><div id="progBar"></div></div>
     <div class="log" id="log" aria-live="polite"></div>
-    <div class="dl" id="dl"><a class="btn pri" id="apk" hidden>Download APK</a><a class="btn" id="aab" hidden>Download AAB</a></div>
+    <div class="dl" id="dl"><button class="btn pri" id="apk" hidden>APK</button><button class="btn" id="aab" hidden>AAB</button></div>
   </div></div>
 
   <div class="foot"><button class="btn" id="back">Back</button><button class="btn pri" id="next">Next</button></div>
@@ -382,7 +426,7 @@ CastelApp.bundleUrl(key, path)</div>
 
 <script>
 /* ============ CONFIG & BACKEND HOOKS ============ */
-const STEPS=["Source","Details","Icon","Offline","Preview","Check","Build"];
+const STEPS=["Source","Details","Icon & splash","Offline","Preview","Check","Build"];
 const KEY={p:"castel.projects",g:"castel.settings",cur:"castel.current"};
 const DEFAULT_ENDPOINT="https://api.instapped.com";
 const CFG=Object.assign({adConfigUrl:"",adRefreshMinutes:0,adAllowedOrigins:[]},window.INSTAPPED_CONFIG||{});
@@ -454,7 +498,10 @@ function base64Blob(data,type){const raw=atob(data),bytes=new Uint8Array(raw.len
 const isZipName=n=>/\.zip$/i.test(n||"");
 const storedInDb=p=>!!(p&&p.fileName&&(isZipName(p.fileName)||p.htmlInDb));
 
-function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now()}}
+function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
+const HEX=/^#[0-9a-f]{6}$/i;
+const splashKey=id=>id+":splash";
+let splashURL="";
 function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("on");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("on"),2600)}
 function persist(){S.updated=Date.now();const i=P.findIndex(p=>p.id===S.id);if(!S.name&&!S.html&&!S.url&&!S.icon&&!S.fileName)return;i<0?P.unshift(S):P[i]=S;save(KEY.p,P);try{localStorage.setItem(KEY.cur,S.id)}catch{}}
 
@@ -521,6 +568,15 @@ function bind(){
   const st=S.status==="built"?["Built"," ok"]:S.status==="pending"?["Build pending"," run"]:S.status==="failed"?["Failed"," err"]:["Draft",""];
   $("#status").textContent=st[0];$("#status").className="pill"+st[1];
   drawIcon();
+  $("#splashArt").hidden=S.splash!=="art";
+  $("#splashRow").hidden=!S.splashName;
+  $("#splashT").textContent=S.splashName?"Replace splash art":"Tap to upload splash art";
+  $("#splashS").textContent=S.splashName?S.splashName+" · "+S.splashW+"×"+S.splashH:"PNG, JPG or WebP · portrait, 1080×1920 or larger works best";
+  $("#splashThumb").style.backgroundImage=splashURL?'url("'+splashURL+'")':"";
+  $("#splashThumb").style.backgroundSize=S.sfit==="contain"?"contain":"cover";
+  $("#splashThumb").style.backgroundColor=HEX.test(S.sbg)?S.sbg:"#080b14";
+  if(HEX.test(S.sbg))$("#sbgPick").value=S.sbg.toLowerCase();
+  if(HEX.test(S.theme))$("#themePick").value=S.theme.toLowerCase();
   previewChrome();
   scheduleCheck();
 }
@@ -529,6 +585,7 @@ $$("#v-create input[data-k],#v-create select[data-k]").forEach(el=>{
     if(k==="pkg"){pkgTouched=true;S.pkg=S.pkg.trim()}
     if(k==="name"){$("#ptitle").textContent=S.name||"New app";if(!pkgTouched){S.pkg=suggestPkg(S.name);$('[data-k=pkg]').value=S.pkg}}
     if(k==="sign")$("#tokWrap").hidden=!S.sign;
+    if(k==="sbg"||k==="theme"){S[k]=S[k].trim().toUpperCase().replace(/^([0-9A-F]{6})$/,"#$1");bind()}
     persist();previewChrome();scheduleCheck();
     if(k==="url")refreshPreviewSoon();
   };
@@ -640,6 +697,39 @@ async function analyze(force){
   A=a;return A;
 }
 
+/* ============ SPLASH ART ============ */
+$("#sbgPick").oninput=e=>{S.sbg=e.target.value.toUpperCase();$('[data-k=sbg]').value=S.sbg;bind();persist()};
+$("#themePick").oninput=e=>{S.theme=e.target.value.toUpperCase();$('[data-k=theme]').value=S.theme;bind();persist()};
+async function loadSplash(){
+  if(splashURL){URL.revokeObjectURL(splashURL);splashURL=""}
+  if(!S.splashName)return;
+  try{const b=await getZip(splashKey(S.id));if(b)splashURL=URL.createObjectURL(b);else{S.splashName="";toast("Saved splash art isn't on this device any more. Upload it again.")}}catch{}
+}
+async function splashBlob(){if(!S.splashName)return null;try{return await getZip(splashKey(S.id))||null}catch{return null}}
+$("#splashFile").onchange=e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  if(!/^image\/(png|jpeg|webp)$/.test(f.type))return toast("Use a PNG, JPG or WebP image.");
+  if(f.size>25*1024*1024)return toast("That image is over 25 MB.");
+  const img=new Image(),u=URL.createObjectURL(f);
+  img.onerror=()=>{URL.revokeObjectURL(u);toast("That image couldn't be read. Try another file.")};
+  img.onload=async()=>{
+    // Downscale to at most 1440×2560 so the build upload stays small.
+    const k=Math.min(1,1440/Math.min(img.width,img.height),2560/Math.max(img.width,img.height));
+    const w=Math.round(img.width*k),h=Math.round(img.height*k),c=document.createElement("canvas");c.width=w;c.height=h;
+    const x=c.getContext("2d");x.drawImage(img,0,0,w,h);URL.revokeObjectURL(u);
+    let alpha=false;try{const d=x.getImageData(0,0,w,h).data;for(let i=3;i<d.length;i+=16)if(d[i]<250){alpha=true;break}}catch{}
+    const type=alpha?"image/png":"image/jpeg";
+    const blob=await new Promise(r=>c.toBlob(r,type,.9));
+    if(!blob)return toast("Couldn't process that image.");
+    try{await putZip(splashKey(S.id),blob)}catch{return toast("Couldn't save splash art on this device.")}
+    S.splash="art";S.splashName=f.name.replace(/\.[^.]+$/,"")+(alpha?".png":".jpg");S.splashW=w;S.splashH=h;
+    await loadSplash();bind();persist();toast("Splash art added");playSplash();
+  };
+  img.src=u;
+};
+$("#splashClear").onclick=async()=>{try{await delZip(splashKey(S.id))}catch{}S.splashName="";S.splashW=S.splashH=0;S.splash="icon";await loadSplash();bind();persist();toast("Splash art removed. The app icon will be shown instead.")};
+$("#splashPlay").onclick=()=>{if(!pvOpen)setPanel(true);setTimeout(playSplash,150)};
+
 /* ============ ICON ============ */
 $("#iconFile").onchange=e=>{
   const f=e.target.files[0];e.target.value="";if(!f)return;
@@ -691,10 +781,18 @@ function previewChrome(){
   $("#rotate").disabled=S.orient==="portrait";
   $("#rotate").title=S.orient==="portrait"?"This app is locked to portrait":"Rotate";
   $("#sbT").textContent=new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M$/i,"");
-  $("#spN").textContent=S.name||"";
-  $("#spI").hidden=!S.icon;if(S.icon)$("#spI").src=S.icon;
+  const th=HEX.test(S.theme)?S.theme:"#080B14",bg=HEX.test(S.sbg)?S.sbg:"#080B14";
+  $("#sb").style.background=th;$("#sb").style.color=isLightHex(th)?"#101a2e":"#fff";
+  const sp=$("#splash");sp.style.background=bg;sp.style.color=isLightHex(bg)?"#101a2e":"#fff";
+  const art=S.splash==="art"&&splashURL;
+  let ad=sp.querySelector(".art");if(!ad){ad=document.createElement("div");ad.className="art";sp.prepend(ad)}
+  ad.hidden=!art;ad.classList.toggle("contain",S.sfit==="contain");ad.style.backgroundImage=art?'url("'+splashURL+'")':"";
+  $("#spN").textContent=art?"":S.name||"";
+  $("#spI").hidden=!!art||!S.icon;if(S.icon&&!art)$("#spI").src=S.icon;
   $("#pvTitle").textContent=S.name?S.name+" · preview":"Preview";
 }
+function isLightHex(h){const n=parseInt(h.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255;return .2126*r+.7152*g+.0722*b>.6}
+function playSplash(){const sp=$("#splash");if(!sp)return;previewChrome();clearTimeout(splashT);sp.classList.remove("out");splashT=setTimeout(()=>sp.classList.add("out"),Math.max(900,+S.smin||0))}
 function resolveRel(base,rel){
   if(!rel||/^([a-z][a-z0-9+.-]*:|\/\/|#)/i.test(rel))return null;
   try{return decodeURIComponent(new URL(rel,"https://z/"+base).pathname.slice(1))}catch{return null}
@@ -735,7 +833,7 @@ async function preview(force){
   }
   f.hidden=!ok;empty.hidden=ok;
   const sp=$("#splash");clearTimeout(splashT);
-  if(ok){sp.classList.remove("out");splashT=setTimeout(()=>sp.classList.add("out"),900)}else sp.classList.add("out");
+  if(ok){sp.classList.remove("out");splashT=setTimeout(()=>sp.classList.add("out"),Math.max(900,+S.smin||0))}else sp.classList.add("out");
 }
 const refreshPreviewSoon=debounce(()=>{if(pvOpen||step===4)preview(false)},500);
 
@@ -746,7 +844,7 @@ function checks(){
   if(S.stype==="url"){
     let ok=false,url=null;try{url=new URL(normUrl(S.url));ok=/^https?:$/.test(url.protocol)&&url.hostname.includes(".")&&!/\s/.test(S.url.trim())}catch{}
     add("Source added",ok?"ok":"fail",!S.url?"Enter a website address.":ok?"":"That website address isn't valid.",0);
-    if(ok&&url.protocol==="http:")add("Secure address","warn","This site uses http. Android may block it. Use https.",0);
+    if(ok&&url.protocol==="http:")add("Secure address","warn","This site uses plain http. The app will allow it, but https is safer and some features (camera, location) only work on https.",0);
   }else{
     const has=!!(S.html||srcFile||storedInDb(S));
     add("Source added",has?"ok":"fail",has?"":"Upload a file or enter a website address.",0);
@@ -764,6 +862,13 @@ function checks(){
   if(vc&&S.lastBuiltCode&&+S.vcode<=S.lastBuiltCode)add("Version code","warn","Version code "+S.lastBuiltCode+" was already built. Google Play needs a higher number for each update.",1);
   add("Launcher icon",!S.icon?"warn":S.iconSize<512?"warn":"ok",!S.icon?"No icon. Android will use a default.":S.iconSize<512?"Icon is smaller than 512 px and may look soft.":"",2);
   if(S.icon&&S.iconSquare===false)add("Icon shape","warn","Your image wasn't square, so its edges were cropped. Check the previews.",2);
+  if(S.splash==="art"&&!S.splashName)add("Splash art","warn","Splash art is selected but no image is uploaded, so the app icon will be shown.",2);
+  if(S.splash==="art"&&S.splashName){const ar=S.splashH/S.splashW;if(S.sfit!=="contain"&&(ar<1.5||ar>2.4))add("Splash art","warn","This image isn't tall like a phone screen, so "+(ar<1.5?"its sides":"its top and bottom")+" will be cut off. Use a portrait image (about 9:16) or choose Show whole image.",2);else add("Splash art","ok","",2)}
+  if(!HEX.test(S.sbg))add("Splash background","fail","Use a colour like #080B14.",2);
+  if(!HEX.test(S.theme))add("App colour","fail","Use a colour like #080B14.",2);
+  const badHosts=String(S.hosts||"").split(",").map(h=>h.trim()).filter(Boolean).filter(h=>!/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i.test(h.replace(/^https?:\/\//i,"").split("/")[0]));
+  if(badHosts.length)add("In-app websites","warn","Not a valid domain: "+badHosts.join(", ")+". These will be ignored.",1);
+  if(S.cam||S.mic||S.loc)add("Permissions","ok","Requests "+[S.cam&&"camera",S.mic&&"microphone",S.loc&&"location"].filter(Boolean).join(", ")+". Google Play may ask you to explain why in the Data safety form.",1);
   if(S.cache==="aggr"&&S.stype==="url")add("Cache mode","warn","Aggressive caching may show old content from your live site.",3);
   if(S.cache==="first"&&!S.offline)add("Offline storage","warn","Offline first works best with Offline storage turned on.",3);
   if(S.sign)add("Signing token",$("#token").value.trim()?"ok":"fail",$("#token").value.trim()?"":"Enter your signing access token or turn signing off.",6);
@@ -792,6 +897,8 @@ $("#runCheck").onclick=async()=>{await analyze(true);toast(runCheck()?"Ready to 
 const b64=f=>new Promise(r=>{const x=new FileReader();x.onload=()=>r(x.result.split(",")[1]);x.readAsDataURL(f)});
 function log(m,c){const l=$("#log");l.insertAdjacentHTML("beforeend",`<div class="${c||""}">${esc(m)}</div>`);l.scrollTop=1e9}
 function resetBuildUI(){$("#log").innerHTML="";$("#dl").style.display="none";$("#apk").hidden=$("#aab").hidden=true;$("#prog").style.display="none";$("#progBar").style.width="0"}
+$("#apk").onclick=e=>{e.preventDefault();if(S.buildId)downloadBuildArtifact(S.buildId,"apk",e.currentTarget,S.name)};
+$("#aab").onclick=e=>{e.preventDefault();if(S.buildId)downloadBuildArtifact(S.buildId,"aab",e.currentTarget,S.name)};
 $("#buildBtn").onclick=async()=>{
   if(building)return;
   await analyze();
@@ -814,12 +921,19 @@ $("#buildBtn").onclick=async()=>{
       backNavigation:Boolean(S.back),zoom:Boolean(S.zoom),fullscreen:Boolean(S.full),externalLinks:Boolean(S.ext),
       offlineStorage:Boolean(S.offline),autoUpdate:Boolean(S.update),
       cacheMode:({off:"off",std:"standard",first:"offline",aggr:"aggressive"})[S.cache]||"standard",
-      signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false
+      signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false,
+      themeColor:HEX.test(S.theme)?S.theme:"#080B14",splashBackground:HEX.test(S.sbg)?S.sbg:"#080B14",
+      splashMode:S.splash==="art"&&S.splashName?"art":"icon",splashFit:S.sfit==="contain"?"contain":"cover",splashMinMs:Number(S.smin)||0,
+      splashFileName:"",splashBase64:"",
+      pullToRefresh:Boolean(S.ptr),keepAwake:Boolean(S.awake),allowCamera:Boolean(S.cam),allowMicrophone:Boolean(S.mic),allowLocation:Boolean(S.loc),
+      internalHosts:String(S.hosts||"").split(",").map(h=>h.trim().replace(/^https?:\/\//i,"").split("/")[0].toLowerCase()).filter(h=>/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(h)),
+      userAgentSuffix:String(S.ua||"").trim()
     };
+    if(payload.splashMode==="art"){const sb=await splashBlob();if(sb){payload.splashBase64=await b64(sb);payload.splashFileName=S.splashName}else payload.splashMode="icon"}
     const res=await buildBridge(payload,log,setP);
     $("#progBar").style.width="100%";
-    if(res.apkUrl){$("#apk").href=res.apkUrl;$("#apk").hidden=false}
-    if(res.aabUrl&&S.sign){$("#aab").href=res.aabUrl;$("#aab").hidden=false}
+    if(res.apkUrl){$("#apk").hidden=false}
+    if(res.aabUrl&&S.sign){$("#aab").hidden=false}
     if(res.apkUrl||res.aabUrl){$("#dl").style.display="flex";log("Build complete","ok")}
     S.status="built";S.vcode=+S.vcode;S.lastBuiltCode=S.vcode;S.pendingBuildId="";S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";
     if(G.bumpCode){S.vcode=S.lastBuiltCode+1;log("Version code raised to "+S.vcode+" for your next build","ok")}
@@ -850,7 +964,7 @@ async function checkProjectBuild(p){
     if(d.status==="success"||d.status==="completed"){
       if(!d.buildApkUrl&&!d.buildAabUrl)throw new Error("Build completed but download metadata is missing.");
       p.buildId=buildId;p.apkUrl=d.buildApkUrl||"";p.aabUrl=d.buildAabUrl||"";p.status="built";p.pendingBuildId="";p.lastBuiltCode=+p.vcode;p.updated=Date.now();save(KEY.p,P);renderProjects();
-      if(S.id===p.id){S=structuredClone(p);bind()}
+      if(S.id===p.id){S=Object.assign(blank(),structuredClone(p));bind()}
       try{localStorage.removeItem("castel.activeBuild."+p.id)}catch{}
       return toast("Build complete. APK and AAB are ready in Projects.");
     }
@@ -900,7 +1014,8 @@ async function downloadBuildArtifact(buildId,kind,button,name){
   }
 }
 async function openProject(p){
-  S=structuredClone(p);srcFile=null;pkgTouched=true;A=emptyA();pvKey="";resetBuildUI();
+  S=Object.assign(blank(),structuredClone(p));srcFile=null;pkgTouched=true;A=emptyA();pvKey="";resetBuildUI();
+  bind();await loadSplash();
   try{localStorage.setItem(KEY.cur,S.id)}catch{}
   if(storedInDb(S)){try{await sourceBlob()}catch{}if(!srcFile)toast("Saved source could not be loaded. Re-import the project backup or upload it again.")}
   bind();await analyze(true);runCheck();
@@ -911,12 +1026,12 @@ $("#plist").onclick=async e=>{
   if(a==="apk"||a==="aab"){if(!p.buildId)return toast("This project has no saved successful build.");downloadBuildArtifact(p.buildId,a,btn,p.name);return}
   if(a==="check"){checkProjectBuild(p);return}
   if(a==="open"){go(0);view("create");await openProject(p)}
-  if(a==="dup"){const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);c.name=(c.name||"Untitled")+" copy";c.status="draft";c.updated=Date.now();["buildId","pendingBuildId","apkUrl","aabUrl","lastBuiltCode"].forEach(k=>delete c[k]);try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob)}catch(e){toast("Project copied, but its source file could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated. Give it its own package ID before publishing.")}
-  if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);try{await delZip(id)}catch{}if(S.id===id){S=blank();srcFile=null;pkgTouched=false;A=emptyA();bind();try{localStorage.removeItem(KEY.cur)}catch{}}renderProjects();toast("Project deleted")}
+  if(a==="dup"){const c=structuredClone(p),oldId=c.id;c.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);c.name=(c.name||"Untitled")+" copy";c.status="draft";c.updated=Date.now();["buildId","pendingBuildId","apkUrl","aabUrl","lastBuiltCode"].forEach(k=>delete c[k]);try{const blob=await getZip(oldId);if(blob)await putZip(c.id,blob);const sb=await getZip(splashKey(oldId));if(sb)await putZip(splashKey(c.id),sb)}catch(e){toast("Project copied, but some of its files could not be copied.")}P.unshift(c);save(KEY.p,P);renderProjects();toast("Duplicated. Give it its own package ID before publishing.")}
+  if(a==="del"&&confirm("Delete "+(p.name||"this project")+"?")){P=P.filter(x=>x.id!==id);save(KEY.p,P);try{await delZip(id);await delZip(splashKey(id))}catch{}if(S.id===id){S=blank();srcFile=null;pkgTouched=false;A=emptyA();bind();try{localStorage.removeItem(KEY.cur)}catch{}}renderProjects();toast("Project deleted")}
 };
-$("#newProj").onclick=()=>{S=blank();srcFile=null;pkgTouched=false;A=emptyA();pvKey="";resetBuildUI();try{localStorage.removeItem(KEY.cur)}catch{}bind();go(0);view("create");preview(true)};
-$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(storedInDb(copy)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="instapped-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
-$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64;delete p.zipBase64;delete p.zipMissing;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&storedInDb(p))await putZip(p.id,base64Blob(zip,isZipName(p.fileName)?"application/zip":"text/html"));incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid instApped project backup.")}finally{e.target.value=""}};
+$("#newProj").onclick=()=>{S=blank();if(splashURL){URL.revokeObjectURL(splashURL);splashURL=""}srcFile=null;pkgTouched=false;A=emptyA();pvKey="";resetBuildUI();try{localStorage.removeItem(KEY.cur)}catch{}bind();go(0);view("create");preview(true)};
+$("#exp").onclick=async()=>{try{const backup=[];for(const p of P){const copy=structuredClone(p);if(storedInDb(copy)){copy.zipBase64=await zipBase64(copy.id);if(!copy.zipBase64)copy.zipMissing=true}if(copy.splashName){const sb=await getZip(splashKey(copy.id)).catch(()=>null);if(sb)copy.splashBase64=await b64(sb)}backup.push(copy)}const a=document.createElement("a"),url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:"application/json"}));a.href=url;a.download="instapped-projects.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);toast("Project backup exported")}catch(e){toast("Export failed: source storage could not be read.")}};
+$("#imp").onchange=async e=>{try{const file=e.target.files[0];if(!file)return;const d=JSON.parse(await file.text());if(!Array.isArray(d))throw 0;const incoming=[];for(const raw of d){if(!raw||!raw.id)continue;const p=structuredClone(raw),zip=p.zipBase64,spl=p.splashBase64;delete p.zipBase64;delete p.zipMissing;delete p.splashBase64;if(P.some(old=>old.id===p.id))p.id="p"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);if(zip&&storedInDb(p))await putZip(p.id,base64Blob(zip,isZipName(p.fileName)?"application/zip":"text/html"));if(spl&&p.splashName)await putZip(splashKey(p.id),base64Blob(spl,/\.png$/i.test(p.splashName)?"image/png":"image/jpeg"));else if(p.splashName&&!spl){p.splashName="";p.splash="icon"}incoming.push(p)}P=[...incoming,...P];save(KEY.p,P);renderProjects();toast("Imported "+incoming.length+" projects")}catch{toast("Import failed. Choose a valid instApped project backup.")}finally{e.target.value=""}};
 $("#copyDev").onclick=async()=>{try{await navigator.clipboard.writeText($("#devCode").textContent);toast("Copied")}catch{toast("Clipboard access is unavailable in this browser.")}};
 
 /* ============ SETTINGS: connection ============ */
