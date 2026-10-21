@@ -14,17 +14,27 @@ for attempt in $(seq 1 24); do
   sleep 5
 done
 adb install -r "$APK" || { sleep 20; adb install -r "$APK"; } || fail "adb install failed"
-adb logcat -c || true
-adb shell am start -n "$PKG/.MainActivity" || fail "could not start MainActivity"
-LOG=""
-for attempt in $(seq 1 30); do
+# Wait until the emulator's network reaches the host before opening the app.
+for attempt in $(seq 1 20); do
+  adb shell 'toybox nc -z -w 3 10.0.2.2 8080' >/dev/null 2>&1 && break
   sleep 3
-  LOG="$(adb logcat -d -v brief -s CastelAppFactory:I CastelAppFactory:E AndroidRuntime:E || true)"
-  if printf '%s\n' "$LOG" | grep -qE 'PAGE_LOADED:http://10.0.2.2|PAGE_ERROR:|FATAL EXCEPTION'; then break; fi
+done
+adb logcat -c || true
+LOG=""
+for launch in 1 2; do
+  adb shell am force-stop "$PKG" || true
+  adb shell am start -n "$PKG/.MainActivity" || fail "could not start MainActivity"
+  # If the first load fails while the network is still coming up, the app
+  # retries by itself once a connection is available; give it time to.
+  for attempt in $(seq 1 30); do
+    sleep 3
+    LOG="$(adb logcat -d -v brief -s CastelAppFactory:I CastelAppFactory:E AndroidRuntime:E || true)"
+    if printf '%s\n' "$LOG" | grep -qE 'PAGE_LOADED:http://10.0.2.2|FATAL EXCEPTION'; then break 2; fi
+  done
+  echo "::warning title=Website runtime::launch $launch did not load the site; retrying once"
 done
 printf '%s\n' "$LOG" | grep -E 'PAGE_|FATAL' | tail -n 10 | while IFS= read -r l; do echo "::notice title=Website logcat::$l"; done
 printf '%s\n' "$LOG" | grep -q 'FATAL EXCEPTION' && fail "app crashed on launch"
-printf '%s\n' "$LOG" | grep -q 'PAGE_ERROR:' && fail "WebView reported $(printf '%s\n' "$LOG" | grep -o 'PAGE_ERROR:.*' | head -n 1)"
 if ! printf '%s\n' "$LOG" | grep -q 'PAGE_LOADED:http://10.0.2.2'; then
   echo "::error title=App log::$(printf '%s\n' "$LOG" | grep -E 'CastelAppFactory|AndroidRuntime' | sed 's/^[A-Z]\/CastelAppFactory( *[0-9]*): //' | tail -n 25 | tr '\n' '|' | cut -c1-3000)"
   echo "::error title=Server log::$(tail -n 15 /tmp/website-server.log | tr '\n' '|' | cut -c1-1500)"
