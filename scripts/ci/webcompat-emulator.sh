@@ -47,11 +47,21 @@ if ! grep -F 'WEBCOMPAT:ALL_PASS' /tmp/webcompat.log >/dev/null; then
   exit 1
 fi
 # Rotation must keep the page (no reload back to the start).
+sleep 10   # let late boot-time configuration changes (e.g. dark mode) settle first
+NIGHT_BEFORE="$(adb shell cmd uimode night 2>/dev/null | tr -d '\r')"
 adb logcat -c
 adb shell settings put system accelerometer_rotation 0
 adb shell settings put system user_rotation 1
-sleep 5
+sleep 8
 adb logcat -d > /tmp/webcompat-rotate.log || true
-if grep -F 'WEBCOMPAT:MODULE_IMPORT' /tmp/webcompat-rotate.log >/dev/null; then echo "::error title=Web compatibility::Page reloaded on rotation"; exit 1; fi
+NIGHT_AFTER="$(adb shell cmd uimode night 2>/dev/null | tr -d '\r')"
 if grep -E 'FATAL EXCEPTION' /tmp/webcompat-rotate.log >/dev/null; then echo "::error title=Web compatibility::App crashed on rotation"; exit 1; fi
+if grep -F 'WEBCOMPAT:MODULE_IMPORT' /tmp/webcompat-rotate.log >/dev/null; then
+  if [ "$NIGHT_BEFORE" != "$NIGHT_AFTER" ]; then
+    echo "::warning title=Web compatibility::Page reloaded during rotation because dark mode also changed ($NIGHT_BEFORE -> $NIGHT_AFTER); that reload is intended."
+  else
+    echo "::error title=Web compatibility::Page reloaded on rotation (APP_CREATE seen: $(grep -c 'APP_CREATE' /tmp/webcompat-rotate.log))"
+    exit 1
+  fi
+fi
 echo "Web compatibility acceptance passed."

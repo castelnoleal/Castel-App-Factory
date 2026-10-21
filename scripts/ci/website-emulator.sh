@@ -28,7 +28,7 @@ for launch in 1 2; do
   # retries by itself once a connection is available; give it time to.
   for attempt in $(seq 1 30); do
     sleep 3
-    LOG="$(adb logcat -d -v brief -s CastelAppFactory:I CastelAppFactory:E AndroidRuntime:E || true)"
+    LOG="$(adb logcat -d -v brief -s CastelAppFactory:V AndroidRuntime:E || true)"
     if printf '%s\n' "$LOG" | grep -qE 'PAGE_LOADED:http://10.0.2.2|FATAL EXCEPTION'; then break 2; fi
   done
   echo "::warning title=Website runtime::launch $launch did not load the site; retrying once"
