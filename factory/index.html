@@ -290,6 +290,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
     <div class="row"><span><b>Camera</b><small>Video calls, QR scanners and photo capture in the page</small></span><input type="checkbox" class="sw" data-k="cam"></div>
     <div class="row"><span><b>Microphone</b><small>Voice notes, calls and audio recording</small></span><input type="checkbox" class="sw" data-k="mic"></div>
     <div class="row"><span><b>Location</b><small>Maps and "near me" features using the device location</small></span><input type="checkbox" class="sw" data-k="loc"></div>
+    <div class="row"><span><b>Allow http:// connections</b><small>Needed only for insecure APIs or devices on your local network. Android blocks them otherwise.</small></span><input type="checkbox" class="sw" data-k="http"></div>
     <label class="f" style="margin-top:12px">App tag for your server (optional)<input type="text" data-k="ua" placeholder="MyApp/1.0" maxlength="60" autocapitalize="none" spellcheck="false"><span class="hint2">Added to the browser user agent so your website can tell when it's opened in the app.</span></label>
   </div></div>
 
@@ -498,7 +499,7 @@ function base64Blob(data,type){const raw=atob(data),bytes=new Uint8Array(raw.len
 const isZipName=n=>/\.zip$/i.test(n||"");
 const storedInDb=p=>!!(p&&p.fileName&&(isZipName(p.fileName)||p.htmlInDb));
 
-function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
+function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,http:false,ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
 const HEX=/^#[0-9a-f]{6}$/i;
 const splashKey=id=>id+":splash";
 let splashURL="";
@@ -940,7 +941,7 @@ $("#buildBtn").onclick=async()=>{
       themeColor:HEX.test(S.theme)?S.theme:"#080B14",splashBackground:HEX.test(S.sbg)?S.sbg:"#080B14",
       splashMode:S.splash==="art"&&S.splashName?"art":"icon",splashFit:S.sfit==="contain"?"contain":"cover",splashMinMs:Number(S.smin)||0,
       splashFileName:"",splashBase64:"",
-      pullToRefresh:Boolean(S.ptr),keepAwake:Boolean(S.awake),allowCamera:Boolean(S.cam),allowMicrophone:Boolean(S.mic),allowLocation:Boolean(S.loc),
+      pullToRefresh:Boolean(S.ptr),keepAwake:Boolean(S.awake),allowCamera:Boolean(S.cam),allowMicrophone:Boolean(S.mic),allowLocation:Boolean(S.loc),allowCleartext:Boolean(S.http),
       internalHosts:String(S.hosts||"").split(",").map(h=>h.trim().replace(/^https?:\/\//i,"").split("/")[0].toLowerCase()).filter(h=>/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(h)),
       userAgentSuffix:String(S.ua||"").trim()
     };

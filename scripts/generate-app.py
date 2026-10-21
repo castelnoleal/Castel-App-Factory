@@ -429,7 +429,7 @@ def generate():
         manifest_text = re.sub(r"    <!-- OPTIONAL_PERMISSIONS:[^>]*-->", lines, manifest_text, count=1)
     if cfg.get("allowCamera"):
         manifest_text = manifest_text.replace("    <application", '    <uses-feature android:name="android.hardware.camera" android:required="false" />\n    <application', 1)
-    if web_source and source_url.lower().startswith("http://"):
+    if cfg.get("allowCleartext") or (web_source and source_url.lower().startswith("http://")):
         # Plain-http websites are blocked by Android unless cleartext is allowed.
         manifest_text = manifest_text.replace("<application", '<application\n        android:usesCleartextTraffic="true"', 1)
     manifest.write_text(manifest_text, encoding="utf-8")

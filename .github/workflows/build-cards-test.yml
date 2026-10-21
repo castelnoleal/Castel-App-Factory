@@ -24,7 +24,6 @@ jobs:
       - name: Checkout latest main
         uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 1
       - name: Show source revision
         run: git rev-parse HEAD
@@ -83,7 +82,7 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_2
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -accel off -netdelay none -netspeed full -dns-server 8.8.8.8,1.1.1.1
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -netdelay none -netspeed full -dns-server 8.8.8.8,1.1.1.1
           emulator-boot-timeout: 900
           script: >-
             set -eu; adb wait-for-device; adb shell getprop sys.boot_completed; adb install -r build/cards/app/build/outputs/apk/debug/app-debug.apk; adb shell pm path org.meiocg.cards; adb shell am force-stop org.meiocg.cards || true; adb shell am start -W -n org.meiocg.cards/.MainActivity || true; sleep 20; echo '--- package state ---'; adb shell dumpsys package org.meiocg.cards | grep -E 'Package \[org\.meiocg\.cards\]|versionName|versionCode' | head -n 20; echo '--- activity state ---'; ACTIVITY_STATE="$(adb shell dumpsys activity activities | tr -d '\r' || true)"; printf '%s\n' "$ACTIVITY_STATE" | grep -E 'org\.meiocg\.cards(/|:|\.)' >/dev/null; printf '%s\n' "$ACTIVITY_STATE" | grep -E 'MainActivity' >/dev/null; echo 'MEIOCG Cards MainActivity is present in ActivityManager.'; echo '--- WebView runtime state ---'; WEBVIEW_LOG="$(adb logcat -d -v brief -s CastelAppFactory:I CastelAppFactory:E || true)"; printf '%s\n' "$WEBVIEW_LOG"; printf '%s\n' "$WEBVIEW_LOG" | grep -F 'PAGE_LOADED:' >/dev/null; if printf '%s\n' "$WEBVIEW_LOG" | grep -F 'PAGE_ERROR:' >/dev/null; then echo 'WebView PAGE_ERROR detected.'; exit 1; fi; echo 'MEIOCG Cards remote website reached WebView successfully.'; PID="$(adb shell pidof org.meiocg.cards 2>/dev/null | tr -d '\r' || true)"; if [ -n "$PID" ]; then echo "MEIOCG Cards process is running: $PID"; else echo 'Process PID unavailable; ActivityManager confirmed MainActivity.'; fi; adb logcat -d -v time '*:E' | grep -F 'org.meiocg.cards' | tail -n 100 || true
@@ -94,7 +93,6 @@ jobs:
       - name: Checkout latest main
         uses: actions/checkout@v4
         with:
-          ref: main
           fetch-depth: 1
       - name: Show source revision
         run: git rev-parse HEAD
@@ -124,8 +122,8 @@ jobs:
           BUILD_MANIFEST="$GITHUB_WORKSPACE/test-inputs/local-html.json" \
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-html" \
           python3 scripts/generate-app.py
-          MAIN="build/local-html/app/src/main/java/com/castel/localtest/MainActivity.java"
-          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
+          MAIN="build/local-html/app/src/main/java/com/instapped/localtest/MainActivity.java"
+          grep -F 'START_URL = "https://appassets.androidplatform.net/";' "$MAIN"
           test -s build/local-html/app/src/main/assets/index.html
           gradle -p build/local-html lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
           unzip -t build/local-html/app/build/outputs/apk/debug/app-debug.apk >/dev/null
@@ -152,7 +150,7 @@ jobs:
           BUILD_OUTPUT="$GITHUB_WORKSPACE/build/local-zip" \
           python3 scripts/generate-app.py
           MAIN="build/local-zip/app/src/main/java/com/castel/ziptest/MainActivity.java"
-          grep -F 'webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")' "$MAIN"
+          grep -F 'START_URL = "https://appassets.androidplatform.net/";' "$MAIN"
           test -s build/local-zip/app/src/main/assets/index.html
           test -s build/local-zip/app/src/main/assets/style.css
           gradle -p build/local-zip lintDebug assembleDebug bundleRelease --no-daemon --stacktrace
