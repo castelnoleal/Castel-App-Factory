@@ -168,6 +168,7 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "APP_CREATE");
         Window window = getWindow();
         try {
             configureWindow(window);
@@ -508,6 +509,7 @@ public class MainActivity extends ComponentActivity {
         });
 
         boolean restored = savedInstanceState != null && webView.restoreState(savedInstanceState) != null;
+        Log.i(TAG, "WEBVIEW_READY");
         if (!restored) {
             webView.post(() -> webView.loadUrl("__TARGET_URL__"));
         }

@@ -29,6 +29,11 @@ if [ ! -s /tmp/webcompat-results.txt ]; then
   summary="$(grep -E 'CastelAppFactory|CONSOLE|AndroidRuntime|FATAL|LAUNCH_FAILED' /tmp/webcompat.log | sed 's/^[0-9-]* [0-9:.]* *[0-9]* *[0-9]* //' | tail -n 25 | tr '\n' '|' | cut -c1-3500)"
   echo "::error title=Web compatibility::No WEBCOMPAT output. Log: ${summary:-no app log lines}"
   top="$(adb shell dumpsys activity top | grep -E 'ACTIVITY|mResumed' | head -n 3 | tr '\n' ' ')"
+  APP_PID="$(adb shell pidof "$PKG" | tr -d '\r' | awk '{print $1}')"
+  adb logcat -d -v brief > /tmp/webcompat-brief.log || true
+  { [ -n "$APP_PID" ] && grep -E "\( *$APP_PID\)" /tmp/webcompat-brief.log; grep -E "ANR|am_anr|Input dispatching|CastelAppFactory|chromium" /tmp/webcompat-brief.log; } | grep -vE "variations_seed|DnsConfig" | tail -n 120 > /tmp/webcompat-app.log || true
+  split -l 30 /tmp/webcompat-app.log /tmp/webcompat-part- || true
+  for part in /tmp/webcompat-part-*; do [ -f "$part" ] && echo "::warning title=App log $(basename "$part")::$(tr '\n' '|' < "$part" | cut -c1-6000)"; done
   echo "::error title=Activity::${top}"
 fi
 if grep -E 'FATAL EXCEPTION' /tmp/webcompat.log >/dev/null; then echo "::error title=Web compatibility::App crashed"; grep -A20 "FATAL EXCEPTION" /tmp/webcompat.log | head -n 25 | while IFS= read -r l; do echo "::error title=crash::$l"; done; exit 1; fi
