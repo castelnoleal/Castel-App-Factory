@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Page not found — instApped</title>
+<meta name="theme-color" content="#101a2e">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-head">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="instApped home"><span class="logo" aria-hidden="true">📦</span>instApped</a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#faq">FAQ</a>
+      <a class="btn primary small" href="https://create.instapped.com/">Create your app</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main" class="wrap doc" style="grid-template-columns:1fr">
+  <article>
+    <h1>This page isn't here</h1>
+    <p class="meta">The link may be old, or the address may have a typo.</p>
+    <p><a class="btn primary" href="/">Go to the home page</a></p>
+    <p>Looking for the app factory? Open <a href="https://create.instapped.com/">create.instapped.com</a>.</p>
+  </article>
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-about">
+        <a class="brand" href="/"><span class="logo" aria-hidden="true">📦</span>instApped</a>
+        <p>Turn a website or HTML project into an Android app.</p>
+      </div>
+      <div>
+        <h2>Product</h2>
+        <ul>
+          <li><a href="https://create.instapped.com/">App factory</a></li>
+          <li><a href="/#how-it-works">How it works</a></li>
+          <li><a href="/#faq">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Legal</h2>
+        <ul>
+          <li><a href="/terms.html">Terms of Service</a></li>
+          <li><a href="/privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="/acceptable-use.html">Acceptable Use</a></li>
+          <li><a href="/cookies.html">Cookies and storage</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2>Support</h2>
+        <ul>
+          <li><a href="/contact.html">Contact us</a></li>
+          <li><a href="mailto:instapped@gmail.com">instapped@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-base">
+      <p>© <span data-year>2026</span> instApped. All rights reserved.</p>
+      <p>Android and Google Play are trademarks of Google LLC. instApped is not affiliated with Google.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll("[data-year]").forEach(e=>e.textContent=new Date().getFullYear());
+const head=document.querySelector(".site-head");
+const onScroll=()=>head.classList.toggle("scrolled",scrollY>8);
+addEventListener("scroll",onScroll,{passive:true});onScroll();
+</script>
+</body>
+</html>
