@@ -13,7 +13,7 @@ adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb st
 adb install -r "$APK"
 adb logcat -c
 adb shell am start -n "$PKG/.MainActivity"
-for attempt in $(seq 1 20); do
+for attempt in $(seq 1 40); do
   sleep 3
   adb logcat -d > /tmp/webcompat.log || true
   if grep -E 'WEBCOMPAT:(ALL_PASS|SOME_FAILED)' /tmp/webcompat.log >/dev/null; then break; fi

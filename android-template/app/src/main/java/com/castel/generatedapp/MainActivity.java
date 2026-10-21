@@ -538,8 +538,12 @@ public class MainActivity extends ComponentActivity {
             }
         });
 
-        boolean restored = savedInstanceState != null && webView.restoreState(savedInstanceState) != null;
-        Log.i(TAG, "WEBVIEW_READY");
+        // Restore the page after Android recreates the screen (dark-mode switch,
+        // process death). An empty history (recreated before the first page
+        // loaded) must still load the start page, or the app stays blank.
+        android.webkit.WebBackForwardList history = savedInstanceState == null ? null : webView.restoreState(savedInstanceState);
+        boolean restored = history != null && history.getSize() > 0;
+        Log.i(TAG, "WEBVIEW_READY:" + (restored ? "restored" : "fresh"));
         if (!restored) {
             webView.post(() -> webView.loadUrl("__TARGET_URL__"));
         }
@@ -548,7 +552,7 @@ public class MainActivity extends ComponentActivity {
     // ------------------------------------------------------------------ splash
 
     private void setupSplash(boolean restoring) {
-        if (restoring) { splashHidden = true; return; }
+        if (restoring && splashHidden) return;
         boolean art = "art".equals(SPLASH_MODE) && splashArtId() != 0;
         // A plain overlay, never a draw-blocking listener: holding the first frame
         // starves the main thread's message queue and the page would never load.
