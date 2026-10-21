@@ -41,10 +41,10 @@ The Worker limits uploaded HTML/ZIP payloads to approximately 21 MB for the init
 
 Use:
 
-`https://meiocg.org/duel-synapse`
+`https://example.com/`
 
 with a unique package such as:
 
-`org.meiocg.duelsynapse`
+`com.example.myapp`
 
 Deployment trigger verification: Account ID updated.
