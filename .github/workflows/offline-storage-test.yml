@@ -17,7 +17,7 @@ permissions:
 jobs:
   offline-storage:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout factory
         uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
       - name: Install Android API 36
         run: |
           set -euo pipefail
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64"
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
 
       - name: Set up Gradle 9.3.1
@@ -164,4 +164,6 @@ jobs:
           force-avd-creation: true
           emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
           emulator-boot-timeout: 900
+          ram-size: 2048M
+          cores: 2
           script: bash scripts/ci/offline-emulator.sh

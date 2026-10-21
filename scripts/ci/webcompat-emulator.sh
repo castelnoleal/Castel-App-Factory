@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Runs inside the Android emulator job of web-compat-test.yml.
-set -eu
+set -u
+fail() { echo "::error title=Web compatibility::$1"; exit 1; }
+retry() { for i in 1 2 3 4; do "$@" && return 0; echo "retry $i: $*"; adb reconnect >/dev/null 2>&1 || true; sleep 15; adb wait-for-device; done; return 1; }
 APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
 PKG=com.castel.webcompat
 adb wait-for-device
@@ -10,9 +12,10 @@ for attempt in 1 2 3 4 5 6 7 8; do
   sleep 5
 done
 adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; adb wait-for-device; sleep 10; }
-adb install -r "$APK"
-adb logcat -c
-adb shell am start -n "$PKG/.MainActivity"
+echo "::notice title=Web compatibility::emulator ready, installing"
+retry adb install -r "$APK" || fail "adb install failed after retries"
+adb logcat -c || true
+retry adb shell am start -n "$PKG/.MainActivity" || fail "could not start the app"
 for attempt in $(seq 1 40); do
   sleep 3
   adb logcat -d > /tmp/webcompat.log || true
