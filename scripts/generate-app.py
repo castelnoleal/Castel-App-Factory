@@ -387,6 +387,7 @@ def generate():
         "UPDATE_FEED_URL": java_string(feed_url),
         "UPDATE_CHECK_HOURS": str(check_hours),
         "PAGE_NOTIFICATIONS": java_bool(cfg.get("pageNotifications", False)),
+        "SPLASH_BADGE": java_bool(cfg.get("brandBadge", False)),
     }
 
     java_root = output / "app" / "src" / "main" / "java"

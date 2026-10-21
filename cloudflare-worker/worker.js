@@ -7,6 +7,8 @@ async function superviseBuild(env, context = {}) {
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
 }
 
+import { plansPayload, createCheckout, claimCheckout, verifyLicense, resolveTier, premiumFeaturesUsed, tierRank, verifyWebhook, sessionForReference, freeBuildAllowed, PLAN_INFO } from "./billing.js";
+
 const ORIGIN = "https://create.instapped.com";
 const API_VERSION = "2022-11-28";
 const MAX_SOURCE_BASE64 = 28_000_000;
@@ -14,7 +16,7 @@ const MAX_ICON_BASE64 = 8_000_000;
 const MAX_SPLASH_BASE64 = 11_000_000;
 const CHUNK_CHARS = 800_000;
 // Re-deploy to verify the live GitHub and signing secret configuration.
-const BUILD_BRIDGE_REVISION = "instapped-splash-v1";
+const BUILD_BRIDGE_REVISION = "instapped-premium-v1";
 const SIGNING_ACCESS_HEADER = "X-Castel-Signing-Access";
 
 async function signingTokenMatches(candidate, expected) {
@@ -29,6 +31,7 @@ function headers() {
     "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
+    "Vary": "Origin",
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store"
   };
@@ -71,6 +74,44 @@ export default {
     if (u.pathname === "/health" && request.method === "GET") {
       return reply({ok:true,service:"instApped API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "instApped"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "instApped")),signingConfigured: Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
+    // ---------------- plans, checkout and licenses (no GitHub token needed)
+    if (u.pathname === "/plans" && request.method === "GET") return reply(plansPayload(env));
+    if (u.pathname === "/checkout" && request.method === "POST") {
+      try {
+        const b = await request.json().catch(() => ({}));
+        const out = await createCheckout(env, { plan: String(b.plan || ""), period: String(b.period || ""), email: b.email, factoryUrl: env.FACTORY_URL || ORIGIN });
+        return reply({ ok: true, ...out });
+      } catch (e) { return reply({ ok: false, error: e.message || "Checkout failed." }, e.status && (e.status < 500 || e.status === 503) ? e.status : 502); }
+    }
+    if ((u.pathname === "/license/claim" || u.pathname === "/license/recover") && request.method === "POST") {
+      try {
+        const b = await request.json().catch(() => ({}));
+        const sessionId = u.pathname === "/license/recover" ? await sessionForReference(env, b.reference) : String(b.sessionId || "");
+        if (!sessionId) return reply({ ok: false, error: "We couldn't find a purchase with that reference. Use the checkout ID (starts with cs_) from your purchase, or contact support." }, 404);
+        const out = await claimCheckout(env, { sessionId, currentKey: b.currentKey });
+        return reply(out, out.ok ? 200 : out.pending ? 202 : 409);
+      } catch (e) { return reply({ ok: false, error: e.message || "Couldn't confirm the payment." }, e.status && (e.status < 500 || e.status === 503) ? e.status : 502); }
+    }
+    if (u.pathname === "/license/verify" && request.method === "POST") {
+      const b = await request.json().catch(() => ({}));
+      const owner = b.ownerToken && env.CASTEL_SIGNING_ACCESS_TOKEN ? (await resolveTier(env, { ownerToken: b.ownerToken })).owner : false;
+      if (owner) return reply({ ok: true, valid: true, plan: "business", owner: true });
+      const v = await verifyLicense(env.LICENSE_SECRET, b.key);
+      return reply({ ok: true, valid: v.valid, plan: v.plan || "free", exp: v.exp || null, expired: Boolean(v.expired), reason: v.valid ? "" : v.reason, name: v.plan ? PLAN_INFO[v.plan].name : "Free" });
+    }
+    if (u.pathname === "/webhooks/paymongo" && request.method === "POST") {
+      const raw = await request.text();
+      if (!(await verifyWebhook(env.PAYMONGO_WEBHOOK_SECRET, request.headers.get("Paymongo-Signature"), raw))) return reply({ ok: false, error: "Invalid signature." }, 401);
+      try {
+        const event = JSON.parse(raw);
+        const type = event?.data?.attributes?.type;
+        const sessionId = event?.data?.attributes?.data?.id;
+        // Issue and store the key as soon as PayMongo confirms, so it can be recovered later.
+        if (type === "checkout_session.payment.paid" && /^cs_/.test(String(sessionId || ""))) await claimCheckout(env, { sessionId });
+      } catch (e) { console.error("webhook", e); }
+      return reply({ ok: true });
+    }
+
     if (!env.GITHUB_TOKEN) return reply({ok:false,error:"Build bridge GitHub token is not configured. Add the GITHUB_TOKEN Worker secret."},503);
 
     const downloadMatch = u.pathname.match(/^\/download\/([0-9a-f-]{36})\/(apk|aab)$/i);
@@ -147,7 +188,11 @@ export default {
         const previousBuildId = String(b.previousBuildId || "").trim();
         const signingRequested = Boolean(b.signing);
         const signingAccess = String(b.signingAccessToken || request.headers.get(SIGNING_ACCESS_HEADER) || "");
-        const signing = signingRequested && Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN) && await signingTokenMatches(signingAccess, env.CASTEL_SIGNING_ACCESS_TOKEN);
+        // Plan enforcement happens here, on the server, so it can't be skipped from the page.
+        const tierInfo = await resolveTier(env, { licenseKey: String(b.licenseKey || request.headers.get("X-Instapped-License") || ""), ownerToken: signingAccess });
+        const tier = tierInfo.tier;
+        // Test builds publish to the shared test release, so only the owner may request them.
+        if (testBuild && !tierInfo.owner) return reply({ok:false,error:"Test builds are reserved for the factory owner."},403);
         if (!appName || appName.length > 40) return reply({ok:false,error:"Invalid app name."},400);
         if (!validPkg(packageName)) return reply({ok:false,error:"Invalid Android package ID."},400);
         if (!/^\d+(\.\d+){0,2}$/.test(versionName)) return reply({ok:false,error:"Invalid version name."},400);
@@ -162,7 +207,18 @@ export default {
         if (splashBase64.length > MAX_SPLASH_BASE64) return reply({ok:false,error:"Splash art is too large. Use an image under about 8 MB."},413);
         if (splashBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(splashBase64)) return reply({ok:false,error:"Splash art encoding is invalid."},400);
         if (splashBase64 && !/\.(png|jpe?g|webp)$/i.test(splashFileName)) return reply({ok:false,error:"Splash art must be PNG, JPG, JPEG, or WebP."},400);
-        if (signingRequested && !signing) return reply({ok:false,error:"Release signing is not authorized. Configure the factory signing access token first."},403);
+        const premiumUsed = premiumFeaturesUsed({ signing: signingRequested, splashMode, themeColor, splashBackground, updateAlerts: Boolean(b.updateAlerts), pageNotifications: Boolean(b.pageNotifications) });
+        const blocked = premiumUsed.filter(f => tierRank(tier) < tierRank(f.minTier));
+        if (blocked.length) {
+          const labels = blocked.map(f => f.label);
+          return reply({ok:false, code:"upgrade_required", requiredPlan:"pro", tier, features:labels, licenseError: tierInfo.licenseError || "",
+            error: `${labels.join(", ")} ${labels.length > 1 ? "need" : "needs"} instApped Pro.${tierInfo.licenseError ? " " + tierInfo.licenseError : " Add a license key in Settings or choose a plan."}`}, 402);
+        }
+        const signing = signingRequested;
+        if (tier === "free") {
+          const quota = await freeBuildAllowed(env, request.headers.get("CF-Connecting-IP") || "unknown");
+          if (!quota.allowed) return reply({ok:false, code:"free_limit", tier, error:`The free plan includes ${quota.limit} builds a day. Upgrade to Pro for unlimited builds, or try again tomorrow.`}, 429);
+        }
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
         const base = `build-inputs/${buildId}`;
@@ -175,7 +231,7 @@ export default {
         if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
         const splashChunks = [];
         if (splashMode === "art") for (let i=0;i<splashBase64.length;i+=CHUNK_CHARS) splashChunks.push(splashBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, splashChunkCount: splashChunks.length, splashFileName: splashMode === "art" ? splashFileName : "", splashMode, splashFit, splashMinMs, splashBackground, themeColor, pullToRefresh: Boolean(b.pullToRefresh), keepAwake: Boolean(b.keepAwake), allowLocation: Boolean(b.allowLocation), allowCamera: Boolean(b.allowCamera), allowMicrophone: Boolean(b.allowMicrophone), allowCleartext: Boolean(b.allowCleartext), updateAlerts: Boolean(b.updateAlerts), playUpdates: b.playUpdates !== false, updateFeedUrl, updateCheckHours, pageNotifications: Boolean(b.pageNotifications), internalHosts, userAgentSuffix, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
+        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, splashChunkCount: splashChunks.length, splashFileName: splashMode === "art" ? splashFileName : "", splashMode, splashFit, splashMinMs, splashBackground, themeColor, tier, brandBadge: tier === "free", pullToRefresh: Boolean(b.pullToRefresh), keepAwake: Boolean(b.keepAwake), allowLocation: Boolean(b.allowLocation), allowCamera: Boolean(b.allowCamera), allowMicrophone: Boolean(b.allowMicrophone), allowCleartext: Boolean(b.allowCleartext), updateAlerts: Boolean(b.updateAlerts), playUpdates: b.playUpdates !== false, updateFeedUrl, updateCheckHours, pageNotifications: Boolean(b.pageNotifications), internalHosts, userAgentSuffix, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`, buildBranch);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`, buildBranch);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`, buildBranch);
@@ -183,7 +239,7 @@ export default {
         for (let i=0;i<splashChunks.length;i++) await putFile(env, `${base}/splash-${String(i).padStart(4,"0")}.bin`, splashChunks[i], `Queue build ${buildId} splash ${i+1}/${splashChunks.length}`, buildBranch);
         const workflow = env.GITHUB_WORKFLOW || "build-app.yml";
         await gh(env, `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions/workflows/${workflow}/dispatches`, {method:"POST",body:JSON.stringify({ref:buildBranch,inputs:{build_id:buildId}})});
-        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions.",queueMode:"isolated-concurrent"},202);
+        return reply({ok:true,status:"queued",revision:BUILD_BRIDGE_REVISION,sourceType,buildId,testBuild,signing,tier,aiSupervisor:manifest.aiSupervisor,runUrl:`https://github.com/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/actions`,message:"Build queued in GitHub Actions.",queueMode:"isolated-concurrent"},202);
       } catch (e) { console.error(e); return reply({ok:false,error:e.message || "Build request failed."},502); }
     }
     const match = u.pathname.match(/^\/build\/([0-9a-f-]{36})$/i);

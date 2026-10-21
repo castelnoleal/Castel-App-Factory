@@ -143,6 +143,7 @@ public class MainActivity extends ComponentActivity {
     private static final String UPDATE_FEED_URL = "";
     private static final int UPDATE_CHECK_HOURS = 12;
     private static final boolean PAGE_NOTIFICATIONS = false;
+    private static final boolean SPLASH_BADGE = false;
     private static final String START_URL = "__TARGET_URL__";
     // ---- End of build options ----
 
@@ -598,6 +599,16 @@ public class MainActivity extends ComponentActivity {
             image.setImageDrawable(icon);
             int size = dp(Build.VERSION.SDK_INT >= 31 ? 160 : 112);
             splash.addView(image, new FrameLayout.LayoutParams(size, size, Gravity.CENTER));
+        }
+        if (SPLASH_BADGE) {
+            // Free-plan apps: a small, unobtrusive credit at the bottom of the splash.
+            TextView badge = new TextView(this);
+            badge.setText("Made with instApped");
+            badge.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
+            badge.setTextColor(isLightColor(SPLASH_COLOR) ? Color.argb(150, 16, 26, 46) : Color.argb(170, 255, 255, 255));
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+            lp.bottomMargin = dp(48);
+            splash.addView(badge, lp);
         }
         return splash;
     }

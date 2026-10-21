@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101a2e">
-<title>instApped</title>
+<meta name="description" content="instApped turns your website or HTML project into an Android app. Build test APKs free; publish signed Google Play releases with Pro.">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta property="og:title" content="instApped — turn a web page into an Android app">
+<meta property="og:description" content="Build Android apps from HTML, ZIP or a website. Free to start.">
+<meta property="og:url" content="https://create.instapped.com/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23101a2e'/%3E%3Ctext x='32' y='44' font-size='34' text-anchor='middle'%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E">
+<title>instApped — turn a web page into an Android app</title>
 <style>
 :root{--bg:#f2f3f6;--s:#fff;--s2:#e9ebf0;--b:#dcdfe7;--t:#101a2e;--m:#5f6a80;--p:#101a2e;--pt:#fff;--a:#b8862b;--ok:#17724f;--w:#9a5b08;--e:#b3261e;--r:12px;--nav:64px;color-scheme:light}
 :root[data-theme=dark]{--bg:#0b101d;--s:#141b2d;--s2:#1c2540;--b:#263050;--t:#e8ebf3;--m:#94a0b8;--p:#e0b050;--pt:#1a1405;--a:#e0b050;--ok:#5ccf9e;--w:#e8b04a;--e:#ff8a80;color-scheme:dark}
@@ -180,6 +186,31 @@ h2{font-size:24px}
 .splashthumb{width:90px;aspect-ratio:9/16;border-radius:12px;border:1px solid var(--b);background:#080b14 center/cover no-repeat;flex:none}
 .splash .art{position:absolute;inset:0;background:center/cover no-repeat}
 .splash .art.contain{background-size:contain}
+/* ---- Plans, license and publishing kit ---- */
+.planchip{border:1px solid var(--b);background:var(--s);color:var(--t);border-radius:99px;padding:4px 10px;font-size:12.5px;font-weight:700;min-height:28px;flex:none}
+.planchip.pro{border-color:var(--a);color:var(--a)}
+.planchip.business{background:var(--a);border-color:var(--a);color:#17130b}
+.prochip{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--a);border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
+.plan{background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:10px}
+.plan.hl{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 18%,transparent)}
+.plan h3{font-size:17px}.plan .ptag{color:var(--m);font-size:13.5px}
+.plan .price{font-size:28px;font-weight:800;letter-spacing:-.02em}.plan .price small{font-size:13px;font-weight:500;color:var(--m)}
+.plan .btn{margin-top:auto}
+.feat{list-style:none;padding:0;display:grid;gap:6px;font-size:14px}
+.feat li{display:flex;gap:8px}.feat li::before{content:"✓";color:var(--ok);font-weight:700}
+.billseg{max-width:360px}
+.legal{font-size:12.5px;color:var(--m);margin-top:14px}.legal a{color:var(--a)}
+.lock{border:1.5px dashed var(--b);border-radius:var(--r);padding:16px;text-align:center;color:var(--m);display:grid;gap:10px;justify-items:center}
+body:not(.biz) #kitBody{display:none}body.biz #kitLock{display:none}
+body.paid .prochip[data-min="pro"]{display:none}body.biz .prochip{display:none}
+.count{float:right;font-size:12px;color:var(--m)}.count.over{color:var(--e)}
+.kit-ta{min-height:140px;font:14px/1.5 system-ui,sans-serif}
+dialog.dlg{border:1px solid var(--b);border-radius:16px;background:var(--s);color:var(--t);padding:20px;width:min(440px,calc(100vw - 32px))}
+dialog.dlg::backdrop{background:rgba(5,10,20,.5)}
+.dlg h3{font-size:18px;margin-bottom:6px}.dlgacts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+@media(max-width:900px){.plans{grid-template-columns:1fr}}
+@media(max-width:760px),(pointer:coarse) and (max-width:1024px){.planchip{padding:4px 8px}}
 /* ---- Added: projects search ---- */
 .psearch{margin-bottom:12px}
 /* ---- Added: injectable ad slot ---- */
@@ -219,14 +250,14 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
 <script type="application/json" id="instapped-ad">
 {
   "enabled": true,
-  "id": "house-2026-10",
+  "id": "house-pro-2026-10",
   "type": "text",
-  "label": "Sponsored",
-  "title": "Your ad here",
-  "body": "Reach people turning their websites into Android apps.",
-  "cta": "Advertise",
-  "url": "https://instapped.com",
-  "newTab": true,
+  "label": "instApped Pro",
+  "title": "Publish on Google Play",
+  "body": "Signed releases, splash art and update alerts.",
+  "cta": "See plans",
+  "url": "#plans",
+  "newTab": false,
   "dismissible": true,
   "dismissHours": 24
 }
@@ -239,6 +270,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
   <div class="logo" aria-label="Original box logo" role="img">📦</div>
   <div><h1>instApped</h1><p>Turn a web page into an Android app</p></div>
   <span class="pill" id="status">Draft</span>
+  <button class="planchip" id="planChip" title="Your plan">Free</button>
   <button class="hbtn" id="pvOpen" aria-controls="pv" aria-expanded="false" title="Preview (P)"><svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg><span>Preview</span></button>
 </header>
 <div class="shell">
@@ -246,6 +278,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
   <button data-view="create" class="on"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create</button>
   <button data-view="projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</button>
   <button data-view="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>Settings</button>
+  <button data-view="plans"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>Plans</button>
 </nav>
 <main>
 
@@ -304,7 +337,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
     </div>
   </div>
   <div class="card">
-    <h3>Splash screen</h3><p class="h">What people see while the app opens. With no splash art, the app shows its icon like any normal Android app.</p>
+    <h3>Splash screen <i class="prochip" data-min="pro">Pro: splash art &amp; colours</i></h3><p class="h">What people see while the app opens. With no splash art, the app shows its icon like any normal Android app.</p>
     <div class="seg" data-k="splash"><button data-v="icon" class="on">App icon</button><button data-v="art">Splash art</button></div>
     <div id="splashArt" hidden>
       <label class="drop" id="splashDrop"><b id="splashT">Tap to upload splash art</b><span id="splashS">PNG, JPG or WebP · portrait, 1080×1920 or larger works best</span><input type="file" id="splashFile" accept="image/png,image/jpeg,image/webp"></label>
@@ -334,7 +367,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
   </div>
   <div class="card">
     <h3>Update alerts</h3><p class="h">Let people know when a new version is out, even when the app is closed.</p>
-    <div class="row"><span><b>Tell people about updates</b><small>Shows an update prompt in the app and a notification on the phone</small></span><input type="checkbox" class="sw" data-k="upd"></div>
+    <div class="row"><span><b>Tell people about updates <i class="prochip" data-min="pro">Pro</i></b><small>Shows an update prompt in the app and a notification on the phone</small></span><input type="checkbox" class="sw" data-k="upd"></div>
     <div id="updOpts">
       <div class="row"><span><b>Use Google Play's update prompt</b><small>For copies installed from Google Play: Play downloads and installs the update in the app</small></span><input type="checkbox" class="sw" data-k="playupd"></div>
       <label class="f" style="margin-top:10px">Update feed URL<input type="text" inputmode="url" data-k="feed" placeholder="https://example.com/myapp/update.json" autocapitalize="none" spellcheck="false"><span class="hint2">Optional. A small JSON file you host. The app checks it in the background and notifies people of new versions and announcements. Works for any install, including APKs shared outside Play.</span></label>
@@ -345,7 +378,7 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
       <button class="btn sm" id="feedDl">Download update feed for this version</button>
       <div class="dev" id="feedSample" style="margin-top:12px"></div>
     </div>
-    <div class="row" style="margin-top:6px"><span><b>Let pages show notifications</b><small>The web Notification API works while the app is open (messages, reminders). Push while the app is closed needs a push service.</small></span><input type="checkbox" class="sw" data-k="pnotif"></div>
+    <div class="row" style="margin-top:6px"><span><b>Let pages show notifications <i class="prochip" data-min="pro">Pro</i></b><small>The web Notification API works while the app is open (messages, reminders). Push while the app is closed needs a push service.</small></span><input type="checkbox" class="sw" data-k="pnotif"></div>
   </div>
   <div class="card">
     <h3>instApped SDK for developers</h3><p class="h">Your HTML can save files and ZIP bundles to private storage that works offline.</p>
@@ -386,12 +419,39 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
 
   <div class="step" data-s="6"><div class="card">
     <h3>Build</h3><p class="h">Creates an APK for testing and an AAB for Google Play.</p>
-    <div class="row"><span><b>Sign the release AAB</b><small>Required for Google Play uploads</small></span><input type="checkbox" class="sw" data-k="sign"></div>
-    <label class="f" id="tokWrap" hidden style="margin-top:10px">Signing access token<input type="password" id="token" autocomplete="off" placeholder="Not saved on this device"></label>
+    <div class="row"><span><b>Sign the release AAB <i class="prochip" data-min="pro">Pro</i></b><small>Required for Google Play uploads</small></span><input type="checkbox" class="sw" data-k="sign"></div>
     <button class="btn pri" id="buildBtn" style="width:100%;margin-top:14px">Build APK and AAB</button>
     <div class="prog" id="prog"><div id="progBar"></div></div>
     <div class="log" id="log" aria-live="polite"></div>
     <div class="dl" id="dl"><button class="btn pri" id="apk" hidden>APK</button><button class="btn" id="aab" hidden>AAB</button></div>
+  </div>
+  <div class="card" id="kitCard">
+    <h3>Publishing kit <i class="prochip" data-min="business">Business</i></h3><p class="h">Everything Google Play asks for, prepared from this project: store graphics, listing text, a privacy policy, Data safety answers and a submission checklist.</p>
+    <div class="lock" id="kitLock"><p>The publishing kit is part of instApped Business.</p><button class="btn pri sm" data-plans="business">See Business plan</button></div>
+    <div id="kitBody">
+      <div class="grid">
+        <label class="f">Developer or company name<input type="text" data-k="devName" maxlength="80" placeholder="Acme Studio"></label>
+        <label class="f">Contact email<input type="email" data-k="devEmail" maxlength="120" placeholder="support@example.com" autocapitalize="none"></label>
+        <label class="f">Website<input type="text" inputmode="url" data-k="devSite" maxlength="200" placeholder="https://example.com" autocapitalize="none"></label>
+        <label class="f">Privacy policy URL<input type="text" inputmode="url" data-k="privUrl" maxlength="200" placeholder="https://example.com/privacy" autocapitalize="none"><span class="hint2">Upload the generated privacy-policy.html and paste its link. Google Play requires one.</span></label>
+        <label class="f">Store category<select data-k="cat"><option value="">Choose…</option><option>Art &amp; Design</option><option>Auto &amp; Vehicles</option><option>Beauty</option><option>Books &amp; Reference</option><option>Business</option><option>Comics</option><option>Communication</option><option>Dating</option><option>Education</option><option>Entertainment</option><option>Events</option><option>Finance</option><option>Food &amp; Drink</option><option>Health &amp; Fitness</option><option>House &amp; Home</option><option>Libraries &amp; Demo</option><option>Lifestyle</option><option>Maps &amp; Navigation</option><option>Medical</option><option>Music &amp; Audio</option><option>News &amp; Magazines</option><option>Parenting</option><option>Personalization</option><option>Photography</option><option>Productivity</option><option>Shopping</option><option>Social</option><option>Sports</option><option>Tools</option><option>Travel &amp; Local</option><option>Video Players &amp; Editors</option><option>Weather</option><option>Games</option></select></label>
+        <label class="f">Contains ads<select data-k="hasAds"><option value="no">No</option><option value="yes">Yes</option></select></label>
+      </div>
+      <label class="f">Short description <span class="count" data-count="shortDesc" data-max="80"></span><input type="text" data-k="shortDesc" maxlength="80" placeholder="One line that sells your app"></label>
+      <label class="f">Full description <span class="count" data-count="fullDesc" data-max="4000"></span><textarea class="inp kit-ta" data-k="fullDesc" maxlength="4000" placeholder="What the app does, its main features, and who it's for."></textarea></label>
+      <p style="margin:6px 0 4px;color:var(--m);font-size:13.5px">What the app does with personal data</p>
+      <div class="row"><span><b>Accounts or sign-in</b><small>People create an account or log in (names, emails)</small></span><input type="checkbox" class="sw" data-k="pAcct"></div>
+      <div class="row"><span><b>Analytics</b><small>The site uses analytics such as Google Analytics</small></span><input type="checkbox" class="sw" data-k="pAnalytics"></div>
+      <div class="row"><span><b>Payments</b><small>People buy things (handled by a payment provider)</small></span><input type="checkbox" class="sw" data-k="pPay"></div>
+      <div class="row"><span><b>User content</b><small>People upload files, photos or send messages</small></span><input type="checkbox" class="sw" data-k="pContent"></div>
+      <h3 style="margin-top:14px">Submission checklist</h3>
+      <div id="kitChecklist"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn pri" id="kitZip">Download publishing kit (.zip)</button>
+        <button class="btn" id="kitPolicy">Preview privacy policy</button>
+        <button class="btn" id="kitGraphic">Download feature graphic</button>
+      </div>
+    </div>
   </div></div>
 
   <div class="foot"><button class="btn" id="back">Back</button><button class="btn pri" id="next">Next</button></div>
@@ -405,9 +465,28 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   <button class="btn pri" id="newProj">New project</button>
 </section>
 
+<!-- PLANS -->
+<section class="view" id="v-plans">
+  <h2>Plans</h2><p class="sub">Start free. Upgrade when you're ready to publish on Google Play.</p>
+  <div class="seg billseg" id="billSeg"><button data-v="monthly" class="on">Monthly</button><button data-v="annual">Yearly · 2 months free</button></div>
+  <div class="plans" id="planCards"></div>
+  <label class="f" style="max-width:420px;margin-top:4px">Email for your receipt (optional)<input type="email" id="buyEmail" maxlength="200" placeholder="you@example.com" autocapitalize="none"></label>
+  <p class="sub" id="plansNote" style="font-size:13px"></p>
+  <div class="card"><h3>Already paid?</h3><p class="h">If your license didn't appear after checkout, recover it with the reference on your receipt (starts with IA-) or the checkout ID (starts with cs_).</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="inp" id="recRef" style="max-width:320px;margin:0" placeholder="IA-… or cs_…" autocapitalize="characters" spellcheck="false"><button class="btn" id="recBtn">Recover license</button></div>
+  </div>
+  <p class="legal">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
+</section>
+
 <!-- SETTINGS -->
 <section class="view" id="v-settings">
   <h2>Settings</h2><p class="sub">Preferences for this factory.</p>
+  <div class="card" id="licCard"><h3>Plan and license</h3><p class="h" id="licStatus">You're on the Free plan.</p>
+    <label class="f">License key<input class="inp" id="licKey" placeholder="IAL1.…" spellcheck="false" autocapitalize="none" autocomplete="off"></label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri" id="licSave">Activate</button><button class="btn sm" id="licCopy">Copy key</button><button class="btn sm dng" id="licRemove">Remove from this device</button><button class="btn sm" data-plans="pro">See plans</button></div>
+    <label class="f" style="margin-top:14px">Owner access token<input type="password" id="token" autocomplete="off" placeholder="Only for the factory owner"></label>
+    <p style="font-size:13px;color:var(--m);margin-top:-6px">Kept for this browser tab only. Unlocks every feature and test builds.</p>
+  </div>
   <div class="card"><h3>Appearance</h3><p class="h">&nbsp;</p>
     <p style="color:var(--m);font-size:13.5px;margin-bottom:6px">Theme</p>
     <div class="seg" data-g="theme"><button data-v="system">System</button><button data-v="light">Light</button><button data-v="dark">Dark</button></div>
@@ -421,7 +500,7 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="epTest">Test connection</button><button class="btn sm" id="epReset">Reset to default</button></div>
     <div class="row" style="margin-top:12px;border-top:1px solid var(--b)"><span><b>Raise version code after each build</b><small>Google Play rejects an update that reuses a version code</small></span><input type="checkbox" class="sw" id="gBump"></div>
   </div>
-  <div class="card"><h3>Advertising</h3><p class="h">The banner at the top is set by an injector (see the guide at the top of this file). Paste ad JSON here to preview it on this device only.</p>
+  <div class="card" id="adCard" hidden><h3>Advertising</h3><p class="h">The banner at the top is set by an injector (see the guide at the top of this file). Paste ad JSON here to preview it on this device only.</p>
     <label class="f">Preview override (JSON)<textarea class="inp" id="adJson" spellcheck="false" placeholder='{"type":"text","title":"Hello","cta":"Open","url":"https://example.com"}'></textarea></label>
     <p style="font-size:13px;color:var(--m);margin:-4px 0 10px" id="adSrc">Active source: none</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri" id="adApply">Apply on this device</button><button class="btn sm" id="adLoad">Load current ad</button><button class="btn sm" id="adClear">Remove override</button><button class="btn sm" id="adUndo">Show dismissed ad again</button></div>
@@ -429,6 +508,7 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   <div class="card"><h3>Backup</h3><p class="h">Move your projects to another device.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="exp">Export projects</button><label class="btn" style="cursor:pointer">Import<input type="file" id="imp" accept=".json" hidden></label></div>
   </div>
+  <p class="legal">instApped · <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> · <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy</a> · <a href="https://instapped.com/acceptable-use.html" target="_blank" rel="noopener">Acceptable use</a> · <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact</a></p>
 </section>
 
 </main>
@@ -439,6 +519,19 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   <div class="pvh"><h3 id="pvTitle">Preview</h3><button class="btn sm" id="pvClose" aria-label="Close preview">Close</button></div>
   <div class="pvb"><div id="pvStage" style="width:100%"></div><div class="pvchk" id="pvChecks"></div></div>
 </aside>
+<dialog class="dlg" id="upDlg" aria-labelledby="upTitle">
+  <h3 id="upTitle">This is a Pro feature</h3>
+  <p id="upBody" class="h"></p>
+  <ul class="feat" id="upList"></ul>
+  <div class="dlgacts"><button class="btn" id="upLater">Not now</button><button class="btn pri" id="upGo">See plans</button></div>
+</dialog>
+<dialog class="dlg" id="okDlg" aria-labelledby="okTitle">
+  <h3 id="okTitle">You're on instApped Pro</h3>
+  <p class="h" id="okBody">Thank you! Your license is active on this device.</p>
+  <label class="f">Your license key — save it somewhere safe to use on other devices<textarea class="inp" id="okKey" readonly rows="3"></textarea></label>
+  <p class="h" id="okRef" style="font-size:12.5px"></p>
+  <div class="dlgacts"><button class="btn" id="okCopy">Copy key</button><button class="btn pri" id="okDone">Start building</button></div>
+</dialog>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -453,7 +546,7 @@ async function buildBridge(payload,onLog,onProgress){
   const ep=endpoint();
   const submit=await fetch(ep+"/build",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
   const queued=await submit.json().catch(()=>({}));
-  if(!submit.ok||!queued.ok||!queued.buildId)throw new Error(queued.error||("Build service returned HTTP "+submit.status));
+  if(!submit.ok||!queued.ok||!queued.buildId){const err=new Error(queued.error||("Build service returned HTTP "+submit.status));err.code=queued.code;throw err}
   if(typeof S!=="undefined"&&String(S.id||"")===String(payload.projectId||"")){S.pendingBuildId=queued.buildId;S.status=S.buildId?"built":"pending";persist();bind()}
   try{localStorage.setItem("castel.activeBuild."+String(payload.projectId||""),JSON.stringify({buildId:queued.buildId,projectId:String(payload.projectId||""),startedAt:Date.now()}))}catch{}
   onLog("Build queued: "+queued.buildId);
@@ -515,7 +608,7 @@ function base64Blob(data,type){const raw=atob(data),bytes=new Uint8Array(raw.len
 const isZipName=n=>/\.zip$/i.test(n||"");
 const storedInDb=p=>!!(p&&p.fileName&&(isZipName(p.fileName)||p.htmlInDb));
 
-function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,http:false,upd:false,playupd:true,feed:"",feedh:"12",pnotif:false,whatsnew:"",ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
+function blank(){return{id:"p"+Date.now().toString(36),name:"",pkg:"",vname:"1.0.0",vcode:1,orient:"auto",back:true,zoom:false,full:false,ext:true,stype:"file",html:"",fileName:"",url:"",icon:"",offline:true,update:true,cache:"std",sign:false,status:"draft",updated:Date.now(),hosts:"",ptr:false,awake:false,cam:false,mic:false,loc:false,http:false,upd:false,playupd:true,feed:"",feedh:"12",pnotif:false,whatsnew:"",devName:"",devEmail:"",devSite:"",privUrl:"",cat:"",hasAds:"no",shortDesc:"",fullDesc:"",pAcct:false,pAnalytics:false,pPay:false,pContent:false,ua:"",splash:"icon",sfit:"cover",sbg:"#080B14",smin:"600",theme:"#080B14",splashName:"",splashW:0,splashH:0}}
 const HEX=/^#[0-9a-f]{6}$/i;
 const splashKey=id=>id+":splash";
 let splashURL="";
@@ -580,7 +673,6 @@ function bind(){
   $("#s-file").hidden=S.stype!=="file";$("#s-url").hidden=S.stype!=="url";
   $("#dropT").textContent=S.fileName||"Tap to upload your app";
   $("#dropS").textContent=S.fileName?"Tap to replace":"HTML, HTM or ZIP";
-  $("#tokWrap").hidden=!S.sign;
   $("#ptitle").textContent=S.name||"New app";
   const st=S.status==="built"?["Built"," ok"]:S.status==="pending"?["Build pending"," run"]:S.status==="failed"?["Failed"," err"]:["Draft",""];
   $("#status").textContent=st[0];$("#status").className="pill"+st[1];
@@ -599,11 +691,10 @@ function bind(){
   previewChrome();
   scheduleCheck();
 }
-$$("#v-create input[data-k],#v-create select[data-k]").forEach(el=>{
-  const h=()=>{const k=el.dataset.k;S[k]=el.type==="checkbox"?el.checked:el.value;
+$$("#v-create input[data-k],#v-create select[data-k],#v-create textarea[data-k]").forEach(el=>{
+  const h=()=>{const k=el.dataset.k;if(!gateInput(el,k)){persist();return}S[k]=el.type==="checkbox"?el.checked:el.value;
     if(k==="pkg"){pkgTouched=true;S.pkg=S.pkg.trim()}
     if(k==="name"){$("#ptitle").textContent=S.name||"New app";if(!pkgTouched){S.pkg=suggestPkg(S.name);$('[data-k=pkg]').value=S.pkg}}
-    if(k==="sign")$("#tokWrap").hidden=!S.sign;
     if(k==="sbg"||k==="theme"){S[k]=S[k].trim().toUpperCase().replace(/^([0-9A-F]{6})$/,"#$1");bind()}
     persist();previewChrome();scheduleCheck();
     if(k==="url")refreshPreviewSoon();
@@ -611,8 +702,9 @@ $$("#v-create input[data-k],#v-create select[data-k]").forEach(el=>{
   };
   el.addEventListener(el.type==="checkbox"||el.tagName==="SELECT"?"change":"input",h);
 });
-$$("#v-create .seg[data-k] button").forEach(b=>b.onclick=()=>{const k=b.parentNode.dataset.k;S[k]=b.dataset.v;bind();persist();if(k==="stype")refreshPreviewSoon()});
+$$("#v-create .seg[data-k] button").forEach(b=>b.onclick=()=>{const k=b.parentNode.dataset.k;if(k==="splash"&&b.dataset.v==="art"&&!hasPlan("pro"))return upgrade("Splash art");S[k]=b.dataset.v;bind();persist();if(k==="stype")refreshPreviewSoon()});
 $("#token").addEventListener("input",()=>scheduleCheck());
+$$("#v-create textarea[data-k],#kitCard [data-k]").forEach(el=>el.addEventListener("input",()=>renderKit()));
 
 /* ============ SOURCE ============ */
 const normUrl=u=>{u=String(u||"").trim();return !u?"":/^https?:\/\//i.test(u)?u:"https://"+u};
@@ -733,15 +825,15 @@ $("#feedDl").onclick=()=>{
 };
 
 /* ============ SPLASH ART ============ */
-$("#sbgPick").oninput=e=>{S.sbg=e.target.value.toUpperCase();$('[data-k=sbg]').value=S.sbg;bind();persist()};
-$("#themePick").oninput=e=>{S.theme=e.target.value.toUpperCase();$('[data-k=theme]').value=S.theme;bind();persist()};
+$("#sbgPick").oninput=e=>{if(!hasPlan("pro")){e.target.value=DEF_COLOR.toLowerCase();return upgrade("Custom app colours")}S.sbg=e.target.value.toUpperCase();$('[data-k=sbg]').value=S.sbg;bind();persist()};
+$("#themePick").oninput=e=>{if(!hasPlan("pro")){e.target.value=DEF_COLOR.toLowerCase();return upgrade("Custom app colours")}S.theme=e.target.value.toUpperCase();$('[data-k=theme]').value=S.theme;bind();persist()};
 async function loadSplash(){
   if(splashURL){URL.revokeObjectURL(splashURL);splashURL=""}
   if(!S.splashName)return;
   try{const b=await getZip(splashKey(S.id));if(b)splashURL=URL.createObjectURL(b);else{S.splashName="";toast("Saved splash art isn't on this device any more. Upload it again.")}}catch{}
 }
 async function splashBlob(){if(!S.splashName)return null;try{return await getZip(splashKey(S.id))||null}catch{return null}}
-$("#splashFile").onchange=e=>{
+$("#splashFile").onchange=e=>{if(!hasPlan("pro")){e.target.value="";return upgrade("Splash art")}
   const f=e.target.files[0];e.target.value="";if(!f)return;
   if(!/^image\/(png|jpeg|webp)$/.test(f.type))return toast("Use a PNG, JPG or WebP image.");
   if(f.size>25*1024*1024)return toast("That image is over 25 MB.");
@@ -925,7 +1017,8 @@ function checks(){
   if(S.cam||S.mic||S.loc)add("Permissions","ok","Requests "+[S.cam&&"camera",S.mic&&"microphone",S.loc&&"location"].filter(Boolean).join(", ")+". Google Play may ask you to explain why in the Data safety form.",1);
   if(S.cache==="aggr"&&S.stype==="url")add("Cache mode","warn","Aggressive caching may show old content from your live site.",3);
   if(S.cache==="first"&&!S.offline)add("Offline storage","warn","Offline first works best with Offline storage turned on.",3);
-  if(S.sign)add("Signing token",$("#token").value.trim()?"ok":"fail",$("#token").value.trim()?"":"Enter your signing access token or turn signing off.",6);
+  const prem=premiumInUse();
+  if(prem.length&&!hasPlan("pro"))add("Plan","fail","This project uses "+prem.join(", ")+", which need instApped Pro. Upgrade or turn them off.","plans");
   if(!String(G.endpoint||"").trim())add("Build service","fail","Set the build service URL in Settings.","settings");
   return r;
 }
@@ -944,7 +1037,7 @@ function renderPanelChecks(){
 }
 function paintStepBadges(){$$("#steps button").forEach((b,i)=>b.classList.toggle("bad",i!==step&&lastChecks.some(c=>c.s===i&&c.st==="fail")&&i<step))}
 const scheduleCheck=debounce(async()=>{await analyze();runCheck()},150);
-document.addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(!b)return;const s=b.dataset.fix;if(window.matchMedia("(max-width:999px),(hover:none)").matches)setPanel(false);if(s==="settings")view("settings");else{view("create");go(+s)}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-fix]");if(!b)return;const s=b.dataset.fix;if(window.matchMedia("(max-width:999px),(hover:none)").matches)setPanel(false);if(s==="settings")view("settings");else if(s==="plans")view("plans");else{view("create");go(+s)}});
 $("#runCheck").onclick=async()=>{await analyze(true);toast(runCheck()?"Ready to build":"Fix the items marked ×")};
 
 /* ============ BUILD ============ */
@@ -975,7 +1068,7 @@ $("#buildBtn").onclick=async()=>{
       backNavigation:Boolean(S.back),zoom:Boolean(S.zoom),fullscreen:Boolean(S.full),externalLinks:Boolean(S.ext),
       offlineStorage:Boolean(S.offline),autoUpdate:Boolean(S.update),
       cacheMode:({off:"off",std:"standard",first:"offline",aggr:"aggressive"})[S.cache]||"standard",
-      signing:Boolean(S.sign),signingAccessToken:S.sign?$("#token").value.trim():"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false,
+      signing:Boolean(S.sign),signingAccessToken:ownerToken(),licenseKey:LIC.key&&LIC.exp>Date.now()?LIC.key:"",projectId:S.id,previousBuildId:S.buildId||"",testBuild:false,
       themeColor:HEX.test(S.theme)?S.theme:"#080B14",splashBackground:HEX.test(S.sbg)?S.sbg:"#080B14",
       splashMode:S.splash==="art"&&S.splashName?"art":"icon",splashFit:S.sfit==="contain"?"contain":"cover",splashMinMs:Number(S.smin)||0,
       splashFileName:"",splashBase64:"",
@@ -992,7 +1085,7 @@ $("#buildBtn").onclick=async()=>{
     S.status="built";S.vcode=+S.vcode;S.lastBuiltCode=S.vcode;S.pendingBuildId="";S.buildId=res.buildId||"";S.apkUrl=res.apkUrl||"";S.aabUrl=res.aabUrl||"";
     if(G.bumpCode){S.vcode=S.lastBuiltCode+1;log("Version code raised to "+S.vcode+" for your next build","ok")}
     persist();bind();
-  }catch(e){log(e.message,"err");if(e.pendingBuildId){S.pendingBuildId=e.pendingBuildId;S.status=S.buildId?"built":"pending";persist();bind();$("#status").textContent=S.buildId?"Previous build ready · update pending":"Build pending";$("#status").className=S.buildId?"pill ok":"pill run";log("Saved build ID: "+e.pendingBuildId+" — check status from Projects without restarting.","ok")}else if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
+  }catch(e){log(e.message,"err");if(e.code==="upgrade_required"||e.code==="free_limit")upgrade(e.code==="free_limit"?"Unlimited builds":"This build","pro");if(e.pendingBuildId){S.pendingBuildId=e.pendingBuildId;S.status=S.buildId?"built":"pending";persist();bind();$("#status").textContent=S.buildId?"Previous build ready · update pending":"Build pending";$("#status").className=S.buildId?"pill ok":"pill run";log("Saved build ID: "+e.pendingBuildId+" — check status from Projects without restarting.","ok")}else if(S.buildId){S.status="built";persist();$("#status").textContent="Update failed · previous build kept";$("#status").className="pill ok";log("Previous successful build is preserved and remains downloadable.","ok")}else{S.status="failed";persist();$("#status").textContent="Failed";$("#status").className="pill err"}}
   clearInterval(tick);building=false;btn.disabled=false;btn.textContent="Build APK and AAB";
 };
 
@@ -1194,15 +1287,292 @@ $("#adClear").onclick=()=>{Ads.setLocal(null);renderAdSettings();toast("Override
 $("#adUndo").onclick=()=>{Ads.api.clearDismissed();toast("The ad will show again")};
 window.instApped=Object.assign(window.instApped||{},{ads:Ads.api,project:()=>structuredClone(S)});
 
+/* ============ PLANS & LICENSE ============ */
+const TIER_ORDER=["free","pro","business"];
+const LIC_KEY="instapped.license",PENDING_KEY="instapped.pending";
+const FALLBACK_PLANS={currency:"PHP",paymentsEnabled:false,plans:[
+  {id:"free",name:"Free",tagline:"Build and test Android apps from any web project.",features:["HTML, ZIP and website apps","Test APK builds","Offline storage, links, permissions and more","Small \"Made with instApped\" note on the splash screen"],prices:{monthly:0,annual:0}},
+  {id:"pro",name:"Pro",tagline:"Everything you need to publish on Google Play.",features:["Signed, Play-ready AAB releases","Splash art, app colour and no instApped badge","Update alerts, update feed and page notifications","No ads in the factory"],prices:{monthly:49900,annual:499000}},
+  {id:"business",name:"Business",tagline:"Publish apps for clients and your company.",features:["Everything in Pro","Publishing kit: store listing assets and text","Privacy policy generator and Data safety answers","Google Play submission checklist"],prices:{monthly:169000,annual:1690000}}]};
+let LIC=Object.assign({key:"",plan:"free",exp:0,owner:false,checked:0},load(LIC_KEY,{}));
+let PLANS=FALLBACK_PLANS,billing="monthly";
+const rankOf=t=>Math.max(0,TIER_ORDER.indexOf(t));
+const planNow=()=>LIC.owner?"business":(LIC.key&&LIC.exp>Date.now()?LIC.plan:"free");
+const hasPlan=min=>rankOf(planNow())>=rankOf(min);
+const peso=c=>"₱"+(c/100).toLocaleString("en-PH",{maximumFractionDigits:0});
+const DEF_COLOR="#080B14";
+const ownerToken=()=>{try{return sessionStorage.getItem("instapped.owner")||""}catch{return ""}};
+function saveLic(){const {key,plan,exp,checked}=LIC;save(LIC_KEY,{key,plan,exp,checked})}
+
+function applyPlanUI(){
+  const p=planNow();
+  document.body.classList.toggle("paid",rankOf(p)>=1);
+  document.body.classList.toggle("biz",rankOf(p)>=2);
+  const chip=$("#planChip");chip.textContent=LIC.owner?"Owner":({free:"Free",pro:"Pro",business:"Business"})[p];chip.className="planchip "+p;
+  const exp=LIC.exp&&!LIC.owner?new Date(LIC.exp).toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"}):"";
+  $("#licStatus").textContent=LIC.owner?"Owner access: every feature is unlocked for this tab."
+    :p==="free"?(LIC.key&&LIC.exp&&LIC.exp<=Date.now()?"Your license expired on "+exp+". Renew it on the Plans page.":"You're on the Free plan.")
+    :"instApped "+({pro:"Pro",business:"Business"})[p]+" · active until "+exp+".";
+  if(document.activeElement!==$("#licKey"))$("#licKey").value=LIC.key||"";
+  $("#adCard").hidden=!LIC.owner;
+  // No factory ads on paid plans.
+  try{rankOf(p)>=1?Ads.api.hide():Ads.api.show()}catch{}
+  renderPlans();scheduleCheck();renderKit();
+}
+
+async function verifyLicenseKey(key,{quiet}={}){
+  try{
+    const r=await fetch(endpoint()+"/license/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key,ownerToken:ownerToken()})});
+    const d=await r.json();
+    if(d.owner){LIC.owner=true}
+    else if(d.valid){LIC.key=key;LIC.plan=d.plan;LIC.exp=d.exp}
+    else{if(!quiet)toast(d.reason||"That license key isn't valid.");if(d.expired){LIC.key=key;LIC.plan=d.plan;LIC.exp=d.exp}else if(key===LIC.key){LIC.exp=0}}
+    LIC.checked=Date.now();saveLic();applyPlanUI();return !!(d.valid||d.owner);
+  }catch{if(!quiet)toast("Couldn't reach the build service to check the license.");return false}
+}
+
+$("#planChip").onclick=()=>view("plans");
+document.addEventListener("click",e=>{const b=e.target.closest("[data-plans]");if(!b)return;e.preventDefault();$("#upDlg").open&&$("#upDlg").close();view("plans");if(b.dataset.plans==="business")setTimeout(()=>$('#planCards [data-plan="business"]')?.scrollIntoView({block:"center",behavior:"smooth"}),50)});
+$("#licSave").onclick=async()=>{const k=$("#licKey").value.trim();if(!k)return toast("Paste your license key first.");if(await verifyLicenseKey(k))toast("License activated: instApped "+({pro:"Pro",business:"Business"})[LIC.plan])};
+$("#licCopy").onclick=async()=>{if(!LIC.key)return toast("No license key on this device.");try{await navigator.clipboard.writeText(LIC.key);toast("License key copied")}catch{toast("Copy failed. Select the key and copy it.")}};
+$("#licRemove").onclick=()=>{if(LIC.key&&!confirm("Remove the license from this device? You can paste it again later."))return;LIC={key:"",plan:"free",exp:0,owner:LIC.owner,checked:0};saveLic();applyPlanUI();toast("License removed from this device")};
+$("#token").addEventListener("change",async e=>{const t=e.target.value.trim();try{t?sessionStorage.setItem("instapped.owner",t):sessionStorage.removeItem("instapped.owner")}catch{}LIC.owner=false;if(t){if(!(await verifyLicenseKey(LIC.key,{quiet:true}))&&!LIC.owner)toast("That owner token isn't valid.")}applyPlanUI()});
+
+/* --- upgrade prompt --- */
+function upgrade(feature,min="pro"){
+  const plan=PLANS.plans.find(p=>p.id===min)||FALLBACK_PLANS.plans[1];
+  $("#upTitle").textContent=feature+" is part of instApped "+plan.name;
+  $("#upBody").textContent=plan.tagline+" From "+peso(plan.prices.monthly)+" a month.";
+  $("#upList").innerHTML=plan.features.map(f=>`<li>${esc(f)}</li>`).join("");
+  $("#upGo").dataset.plans=min;
+  try{$("#upDlg").showModal()}catch{view("plans")}
+}
+$("#upLater").onclick=()=>$("#upDlg").close();
+$("#upGo").onclick=()=>{$("#upDlg").close();view("plans")};
+const GATED={sign:["Signed Play-ready AAB","pro"],upd:["Update alerts","pro"],pnotif:["Page notifications","pro"]};
+/** Returns false (and shows the upgrade prompt) if a premium option is being turned on without the plan. */
+function gateInput(el,k){
+  if(GATED[k]&&el.type==="checkbox"&&el.checked&&!hasPlan(GATED[k][1])){el.checked=false;S[k]=false;upgrade(...GATED[k]);return false}
+  if((k==="theme"||k==="sbg")&&!hasPlan("pro")&&HEX.test(el.value.trim())&&el.value.trim().toUpperCase()!==DEF_COLOR){el.value=DEF_COLOR;S[k]=DEF_COLOR;upgrade("Custom app colours");return false}
+  return true;
+}
+function premiumInUse(){
+  const u=[];
+  if(S.sign)u.push("signed AAB");
+  if(S.splash==="art"&&S.splashName)u.push("splash art");
+  if((HEX.test(S.theme)&&S.theme.toUpperCase()!==DEF_COLOR)||(HEX.test(S.sbg)&&S.sbg.toUpperCase()!==DEF_COLOR))u.push("custom colours");
+  if(S.upd)u.push("update alerts");
+  if(S.pnotif)u.push("page notifications");
+  return u;
+}
+
+/* --- plans view & checkout --- */
+async function loadPlans(){
+  try{const r=await fetch(endpoint()+"/plans",{cache:"no-store"});const d=await r.json();if(d&&Array.isArray(d.plans))PLANS=d}catch{}
+  renderPlans();
+}
+function renderPlans(){
+  const box=$("#planCards");if(!box)return;const cur=planNow();
+  box.innerHTML=PLANS.plans.map(p=>{
+    const price=p.prices[billing]||0,per=billing==="annual"?"/year":"/month";
+    const isCur=p.id===cur,lower=rankOf(p.id)<rankOf(cur);
+    const btn=p.id==="free"?`<button class="btn" disabled>${isCur?"Current plan":"Included"}</button>`
+      :isCur?`<button class="btn pri" data-buy="${p.id}">Extend ${esc(p.name)}</button>`
+      :lower?`<button class="btn" disabled>Included in your plan</button>`
+      :`<button class="btn pri" data-buy="${p.id}" ${PLANS.paymentsEnabled?"":"disabled"}>${PLANS.paymentsEnabled?"Get "+esc(p.name):"Coming soon"}</button>`;
+    return `<div class="plan${p.id==="pro"?" hl":""}" data-plan="${p.id}"><h3>${esc(p.name)}${isCur?' <i class="prochip" style="display:inline">Your plan</i>':""}</h3><p class="ptag">${esc(p.tagline)}</p>
+      <div class="price">${p.id==="free"?"₱0":peso(price)}<small> ${p.id==="free"?"forever":per}</small></div>
+      <ul class="feat">${p.features.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>${btn}</div>`;
+  }).join("");
+  $("#plansNote").textContent=PLANS.paymentsEnabled?"":"Online payments are being set up. Paid plans will be available here soon.";
+}
+$$("#billSeg button").forEach(b=>b.onclick=()=>{billing=b.dataset.v;$$("#billSeg button").forEach(x=>x.classList.toggle("on",x===b));renderPlans()});
+$("#planCards").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-buy]");if(!b)return;
+  b.disabled=true;const label=b.textContent;b.textContent="Opening checkout…";
+  try{
+    const r=await fetch(endpoint()+"/checkout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({plan:b.dataset.buy,period:billing,email:$("#buyEmail").value.trim()})});
+    const d=await r.json();if(!r.ok||!d.ok||!d.checkoutUrl)throw new Error(d.error||"Checkout isn't available right now.");
+    save(PENDING_KEY,{sessionId:d.sessionId,reference:d.reference,plan:b.dataset.buy,period:billing,at:Date.now()});
+    location.assign(d.checkoutUrl);
+  }catch(err){toast(err.message);b.disabled=false;b.textContent=label}
+});
+async function claimLicense(body,url="/license/claim"){
+  for(let i=0;i<10;i++){
+    const r=await fetch(endpoint()+url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,currentKey:LIC.key})});
+    const d=await r.json().catch(()=>({}));
+    if(d.ok&&d.key)return d;
+    if(!d.pending)throw new Error(d.error||"We couldn't confirm the payment.");
+    toast("Waiting for PayMongo to confirm the payment…");await sleep(3000);
+  }
+  throw new Error("The payment is still processing. Use Recover license on the Plans page in a few minutes.");
+}
+function celebrate(d){
+  LIC.key=d.key;LIC.plan=d.plan;LIC.exp=d.exp;LIC.checked=Date.now();saveLic();
+  try{localStorage.removeItem(PENDING_KEY)}catch{}
+  applyPlanUI();
+  $("#okTitle").textContent="You're on instApped "+({pro:"Pro",business:"Business"})[d.plan];
+  $("#okBody").textContent="Thank you! Your license is active on this device until "+new Date(d.exp).toLocaleDateString(undefined,{year:"numeric",month:"long",day:"numeric"})+".";
+  $("#okKey").value=d.key;$("#okRef").textContent=d.reference?"Receipt reference: "+d.reference:"";
+  try{$("#okDlg").showModal()}catch{}
+}
+$("#okCopy").onclick=async()=>{try{await navigator.clipboard.writeText($("#okKey").value);toast("License key copied")}catch{$("#okKey").select()}};
+$("#okDone").onclick=()=>{$("#okDlg").close();view("create")};
+$("#recBtn").onclick=async()=>{
+  const ref=$("#recRef").value.trim();if(!ref)return toast("Enter the receipt reference or checkout ID.");
+  const b=$("#recBtn");b.disabled=true;
+  try{celebrate(await claimLicense({reference:ref},"/license/recover"))}catch(e){toast(e.message)}finally{b.disabled=false}
+};
+async function handlePurchaseReturn(){
+  if(!/^#purchase=success/.test(location.hash))return;
+  history.replaceState(null,"",location.pathname+"#plans");
+  const pending=load(PENDING_KEY,null);
+  view("plans");
+  if(!pending||!pending.sessionId)return toast("Payment received. If your license doesn't appear, use Recover license with your receipt reference.");
+  try{celebrate(await claimLicense({sessionId:pending.sessionId}))}catch(e){toast(e.message)}
+}
+
+/* ============ PUBLISHING KIT (Business) ============ */
+const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(bytes){let c=0xFFFFFFFF;for(let i=0;i<bytes.length;i++)c=CRC_TABLE[(c^bytes[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+/** Minimal ZIP writer (stored entries) for the publishing kit download. */
+function makeZip(files){
+  const te=new TextEncoder(),parts=[],central=[];let offset=0;
+  const now=new Date(),dosTime=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1),dosDate=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+  for(const f of files){
+    const name=te.encode(f.name),data=typeof f.data==="string"?te.encode(f.data):f.data,crc=crc32(data);
+    const h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(8,0,true);h.setUint16(10,dosTime,true);h.setUint16(12,dosDate,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);h.setUint16(28,0,true);
+    parts.push(new Uint8Array(h.buffer),name,data);
+    const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);c.setUint16(12,dosTime,true);c.setUint16(14,dosDate,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,name.length,true);c.setUint32(42,offset,true);
+    central.push(new Uint8Array(c.buffer),name);
+    offset+=30+name.length+data.length;
+  }
+  const size=central.reduce((s,p)=>s+p.length,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,size,true);e.setUint32(16,offset,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:"application/zip"});
+}
+const dl=(name,blob)=>{const a=document.createElement("a"),u=URL.createObjectURL(blob);a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000)};
+const kitName=()=>(S.name||"app").trim();
+const fileSlug=()=>kitName().toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"app";
+function loadImage(src){return new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src})}
+async function canvasBlob(c){return new Promise(r=>c.toBlob(r,"image/png"))}
+async function icon512(){
+  if(!S.icon)return null;const img=await loadImage(S.icon),c=document.createElement("canvas");c.width=c.height=512;c.getContext("2d").drawImage(img,0,0,512,512);return canvasBlob(c);
+}
+async function featureGraphic(){
+  const c=document.createElement("canvas");c.width=1024;c.height=500;const x=c.getContext("2d");
+  const base=HEX.test(S.theme)?S.theme:DEF_COLOR,light=isLightHex(base);
+  const g=x.createLinearGradient(0,0,1024,500);g.addColorStop(0,base);g.addColorStop(1,light?"#d9dde6":"#1c2a4a");x.fillStyle=g;x.fillRect(0,0,1024,500);
+  if(S.icon){try{const img=await loadImage(S.icon);x.save();x.beginPath();x.roundRect?x.roundRect(90,130,240,240,52):x.rect(90,130,240,240);x.clip();x.drawImage(img,90,130,240,240);x.restore()}catch{}}
+  x.fillStyle=light?"#101a2e":"#ffffff";x.font="800 64px system-ui,-apple-system,Segoe UI,sans-serif";x.textBaseline="top";
+  const tx=S.icon?380:90,maxW=1024-tx-70;let title=kitName();while(x.measureText(title).width>maxW&&title.length>4)title=title.slice(0,-2)+"…";x.fillText(title,tx,170);
+  x.font="500 30px system-ui,-apple-system,Segoe UI,sans-serif";x.globalAlpha=.82;
+  const words=String(S.shortDesc||"").split(/\s+/);let line="",y=260;
+  for(const w of words){const t=line?line+" "+w:w;if(x.measureText(t).width>maxW){x.fillText(line,tx,y);y+=42;line=w;if(y>340)break}else line=t}
+  if(line&&y<=340)x.fillText(line,tx,y);
+  return canvasBlob(c);
+}
+function dataPractices(){
+  const d=[];
+  if(S.pAcct)d.push(["Personal info","Name, email address and account details you provide when you sign in or create an account","App functionality, account management"]);
+  if(S.pPay)d.push(["Financial info","Purchase history. Card details are handled by our payment provider and never stored in the app","Purchases"]);
+  if(S.pContent)d.push(["Files and messages","Photos, files or messages you choose to upload or send","App functionality"]);
+  if(S.cam)d.push(["Photos and videos","Camera access, only when you use a feature that needs it","App functionality"]);
+  if(S.mic)d.push(["Audio","Microphone access, only when you use a feature that needs it","App functionality"]);
+  if(S.loc)d.push(["Location","Approximate or precise location, only when you allow it","App functionality"]);
+  if(S.pAnalytics)d.push(["App activity and diagnostics","How you use the app, crash and performance data","Analytics"]);
+  if(S.hasAds==="yes")d.push(["Device or other IDs","Advertising identifier","Advertising"]);
+  return d;
+}
+function privacyPolicyHTML(){
+  const name=esc(kitName()),dev=esc(S.devName||kitName()),mail=esc(S.devEmail||"[your email]"),date=new Date().toLocaleDateString("en",{year:"numeric",month:"long",day:"numeric"});
+  const practices=dataPractices();const thirdParty=[S.pAnalytics&&"analytics providers",S.pPay&&"payment processors",S.hasAds==="yes"&&"advertising partners"].filter(Boolean);
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${name} — Privacy Policy</title>
+<style>body{font:16px/1.65 system-ui,-apple-system,Segoe UI,sans-serif;max-width:760px;margin:0 auto;padding:32px 20px;color:#1a2233}h1{font-size:28px}h2{font-size:19px;margin-top:28px}table{border-collapse:collapse;width:100%;font-size:14.5px}td,th{border:1px solid #d7dce6;padding:8px;text-align:left;vertical-align:top}th{background:#f3f5f9}small{color:#667}</style></head><body>
+<h1>${name} — Privacy Policy</h1><p><small>Last updated: ${date}</small></p>
+<p>This policy explains how ${dev} ("we") handles information when you use the ${name} app for Android.</p>
+<h2>Information we collect</h2>
+${practices.length?`<table><tr><th>Type</th><th>What</th><th>Why</th></tr>${practices.map(p=>`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td></tr>`).join("")}</table>`:"<p>The app does not collect personal information.</p>"}
+${S.offline?"<p>The app may store content on your device so it works offline. This data stays on your device and is removed when you uninstall the app.</p>":""}
+${S.stype==="url"?"<p>The app shows our website, which may use cookies to keep you signed in and remember your preferences.</p>":""}
+${S.upd?"<p>The app may check for new versions and show notifications about updates. You can turn notifications off in your device settings.</p>":""}
+<h2>How we use information</h2><p>We use the information only to provide and improve the app's features described above${S.hasAds==="yes"?", and to show advertising":""}. We do not sell your personal information.</p>
+<h2>Sharing</h2><p>${thirdParty.length?`We share information only with service providers that help us run the app: ${thirdParty.join(", ")}. They may use it only to provide their services to us.`:"We do not share your information with third parties, except when required by law."}</p>
+<h2>Security</h2><p>Information is sent over encrypted connections (HTTPS) where the app communicates with our servers.</p>
+<h2>Your choices</h2><p>You can deny or revoke permissions such as camera, microphone or location in your device settings at any time. To ask us to access or delete your data, email <a href="mailto:${mail}">${mail}</a>.</p>
+<h2>Children</h2><p>The app is not directed at children under 13, and we do not knowingly collect their information.</p>
+<h2>Changes</h2><p>We may update this policy. The date at the top shows when it last changed.</p>
+<h2>Contact</h2><p>${dev}<br><a href="mailto:${mail}">${mail}</a>${S.devSite?`<br><a href="${esc(S.devSite)}">${esc(S.devSite)}</a>`:""}</p>
+</body></html>`;
+}
+function dataSafetyText(){
+  const p=dataPractices();
+  return [`Google Play Data safety answers — ${kitName()}`,`Prepared by instApped on ${new Date().toISOString().slice(0,10)}. Review each answer before submitting.`,"",
+    `Does your app collect or share any of the required user data types? ${p.length?"Yes":"No"}`,
+    ...(p.length?["","Data collected:",...p.map(x=>`  • ${x[0]}: ${x[1]}. Purpose: ${x[2]}.`)]:[]),"",
+    `Is all of the user data collected by your app encrypted in transit? ${S.stype==="url"&&/^http:/i.test(S.url||"")?"No (the site uses plain http)":"Yes"}`,
+    `Do you provide a way for users to request that their data is deleted? ${S.devEmail?"Yes — by email to "+S.devEmail:"Add a contact email"}`,
+    `Data shared with third parties: ${[S.pAnalytics&&"analytics",S.pPay&&"payments",S.hasAds==="yes"&&"advertising"].filter(Boolean).join(", ")||"none"}`,
+    `Contains ads: ${S.hasAds==="yes"?"Yes":"No"}`,
+    `Permissions requested: ${[S.cam&&"camera",S.mic&&"microphone",S.loc&&"location",S.upd&&"notifications"].filter(Boolean).join(", ")||"internet only"}`].join("\n");
+}
+function kitChecks(){
+  const c=[],add=(ok,l,d)=>c.push({ok,l,d});
+  add(/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$/.test(S.pkg||""),"Unique package ID",S.pkg||"Set it in Details");
+  add(!!S.buildId&&!!S.sign,"Signed AAB built","Build with \"Sign the release AAB\" turned on, then upload the AAB in Play Console");
+  add(true,"Target API 36","Meets Google Play's current requirement");
+  add(!!S.icon&&S.iconSize>=512,"512 × 512 app icon",S.icon?"Included in the kit":"Upload a 1024 × 1024 icon");
+  add(true,"1024 × 500 feature graphic","Generated from your icon, colour and short description");
+  add((S.name||"").trim().length>0&&(S.name||"").length<=30,"App name (30 characters max)",S.name||"Set it in Details");
+  add((S.shortDesc||"").trim().length>=10,"Short description",`${(S.shortDesc||"").length}/80`);
+  add((S.fullDesc||"").trim().length>=80,"Full description",`${(S.fullDesc||"").length}/4000 — aim for a few paragraphs`);
+  add(!!S.cat,"Store category",S.cat||"Choose one above");
+  add(/^https:\/\/\S+\.\S+/.test(S.privUrl||""),"Privacy policy URL",S.privUrl?"":"Host privacy-policy.html from the kit and paste its https:// link");
+  add(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(S.devEmail||""),"Contact email","Shown on your store listing");
+  add(true,"Data safety form","Answers prepared in data-safety.txt");
+  add(true,"Content rating questionnaire","Complete it in Play Console (App content › Content rating)");
+  add(true,"Closed testing (new personal accounts)","Personal developer accounts created after November 2023 must run a closed test with at least 12 testers for 14 days before production");
+  return c;
+}
+function renderKit(){
+  const box=$("#kitChecklist");if(!box)return;
+  box.innerHTML=kitChecks().map(x=>`<div class="chk"><span class="dot ${x.ok?"ok":"warn"}">${x.ok?"✓":"!"}</span><div>${esc(x.l)}<small>${esc(x.d)}</small></div></div>`).join("");
+  $$(".count").forEach(n=>{const v=(S[n.dataset.count]||"").length,m=+n.dataset.max;n.textContent=v+"/"+m;n.classList.toggle("over",v>m)});
+}
+function requireBiz(){if(hasPlan("business"))return true;upgrade("The publishing kit","business");return false}
+$("#kitPolicy").onclick=()=>{if(!requireBiz())return;const u=URL.createObjectURL(new Blob([privacyPolicyHTML()],{type:"text/html"}));window.open(u,"_blank","noopener");setTimeout(()=>URL.revokeObjectURL(u),60000)};
+$("#kitGraphic").onclick=async()=>{if(!requireBiz())return;dl(fileSlug()+"-feature-graphic.png",await featureGraphic())};
+$("#kitZip").onclick=async()=>{
+  if(!requireBiz())return;
+  const b=$("#kitZip");b.disabled=true;
+  try{
+    const te=new TextEncoder(),bytes=async blob=>new Uint8Array(await blob.arrayBuffer()),files=[];
+    const ic=await icon512();if(ic)files.push({name:"store/icon-512.png",data:await bytes(ic)});
+    files.push({name:"store/feature-graphic-1024x500.png",data:await bytes(await featureGraphic())});
+    files.push({name:"listing.txt",data:[`App name: ${kitName()}`,`Package: ${S.pkg||""}`,`Category: ${S.cat||""}`,`Contains ads: ${S.hasAds==="yes"?"Yes":"No"}`,`Contact email: ${S.devEmail||""}`,`Website: ${S.devSite||""}`,`Privacy policy: ${S.privUrl||""}`,"",`Short description (${(S.shortDesc||"").length}/80):`,S.shortDesc||"","",`Full description (${(S.fullDesc||"").length}/4000):`,S.fullDesc||""].join("\n")});
+    files.push({name:"privacy-policy.html",data:privacyPolicyHTML()});
+    files.push({name:"data-safety.txt",data:dataSafetyText()});
+    files.push({name:"checklist.txt",data:kitChecks().map(x=>`[${x.ok?"x":" "}] ${x.l} — ${x.d}`).join("\n")});
+    files.push({name:"README.txt",data:`Publishing kit for ${kitName()}, made with instApped.\n\n1. Host privacy-policy.html on your website and paste its link in Play Console.\n2. Upload store/icon-512.png and store/feature-graphic-1024x500.png to the store listing.\n3. Copy the texts from listing.txt.\n4. Use data-safety.txt to answer the Data safety form.\n5. Upload your signed AAB to a testing track, then production.\n`});
+    dl(fileSlug()+"-publishing-kit.zip",makeZip(files));toast("Publishing kit downloaded");
+  }catch(e){toast("Couldn't build the kit: "+e.message)}finally{b.disabled=false}
+};
+
 /* ============ INIT ============ */
 addEventListener("online",()=>scheduleCheck());
 addEventListener("offline",()=>toast("You're offline. Editing still works; building needs a connection."));
 (async()=>{
   Ads.init();applyG();
+  applyPlanUI();loadPlans();
+  if(ownerToken())$("#token").value=ownerToken();
+  if(LIC.key||ownerToken()){if(Date.now()-LIC.checked>6*3600e3||ownerToken())verifyLicenseKey(LIC.key,{quiet:true})}
   const cur=localStorage.getItem(KEY.cur),last=P.find(p=>p.id===cur);
   if(last)await openProject(last);else bind();
   go(0);
+  if(location.hash==="#plans")view("plans");
+  handlePurchaseReturn();
 })();
+addEventListener("hashchange",()=>{if(location.hash==="#plans")view("plans");else if(/^#purchase=/.test(location.hash))handlePurchaseReturn()});
 </script>
 </body>
 </html>

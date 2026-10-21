@@ -1,0 +1,32 @@
+name: Build Service Unit Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'cloudflare-worker/**'
+      - 'tests/worker.test.mjs'
+      - '.github/workflows/build-service-test.yml'
+  pull_request:
+    paths:
+      - 'cloudflare-worker/**'
+      - 'tests/worker.test.mjs'
+      - '.github/workflows/build-service-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Plans, checkout, licenses, webhooks and plan enforcement
+        run: node --test tests/worker.test.mjs

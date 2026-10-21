@@ -10,3 +10,13 @@ GITHUB_WORKFLOW = "build-app.yml"
 
 [secrets]
 required = ["GITHUB_TOKEN", "CASTEL_SIGNING_ACCESS_TOKEN"]
+# Premium plans (set with `wrangler secret put NAME`):
+#   LICENSE_SECRET            long random string used to sign license keys (keep it forever)
+#   PAYMONGO_SECRET_KEY       sk_live_... (or sk_test_... while testing)
+#   PAYMONGO_WEBHOOK_SECRET   whsk_... returned when you create the PayMongo webhook
+# Optional variables: PAYMONGO_METHODS ("card,gcash,paymaya"), PRICING_JSON, FREE_DAILY_BUILDS, FACTORY_URL
+#
+# Optional KV namespace for license recovery, revocation and the free daily build limit:
+# [[kv_namespaces]]
+# binding = "LICENSES"
+# id = "<your KV namespace id>"

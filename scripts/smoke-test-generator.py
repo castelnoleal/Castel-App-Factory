@@ -102,7 +102,7 @@ def option_case():
             "themeColor": "#FFFFFF", "splashBackground": "#123456", "splashMode": "art", "splashMinMs": 1200,
             "internalHosts": ["accounts.example.com", "not a host"], "userAgentSuffix": "Check/1",
             "updateAlerts": True, "playUpdates": False, "updateFeedUrl": "https://example.com/app/update.json",
-            "updateCheckHours": 500, "pageNotifications": True,
+            "updateCheckHours": 500, "pageNotifications": True, "brandBadge": True,
         }), encoding="utf-8")
         env = os.environ.copy()
         env.update(BUILD_MANIFEST=str(manifest), BUILD_OUTPUT=str(output), SOURCE_FILE="", ICON_FILE="", SPLASH_FILE="")
@@ -117,7 +117,7 @@ def option_case():
             'INTERNAL_HOSTS = {"accounts.example.com"};', 'USER_AGENT_SUFFIX = "Check/1";',
             'START_URL = "http://plain.example.com/";',
             "UPDATE_ALERTS = true;", "PLAY_UPDATES = false;", 'UPDATE_FEED_URL = "https://example.com/app/update.json";',
-            "UPDATE_CHECK_HOURS = 168;", "PAGE_NOTIFICATIONS = true;",
+            "UPDATE_CHECK_HOURS = 168;", "PAGE_NOTIFICATIONS = true;", "SPLASH_BADGE = true;",
         ):
             assert expected in text, f"generated MainActivity is missing: {expected}"
         manifest_xml = (output / "app" / "src" / "main" / "AndroidManifest.xml").read_text(encoding="utf-8")
