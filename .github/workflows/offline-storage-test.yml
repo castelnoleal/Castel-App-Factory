@@ -123,7 +123,7 @@ jobs:
           </script></body></html>
           HTML
           mkdir -p offline-test/server/bundle
-          cp offline-test/payload.txt offline-test/server/payload.txt
+          printf 'CASTEL_OFFLINE_PERSISTENCE_OK' > offline-test/server/payload.txt
           printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=' | base64 -d > offline-test/server/bundle/card.png
           printf 'CASTEL_OFFLINE_RULING_OK' > offline-test/server/bundle/ruling.txt
           python3 - <<'PY'
