@@ -12,11 +12,13 @@ on:
       - '.github/workflows/web-compat-test.yml'
       - 'android-template/**'
       - 'scripts/generate-app.py'
+      - 'scripts/ci/**'
   pull_request:
     paths:
       - '.github/workflows/web-compat-test.yml'
       - 'android-template/**'
       - 'scripts/generate-app.py'
+      - 'scripts/ci/**'
   workflow_dispatch:
 
 permissions:
@@ -135,38 +137,4 @@ jobs:
           profile: pixel_2
           force-avd-creation: true
           emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save'
-          script: |
-            set -eu
-            APK=generated-app/app/build/outputs/apk/debug/app-debug.apk
-            PKG=com.castel.webcompat
-            adb wait-for-device
-            for attempt in 1 2 3 4 5 6 7 8; do
-              booted="$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
-              if [ "$booted" = "1" ]; then break; fi
-              sleep 5
-            done
-            adb shell cmd package list packages >/dev/null 2>&1 || { adb kill-server; adb start-server; adb wait-for-device; sleep 10; }
-            adb install -r "$APK"
-            adb logcat -c
-            adb shell am start -n "$PKG/.MainActivity"
-            for attempt in $(seq 1 20); do
-              sleep 3
-              adb logcat -d > /tmp/webcompat.log || true
-              if grep -E 'WEBCOMPAT:(ALL_PASS|SOME_FAILED)' /tmp/webcompat.log >/dev/null; then break; fi
-            done
-            grep -F 'WEBCOMPAT:' /tmp/webcompat.log | sed 's/.*WEBCOMPAT:/WEBCOMPAT:/' | sort -u || true
-            if grep -E 'FATAL EXCEPTION' /tmp/webcompat.log >/dev/null; then echo "App crashed"; tail -n 200 /tmp/webcompat.log; exit 1; fi
-            if ! grep -F 'WEBCOMPAT:ALL_PASS' /tmp/webcompat.log >/dev/null; then
-              echo "Web compatibility checks failed."
-              tail -n 300 /tmp/webcompat.log
-              exit 1
-            fi
-            # Rotation must keep the page (no reload back to the start).
-            adb logcat -c
-            adb shell settings put system accelerometer_rotation 0
-            adb shell settings put system user_rotation 1
-            sleep 5
-            adb logcat -d > /tmp/webcompat-rotate.log || true
-            if grep -F 'WEBCOMPAT:MODULE_IMPORT' /tmp/webcompat-rotate.log >/dev/null; then echo "Page reloaded on rotation"; exit 1; fi
-            if grep -E 'FATAL EXCEPTION' /tmp/webcompat-rotate.log >/dev/null; then echo "App crashed on rotation"; tail -n 200 /tmp/webcompat-rotate.log; exit 1; fi
-            echo "Web compatibility acceptance passed."
+          script: bash scripts/ci/webcompat-emulator.sh
