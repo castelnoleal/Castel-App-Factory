@@ -1125,6 +1125,8 @@ public class MainActivity extends ComponentActivity {
     // ---- Google Play Billing (only compiled in when the playBilling option is on) ----
     private Object playBilling;
 
+    // PlayBilling's methods carry @JavascriptInterface; lint can't see that through reflection.
+    @android.annotation.SuppressLint("JavascriptInterface")
     private void attachPlayBilling() {
         try {
             Class<?> type = Class.forName(MainActivity.class.getPackage().getName() + ".PlayBilling");
