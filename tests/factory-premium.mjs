@@ -78,7 +78,12 @@ try {
   await page.locator('#upLater').click();
 
   // Plans and checkout.
-  await page.getByRole('button', { name: 'Plans', exact: true }).click();
+  assert(await page.locator('nav button', { hasText: 'Plans' }).count() === 0, 'Plans is no longer a separate menu item');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  assert(await page.locator('#v-settings #plansCard').isVisible(), 'Plans are inside Settings');
+  await page.getByRole('button', { name: 'Create', exact: true }).click();
+  await page.locator('#planChip').click();
+  assert(await page.locator('#v-settings').isVisible(), 'the plan chip opens Plans in Settings');
   assert(await page.locator('.plan').count() === 3, 'three plans are shown');
   await page.locator('#billSeg button[data-v=annual]').click();
   assert((await page.locator('.plan[data-plan=pro] .price').textContent()).includes('₱4,990'), 'annual pricing is shown in pesos');

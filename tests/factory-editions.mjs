@@ -135,7 +135,9 @@ try {
     watch(page, 'lite');
     await page.goto('http://127.0.0.1:4176/');
     await page.waitForTimeout(400);
-    assert(!(await page.locator('nav button[data-view=plans]').isVisible()), 'play-lite hides the Plans page');
+    await page.click('nav button[data-view=settings]');
+    assert(!(await page.locator('#plansCard').isVisible()), 'play-lite has no Plans section in Settings');
+    await page.click('nav button[data-view=create]');
     assert(!(await page.locator('#ad-slot').isVisible()), 'play-lite shows no Pro ad');
     const text = await page.evaluate(() => document.body.innerText);
     assert(!/₱|PayMongo|GCash|Subscribe|Get Pro|See plans/.test(text), 'play-lite shows no prices or buy links anywhere');
@@ -147,7 +149,7 @@ try {
     assert(await page.locator('#v-settings').isVisible(), 'the prompt opens Settings');
     await page.evaluate(() => { location.hash = '#plans'; });
     await page.waitForTimeout(150);
-    assert(!(await page.locator('#v-plans').isVisible()), 'the Plans page can\'t be opened by link');
+    assert(!(await page.locator('#plansCard').isVisible()), 'the Plans section can\'t be opened by link');
     await page.fill('#licKey', lic('pro', 'IA-LITE'));
     await page.click('#licSave');
     await page.waitForFunction(() => document.querySelector('#planChip').textContent === 'Pro');
@@ -197,9 +199,9 @@ try {
     watch(page, 'billing');
     await page.goto('http://127.0.0.1:4176/');
     await page.waitForTimeout(400);
-    await page.click('nav button[data-view=plans]');
+    await page.click('#planChip');
     await page.waitForFunction(() => /₱499\.00/.test(document.querySelector('#planCards').textContent));
-    const plansText = await page.locator('#v-plans').innerText();
+    const plansText = await page.locator('#plansCard').innerText();
     assert(!/PayMongo|GCash|Already paid|IA-…/.test(plansText), 'play-billing hides PayMongo checkout and recovery');
     assert(/Google Play/.test(plansText), 'play-billing explains Google Play billing and renewals');
     assert(/₱1,690\.00/.test(plansText), 'prices come from Google Play product details');
@@ -218,7 +220,7 @@ try {
     await page.reload();
     await page.waitForFunction(() => document.querySelector('#planChip').textContent === 'Pro', null, { timeout: 5000 });
     assert(true, 'a reinstall silently restores the plan from Google Play');
-    await page.click('nav button[data-view=plans]');
+    await page.click('#planChip');
     await page.click('#gpRestore');
     await page.waitForTimeout(300);
     assert(claims.length >= 3, 'Restore purchases re-verifies the subscription');
