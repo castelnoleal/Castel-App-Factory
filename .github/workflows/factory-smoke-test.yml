@@ -7,6 +7,7 @@ on:
       - 'tests/factory-smoke.mjs'
       - 'tests/factory-premium.mjs'
       - 'tests/factory-editions.mjs'
+      - 'tests/factory-back.mjs'
       - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   pull_request:
@@ -15,6 +16,7 @@ on:
       - 'tests/factory-smoke.mjs'
       - 'tests/factory-premium.mjs'
       - 'tests/factory-editions.mjs'
+      - 'tests/factory-back.mjs'
       - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   workflow_dispatch:
@@ -41,3 +43,5 @@ jobs:
         run: node tests/factory-premium.mjs
       - name: Editions (master, Play without purchases, Play Billing)
         run: node tests/factory-editions.mjs
+      - name: Back button steps back inside the factory
+        run: node tests/factory-back.mjs
