@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir -p synapse
           base64 -d > synapse.tgz <<'SYNAPSE_PAYLOAD'
-          H4sIAEjS2WoC/+x9CWAkVZkwlyilKD+yIi66jwZM90ynk0zmIjMZzCQZJpJJQpJhGDIxVndXJzXprmqqupMJQxBxwQVh1VXXGzyR
+          H4sIADTV2WoC/+x9CWAkVZkwlyilKD+yIi66jwZM90ynk0zmIjMZzCQZJpJJQpJhGDIxVndXJzXprmqqupMJQxBxwQVh1VXXGzyR
           Q3/xxGNR0EVdz9UVFzwRD9TFVXE90fX/jvdevaruzgRE/f9/ya5MUvXqHd/73nd/36v5fjnsqNq1wtzMousV834tV1067BH96YSf
           jevX07/wk/i3e/3G9RvUM37eta57XedhovOwP8NPPazZAQx/2P/Mn1NP6aiHQUfe9Tocb0FUl2pzvtdtpVKpvmq1vCRqc46YWPLs
           auiIsmMHnlNs7xsSc74/H4qaL2yxB7Bmu18TQ7OeW3NEYc4pzPv1Ws6yBPxwh9CyGZoJeDDXUfM75CPLWiMKftV1wti4oV8PCvDM
@@ -668,6 +668,20 @@ jobs:
           mkdir -p out
           cp "$(ls build/outputs/apk/release/*.apk | head -1)" out/EDOPro-Synapse.apk
           ls -la out
+
+      - name: Check the APK
+        run: |
+          APK=out/EDOPro-Synapse.apk
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          note() { echo "$1"; echo "::notice title=$2::$1"; }
+          note "$("$BT/aapt" dump badging "$APK" | grep -E "^package:|^application-label:|^native-code:" | tr '\n' ' ')" "package"
+          note "$("$BT/apksigner" verify --print-certs "$APK" | grep -i "SHA-256" | head -1)" "signature"
+          note "$(unzip -l "$APK" | grep -cE 'lib/arm64-v8a/.*\.so') native libs; $(unzip -l "$APK" | grep -oE 'assets/defaults/libocgcore[a-z0-9]*\.so' | tr '\n' ' ')" "native"
+          note "$(unzip -p "$APK" assets/defaults/WindBot/synapse.json | tr -d '\n ' | sed 's/"token":"[^"]*"/"token":"(set)"/')" "synapse.json"
+          note "$(unzip -p "$APK" assets/defaults/WindBot/bots.json | grep -o '"Synapse: [^"]*"' | tr '\n' ' ')" "bots"
+          note "$(unzip -l "$APK" | tail -1)" "size"
+          unzip -p "$APK" 'lib/arm64-v8a/libmonodroid*.so' >/dev/null 2>&1 || true
+          note "$(unzip -l "$APK" | grep -ciE 'assemblies/.*(WindBot|ExecutorBase)|libWindbot|windbot' ) windbot entries" "windbot"
 
       - uses: actions/upload-artifact@v4
         with:
