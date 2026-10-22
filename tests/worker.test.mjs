@@ -260,5 +260,5 @@ test("free plan daily build limit", async () => {
 
 test("health reports the premium revision", async () => {
   const { json } = await call("/health");
-  assert.equal(json.revision, "instapped-premium-v1");
+  assert.equal(json.revision, "instapped-editions-v1");
 });

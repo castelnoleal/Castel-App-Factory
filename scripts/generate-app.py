@@ -331,6 +331,16 @@ def generate():
     if output.exists():
         shutil.rmtree(output)
     shutil.copytree(TEMPLATE, output)
+    play_billing = bool(cfg.get("playBilling", False))
+    optional_dir = output / "optional"
+    if play_billing:
+        # Google Play Billing is only compiled into apps that ask for it.
+        billing_java = optional_dir / "PlayBilling.java"
+        if not billing_java.exists():
+            fail("PlayBilling.java is missing from the template")
+        shutil.copy2(billing_java, next((output / "app" / "src" / "main" / "java").rglob("MainActivity.java")).parent / "PlayBilling.java")
+    if optional_dir.exists():
+        shutil.rmtree(optional_dir)
     for path in (output / ".gradle", output / "build", output / "app" / "build"):
         if path.exists():
             shutil.rmtree(path)
@@ -341,6 +351,11 @@ def generate():
     text = re.sub(r"applicationId '.*?'", f"applicationId '{package_name}'", text)
     text = re.sub(r"versionCode \d+", f"versionCode {version_code}", text)
     text = re.sub(r"versionName '.*?'", f"versionName '{version}'", text)
+    if play_billing:
+        anchor = "    implementation 'androidx.fragment:fragment:1.8.5'\n"
+        if anchor not in text:
+            fail("Couldn't add the Play Billing dependency to build.gradle")
+        text = text.replace(anchor, anchor + "    implementation 'com.android.billingclient:billing:8.0.0'\n", 1)
     gradle_file.write_text(text, encoding="utf-8")
 
     theme_hex, theme_int = parse_color(cfg.get("themeColor"), "#080B14")
@@ -388,6 +403,7 @@ def generate():
         "UPDATE_CHECK_HOURS": str(check_hours),
         "PAGE_NOTIFICATIONS": java_bool(cfg.get("pageNotifications", False)),
         "SPLASH_BADGE": java_bool(cfg.get("brandBadge", False)),
+        "PLAY_BILLING": java_bool(play_billing),
     }
 
     java_root = output / "app" / "src" / "main" / "java"

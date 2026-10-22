@@ -75,7 +75,7 @@
   <li><strong>Build information:</strong> build identifiers, status, logs, and the APK and AAB files produced.</li>
   <li><strong>Data on your device:</strong> the app factory saves projects, settings and source files in your browser's local storage and IndexedDB. This stays on your device unless you request a build. See <a href="/cookies.html">Cookies and storage</a>.</li>
   <li><strong>Technical information:</strong> our hosting and infrastructure providers process standard request data such as IP address, browser type, time of request and security signals in order to deliver and protect the Service.</li>
-  <li><strong>Purchases:</strong> if you buy a paid plan, our payment processor PayMongo collects your payment details. We never see or store your card or e-wallet details. We receive the plan, amount, payment status, a reference number and, if you give it, your email address for the receipt. Your license key contains your plan, its end date and a purchase reference, and is saved in your browser.</li>
+  <li><strong>Purchases:</strong> if you buy a paid plan, our payment processor PayMongo collects your payment details. We never see or store your card or e-wallet details. We receive the plan, amount, payment status, a reference number and, if you give it, your email address for the receipt. Your license key contains your plan, its end date and a purchase reference, and is saved in your browser. If you subscribe in the instApped Android app, Google Play handles the payment; we receive the purchase token, order ID, plan and renewal date so we can confirm the subscription.</li>
   <li><strong>Messages you send us:</strong> your email address and whatever you include when you contact us.</li>
 </ul>
 
@@ -92,6 +92,7 @@
   <li><strong>Cloudflare</strong> for website hosting, the build API and network security.</li>
   <li><strong>GitHub</strong> (Microsoft) for private storage of build inputs and for running build workflows.</li>
   <li><strong>PayMongo</strong> for processing payments for paid plans.</li>
+  <li><strong>Google Play</strong> for subscriptions bought in the instApped Android app.</li>
   <li><strong>Automated review:</strong> before a build is queued, build metadata (such as source type, website address, app name, package ID and app settings) may be reviewed by an automated system, which can include an AI service provider. Your uploaded source files are not part of that review.</li>
 </ul>
 <p>These providers process information on our behalf and under their own privacy and security terms.</p>

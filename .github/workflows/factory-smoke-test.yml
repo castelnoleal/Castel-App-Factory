@@ -6,12 +6,16 @@ on:
       - 'factory/index.html'
       - 'tests/factory-smoke.mjs'
       - 'tests/factory-premium.mjs'
+      - 'tests/factory-editions.mjs'
+      - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   pull_request:
     paths:
       - 'factory/index.html'
       - 'tests/factory-smoke.mjs'
       - 'tests/factory-premium.mjs'
+      - 'tests/factory-editions.mjs'
+      - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   workflow_dispatch:
 permissions:
@@ -35,3 +39,5 @@ jobs:
         run: node tests/factory-smoke.mjs
       - name: Plans, checkout, licenses, premium gating and publishing kit
         run: node tests/factory-premium.mjs
+      - name: Editions (master, Play without purchases, Play Billing)
+        run: node tests/factory-editions.mjs

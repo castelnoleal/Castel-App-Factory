@@ -173,6 +173,7 @@ export function premiumFeaturesUsed(o) {
   if (!def(o.themeColor) || !def(o.splashBackground)) used.push({ id: "colours", label: "App and splash colours", minTier: "pro" });
   if (o.updateAlerts) used.push({ id: "updateAlerts", label: "Update alerts", minTier: "pro" });
   if (o.pageNotifications) used.push({ id: "pageNotifications", label: "Page notifications", minTier: "pro" });
+  if (o.playBilling) used.push({ id: "playBilling", label: "Google Play Billing", minTier: "business" });
   return used;
 }
 
