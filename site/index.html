@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>instApped — Turn your website into an Android app</title>
-<meta name="description" content="instApped packages your website, HTML file or ZIP project as an Android app. Preview it, run pre-build checks, and build an APK for testing and an AAB for Google Play.">
+<meta name="description" content="Turn your website into an Android app in minutes. No coding, nothing to install. Start free and publish on Google Play when you're ready.">
 <meta name="theme-color" content="#101a2e">
 <link rel="canonical" href="https://instapped.com/">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="instApped">
-<meta property="og:title" content="instApped — Turn your website into an Android app">
-<meta property="og:description" content="Package a website, HTML file or ZIP project as an Android app. Build an APK for testing and an AAB for Google Play.">
+<meta property="og:title" content="instApped — Your website, now an app">
+<meta property="og:description" content="Turn your website into an Android app. No coding, nothing to install. Start free.">
 <meta property="og:url" content="https://instapped.com/">
 <meta name="twitter:card" content="summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,142 +19,123 @@
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"instApped","applicationCategory":"DeveloperApplication","operatingSystem":"Web","url":"https://instapped.com/","description":"Packages a website, HTML file or ZIP project as an Android app, with APK and AAB builds.","publisher":{"@type":"Organization","name":"instApped","email":"instapped@gmail.com"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"instApped","applicationCategory":"DeveloperApplication","operatingSystem":"Web","url":"https://instapped.com/","description":"Turn your website into an Android app. No coding needed.","offers":{"@type":"Offer","price":"0","priceCurrency":"PHP"},"publisher":{"@type":"Organization","name":"instApped","email":"instapped@gmail.com"}}
 </script>
 <style>
 /* ---------- Hero ---------- */
-.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:64px;align-items:center;padding:72px 0 88px}
-.hero h1{font-size:clamp(40px,6.4vw,76px);line-height:1;letter-spacing:-.045em;font-weight:800;margin:0 0 24px;max-width:13ch}
-.lead{font-size:clamp(17px,1.6vw,20px);line-height:1.55;color:var(--muted);max-width:52ch;margin:0}
-.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-.hero-note{margin:16px 0 0;font-size:14px;color:var(--muted)}
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:64px;align-items:center;padding:80px 0 96px}
+.hero h1{font-size:clamp(46px,7.4vw,92px);line-height:.98;letter-spacing:-.05em;font-weight:800;margin:0 0 26px;max-width:11ch}
+.lead{font-size:clamp(18px,1.8vw,22px);line-height:1.5;color:var(--muted);max-width:40ch;margin:0}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:34px}
+.hero-note{margin:16px 0 0;font-size:15px;color:var(--muted)}
 
 /* The packing slip: the one memorable thing on the page */
 .slip-stage{position:relative;padding:18px 6px 6px}
-.slip{position:relative;margin:0;background:var(--slip);color:#101a2e;border-radius:6px;padding:22px 24px 20px;box-shadow:var(--shadow);transform:rotate(-1.6deg);font-size:15px}
+.slip{position:relative;margin:0;background:var(--slip);color:#101a2e;border-radius:6px;padding:24px 26px 22px;box-shadow:var(--shadow);transform:rotate(-1.6deg);font-size:16px}
 .slip::before{content:"";position:absolute;top:-14px;left:50%;width:120px;height:28px;transform:translateX(-50%) rotate(2deg);background:color-mix(in srgb,#e0b050 72%,transparent);border-radius:2px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .slip-top{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:2px solid #101a2e}
 .slip-top b{display:block;font-size:17px;letter-spacing:-.01em}
 .slip-top small{display:block;color:#6b6250;font-size:13px}
-.slip-no{margin-left:auto;font:600 13px/1 var(--mono);color:#6b6250}
+.slip-no{margin-left:auto;font-weight:700;font-size:14px;color:#6b6250}
 .slip dl{margin:0}
-.slip .r{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px dashed var(--slip-line)}
-.slip dt{color:#6b6250;font-size:13.5px}
+.slip .r{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px dashed var(--slip-line)}
+.slip dt{color:#6b6250;font-size:14px}
 .slip dd{margin:0;font-weight:600;overflow-wrap:anywhere}
-.slip dd code{font:500 14px/1.4 var(--mono)}
-.slip dd span{font-weight:400;color:#6b6250}
-.slip-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-top:16px}
+.slip-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding-top:18px}
 .barcode{height:44px;flex:1;max-width:190px;background:repeating-linear-gradient(90deg,#101a2e 0 2px,transparent 2px 4px,#101a2e 4px 5px,transparent 5px 8px,#101a2e 8px 11px,transparent 11px 12px,#101a2e 12px 13px,transparent 13px 16px)}
-.stamp{display:inline-block;border:2.5px solid #17724f;color:#17724f;border-radius:6px;padding:5px 10px;font-weight:800;font-size:14px;letter-spacing:.02em;transform:rotate(-7deg)}
+.stamp{display:inline-block;border:2.5px solid #17724f;color:#17724f;border-radius:6px;padding:6px 12px;font-weight:800;font-size:15px;transform:rotate(-7deg)}
 
-/* Page-load sequence: rows fill in, then the stamp lands */
 @media (prefers-reduced-motion:no-preference){
   .slip .r{opacity:0;transform:translateY(4px);animation:fill .35s ease-out forwards}
   .slip .r:nth-child(1){animation-delay:.25s}.slip .r:nth-child(2){animation-delay:.45s}
   .slip .r:nth-child(3){animation-delay:.65s}.slip .r:nth-child(4){animation-delay:.85s}
-  .slip .r:nth-child(5){animation-delay:1.05s}.slip .r:nth-child(6){animation-delay:1.25s}
-  .stamp{opacity:0;animation:stamp .32s cubic-bezier(.2,1.6,.4,1) 1.7s forwards}
+  .stamp{opacity:0;animation:stamp .32s cubic-bezier(.2,1.6,.4,1) 1.35s forwards}
 }
 @keyframes fill{to{opacity:1;transform:none}}
 @keyframes stamp{from{opacity:0;transform:rotate(-7deg) scale(1.9)}to{opacity:1;transform:rotate(-7deg) scale(1)}}
 
 /* ---------- Sections ---------- */
 section{scroll-margin-top:80px}
-.sec{padding:88px 0 0}
-.sec-head{max-width:60ch;margin-bottom:40px}
-.sec-head h2{font-size:clamp(30px,4vw,44px);line-height:1.08;letter-spacing:-.035em;margin:0 0 12px;font-weight:750}
-.sec-head p{margin:0;color:var(--muted);font-size:18px}
+.sec{padding:96px 0 0}
+.sec-head{margin-bottom:40px}
+.sec-head h2{font-size:clamp(32px,4.4vw,50px);line-height:1.05;letter-spacing:-.04em;margin:0;font-weight:800;max-width:17ch}
 
-/* Sources: three ways in */
-.sources{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.source{padding:28px 28px 30px 0}
-.source+.source{padding-left:28px;border-left:1px solid var(--line)}
-.source svg{width:32px;height:32px;fill:none;stroke:var(--accent);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.source h3{font-size:20px;margin:14px 0 6px;letter-spacing:-.01em}
-.source p{margin:0;color:var(--muted);font-size:16px}
+/* Benefits */
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.benefit{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:30px 28px}
+.benefit .ico{width:52px;height:52px;border-radius:14px;background:var(--gold);display:grid;place-items:center}
+.benefit .ico svg{width:26px;height:26px;fill:none;stroke:#101a2e;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.benefit h3{font-size:23px;letter-spacing:-.02em;margin:22px 0 8px}
+.benefit p{margin:0;color:var(--muted)}
 
-/* Steps: a real sequence, so numbered */
-.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,1fr);gap:0;counter-reset:s}
-.steps li{position:relative;padding:0 14px 0 0;counter-increment:s}
-.steps li::before{content:counter(s);display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--surface);border:1.5px solid var(--line);font-weight:700;font-size:15px;position:relative;z-index:1}
-.steps li::after{content:"";position:absolute;top:18px;left:36px;right:0;height:1.5px;background:var(--line)}
-.steps li:last-child::after{display:none}
-.steps li:last-child::before{background:var(--btn);border-color:var(--btn);color:var(--btn-text)}
-.steps b{display:block;margin:14px 0 4px;font-size:17px}
-.steps span{display:block;color:var(--muted);font-size:14.5px;line-height:1.45}
+/* Feels like an app: a phone with the perks around it */
+.feel{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:64px;align-items:center}
+.feel .sec-head{margin-bottom:28px}
+.feel .sec-head h2{max-width:14ch}
+.perks{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.perks li{display:flex;gap:16px;align-items:center;padding:16px 0;border-top:1px solid var(--line);font-size:19px;font-weight:600}
+.perks li:first-child{border-top:0}
+.perks i{flex:none;width:28px;height:28px;border-radius:50%;background:var(--ok);display:grid;place-items:center}
+.perks i svg{width:15px;height:15px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.phone{justify-self:center;width:min(280px,100%);aspect-ratio:9/17;border-radius:38px;background:#101a2e;padding:12px;box-shadow:var(--shadow)}
+.screen{height:100%;border-radius:28px;background:linear-gradient(170deg,#1c2a4a,#0f1830);display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:min-content;gap:22px 8px;padding:54px 14px;align-content:start}
+.app{display:grid;justify-items:center;gap:6px;font-size:10.5px;color:#c9d1e3;text-align:center}
+.app span{width:min(44px,100%);aspect-ratio:1;border-radius:13px;background:#2a3858}
+.app.mine span{background:#e0b050;display:grid;place-items:center;font-size:24px;box-shadow:0 0 0 3px #101a2e,0 0 0 5px #e0b050}
+.app.mine{color:#fff;font-weight:700}
 
-/* Outputs */
-.outputs{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.output{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px}
-.output .ext{display:inline-block;font:700 14px/1 var(--mono);padding:7px 10px;border-radius:7px;background:var(--surface-2);color:var(--text)}
-.output.release .ext{background:var(--gold);color:#1a1405}
-.output h3{font-size:24px;letter-spacing:-.02em;margin:18px 0 8px}
-.output p{margin:0;color:var(--muted)}
-.behaviors{display:grid;grid-template-columns:repeat(4,1fr);gap:0 28px;margin:40px 0 0;padding:0}
-.behaviors div{padding:18px 0;border-top:1px solid var(--line)}
-.behaviors dt{font-weight:600;margin:0 0 4px}
-.behaviors dd{margin:0;color:var(--muted);font-size:15px}
+/* How it works: a real sequence, so numbered */
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+.steps li{counter-increment:s;border-top:2px solid var(--gold);padding-top:22px}
+.steps li::before{content:counter(s);display:block;font-size:56px;line-height:1;font-weight:800;letter-spacing:-.04em;color:var(--accent);margin-bottom:14px}
+.steps b{display:block;font-size:22px;letter-spacing:-.02em;margin-bottom:6px}
+.steps span{color:var(--muted)}
 
-/* Checks */
-.checks{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:56px;align-items:start}
-.checks .sec-head{margin:0}
-.checklist{list-style:none;margin:0;padding:6px 24px;background:var(--surface);border:1px solid var(--line);border-radius:18px}
-.checklist li{display:flex;gap:14px;align-items:flex-start;padding:16px 0;border-top:1px solid var(--line)}
-.checklist li:first-child{border-top:0}
-.checklist i{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ok);display:grid;place-items:center;margin-top:1px}
-.checklist i svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-.checklist b{display:block}
-.checklist small{display:block;color:var(--muted);font-size:14.5px;margin-top:2px}
-
-/* Privacy in plain words */
-.plain{display:grid;grid-template-columns:repeat(3,1fr);gap:28px;margin:0;padding:0;list-style:none}
-.plain li{padding-top:18px;border-top:2px solid var(--gold)}
-.plain b{display:block;font-size:18px;margin-bottom:6px}
-.plain span{color:var(--muted);font-size:16px}
-.plain-link{margin:28px 0 0;font-size:16px}
+/* Plans */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.plan{border:1px solid var(--line);border-radius:20px;padding:28px;background:var(--surface)}
+.plan.pro{background:#101a2e;color:#e8ebf3;border-color:#101a2e}
+.plan h3{font-size:22px;margin:0 0 6px}
+.plan p{margin:0;color:var(--muted)}
+.plan.pro p{color:#a8b3ca}
+.plan .tag{display:inline-block;margin-bottom:16px;font-size:13px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--text)}
+.plan.pro .tag{background:#e0b050;color:#1a1405}
 
 /* FAQ */
 .faq{max-width:780px;border-top:1px solid var(--line)}
 .faq details{border-bottom:1px solid var(--line)}
-.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;padding:20px 0;font-weight:600;font-size:18px}
+.faq summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;padding:22px 0;font-weight:600;font-size:19px}
 .faq summary::-webkit-details-marker{display:none}
 .faq summary::after{content:"";flex:none;width:12px;height:12px;margin-top:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .2s}
 .faq details[open] summary::after{transform:rotate(-135deg);margin-top:12px}
-.faq details p{margin:0 0 22px;color:var(--muted);max-width:66ch}
+.faq details p{margin:0 0 22px;color:var(--muted);max-width:60ch}
 
-/* Closing band: navy in both themes, the brand's own colors */
-.band{margin-top:104px;background:#101a2e;color:#e8ebf3;border-radius:24px;padding:56px;display:flex;align-items:center;justify-content:space-between;gap:32px;position:relative;overflow:hidden}
-.band h2{font-size:clamp(28px,4vw,42px);line-height:1.08;letter-spacing:-.035em;margin:0 0 10px;max-width:18ch}
-.band p{margin:0;color:#a8b3ca}
+/* Closing band: navy in both themes */
+.band{margin-top:112px;background:#101a2e;color:#e8ebf3;border-radius:24px;padding:60px 56px;display:flex;align-items:center;justify-content:space-between;gap:32px;position:relative;overflow:hidden}
+.band h2{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.04em;margin:0 0 10px;max-width:16ch}
+.band p{margin:0;color:#a8b3ca;font-size:18px}
 .band .btn.primary{background:#e0b050;border-color:#e0b050;color:#1a1405;flex:none}
 .band-box{position:absolute;right:-30px;bottom:-60px;font-size:220px;line-height:1;opacity:.07;pointer-events:none}
 
 @media (max-width:980px){
-  .hero{grid-template-columns:1fr;gap:40px;padding:40px 0 56px}
+  .hero{grid-template-columns:1fr;gap:44px;padding:44px 0 64px}
   .slip-stage{max-width:460px}
-  .steps{grid-template-columns:1fr;gap:0}
-  .steps li{display:grid;grid-template-columns:36px 1fr;column-gap:16px;padding:0 0 22px}
-  .steps li::before{grid-row:1/3}
-  .steps li::after{top:36px;bottom:0;left:17px;right:auto;width:1.5px;height:auto}
-  .steps b{margin:5px 0 2px}
-  .behaviors{grid-template-columns:1fr 1fr}
-  .checks{grid-template-columns:1fr;gap:28px}
+  .benefits,.plans{grid-template-columns:1fr}
+  .feel{grid-template-columns:1fr;gap:40px}
+  .phone{order:-1;width:min(240px,70%)}
 }
 @media (max-width:700px){
   body{font-size:16px}
-  .sec{padding-top:64px}
-  .sources{grid-template-columns:1fr}
-  .source,.source+.source{padding:22px 0;border-left:0}
-  .source+.source{border-top:1px solid var(--line)}
-  .outputs{grid-template-columns:1fr}
-  .output{padding:22px}
-  .behaviors{grid-template-columns:1fr}
-  .plain{grid-template-columns:1fr;gap:22px}
-  .band{flex-direction:column;align-items:flex-start;padding:36px 24px;margin-top:72px}
+  .sec{padding-top:72px}
+  .steps{grid-template-columns:1fr;gap:28px}
+  .steps li::before{font-size:44px}
+  .benefit,.plan{padding:24px}
+  .perks li{font-size:17px}
+  .band{flex-direction:column;align-items:flex-start;padding:40px 24px;margin-top:80px}
   .band .btn{width:100%}
   .hero-actions .btn{flex:1 1 100%}
-  .slip{padding:18px 18px 16px}
-  .slip .r{grid-template-columns:84px minmax(0,1fr)}
+  .slip{padding:20px 18px 18px}
+  .slip .r{grid-template-columns:92px minmax(0,1fr)}
 }
 </style>
 </head>
@@ -166,9 +147,9 @@ section{scroll-margin-top:80px}
     <a class="brand" href="/" aria-label="instApped home"><span class="logo" aria-hidden="true">📦</span>instApped</a>
     <nav class="site-nav" aria-label="Main">
       <a href="#how-it-works">How it works</a>
-      <a href="#outputs">What you get</a>
+      <a href="#plans">Plans</a>
       <a href="#faq">FAQ</a>
-      <a class="btn primary small" href="https://create.instapped.com/">Create your app</a>
+      <a class="btn primary small" href="https://create.instapped.com/">Start free</a>
     </nav>
   </div>
 </header>
@@ -176,169 +157,135 @@ section{scroll-margin-top:80px}
 <main id="main">
   <section class="wrap hero" aria-labelledby="hero-title">
     <div>
-      <h1 id="hero-title">Pack your website into an Android app.</h1>
-      <p class="lead">Upload an HTML file or ZIP project, or paste a website link. instApped sets up the Android project, checks it, and builds an APK you can install for testing and an AAB ready for Google Play.</p>
+      <h1 id="hero-title">Your website, now an app.</h1>
+      <p class="lead">Put your website on every Android home screen. No coding, nothing to install, and it's free to start.</p>
       <div class="hero-actions">
-        <a class="btn primary" href="https://create.instapped.com/">Create your app</a>
+        <a class="btn primary" href="https://create.instapped.com/">Make my app</a>
         <a class="btn" href="#how-it-works">See how it works</a>
       </div>
-      <p class="hero-note">Runs in your browser. No Android Studio or build tools to install.</p>
+      <p class="hero-note">Works right in your browser, on your phone or computer.</p>
     </div>
 
     <div class="slip-stage">
-      <figure class="slip" aria-label="Example packing slip for an app built with instApped">
+      <figure class="slip" aria-label="Example: an app made with instApped">
         <div class="slip-top">
           <span class="logo" aria-hidden="true">📦</span>
-          <div><b>instApped</b><small>Packing slip</small></div>
+          <div><b>instApped</b><small>Your app is packed</small></div>
           <span class="slip-no">#0001</span>
         </div>
         <dl>
-          <div class="r"><dt>App name</dt><dd>Harbor Bakery</dd></div>
-          <div class="r"><dt>Source</dt><dd>harborbakery.com <span>website</span></dd></div>
-          <div class="r"><dt>Package ID</dt><dd><code>com.harborbakery.app</code></dd></div>
-          <div class="r"><dt>Version</dt><dd>1.0.0 <span>code 1</span></dd></div>
-          <div class="r"><dt>Target</dt><dd>Android API 36</dd></div>
-          <div class="r"><dt>Contents</dt><dd><code>app-debug.apk</code><br><code>app-release.aab</code></dd></div>
+          <div class="r"><dt>App</dt><dd>Harbor Bakery</dd></div>
+          <div class="r"><dt>Made from</dt><dd>harborbakery.com</dd></div>
+          <div class="r"><dt>Works on</dt><dd>Android phones and tablets</dd></div>
+          <div class="r"><dt>Ready for</dt><dd>Google Play</dd></div>
         </dl>
         <div class="slip-foot">
           <div class="barcode" aria-hidden="true"></div>
-          <span class="stamp">Checks passed</span>
+          <span class="stamp">Ready to ship</span>
         </div>
       </figure>
     </div>
   </section>
 
-  <section class="wrap sec" aria-labelledby="sources-title">
-    <div class="sec-head">
-      <h2 id="sources-title">Start with what you already have</h2>
-      <p>If it works in a mobile browser, it can become an app.</p>
+  <section class="wrap sec" aria-labelledby="why-title">
+    <div class="sec-head"><h2 id="why-title">Skip the developer. Keep the app.</h2></div>
+    <div class="benefits">
+      <article class="benefit">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg></div>
+        <h3>No coding</h3>
+        <p>If your site works on a phone, it works as an app. That's all it takes.</p>
+      </article>
+      <article class="benefit">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <h3>Ready in minutes</h3>
+        <p>No software to set up and no weeks of waiting. Start now, test your app today.</p>
+      </article>
+      <article class="benefit">
+        <div class="ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 3.5v17l14-8.5z"/></svg></div>
+        <h3>Made for Google Play</h3>
+        <p>Publish under your own name and reach people where they already shop for apps.</p>
+      </article>
     </div>
-    <div class="sources">
-      <div class="source">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M8 3h11l6 6v20H8z"/><path d="M19 3v6h6"/><path d="m13 18-3 3 3 3M20 18l3 3-3 3"/></svg>
-        <h3>An HTML file</h3>
-        <p>A single page with its styles and scripts built in. Good for tools, calculators and small games.</p>
+  </section>
+
+  <section class="wrap sec" aria-labelledby="feel-title">
+    <div class="feel">
+      <div>
+        <div class="sec-head"><h2 id="feel-title">It feels like a real app, because it is one.</h2></div>
+        <ul class="perks">
+          <li><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i>Your name and icon on the home screen</li>
+          <li><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i>Full screen, no browser bars</li>
+          <li><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i>Keeps working offline</li>
+          <li><i aria-hidden="true"><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i>One tap to open, every time</li>
+        </ul>
       </div>
-      <div class="source">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 10 16 4l11 6v13l-11 6-11-6z"/><path d="m5 10 11 6 11-6M16 16v13"/></svg>
-        <h3>A ZIP project</h3>
-        <p>A full site folder with pages, images, fonts and scripts. It is bundled into the app so it can run offline.</p>
-      </div>
-      <div class="source">
-        <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="12"/><path d="M4 16h24M16 4c4 4 5 8 5 12s-1 8-5 12c-4-4-5-8-5-12s1-8 5-12"/></svg>
-        <h3>A website link</h3>
-        <p>Any HTTPS site you own or have permission to package. The app opens it with Android navigation built in.</p>
+      <div class="phone" aria-hidden="true">
+        <div class="screen">
+          <div class="app"><span></span>Photos</div>
+          <div class="app"><span></span>Maps</div>
+          <div class="app"><span></span>Mail</div>
+          <div class="app"><span></span>Music</div>
+          <div class="app"><span></span>Notes</div>
+          <div class="app mine"><span>📦</span>Your app</div>
+          <div class="app"><span></span>Clock</div>
+          <div class="app"><span></span>Store</div>
+          <div class="app"><span></span>Camera</div>
+          <div class="app"><span></span>Phone</div>
+          <div class="app"><span></span>Chat</div>
+          <div class="app"><span></span>Files</div>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="wrap sec" id="how-it-works" aria-labelledby="how-title">
-    <div class="sec-head">
-      <h2 id="how-title">Seven steps, one workspace</h2>
-      <p>The app factory walks you through each step and saves your project in your browser, so you can stop and pick it up later.</p>
-    </div>
+    <div class="sec-head"><h2 id="how-title">Three steps to your app</h2></div>
     <ol class="steps">
-      <li><b>Source</b><span>Upload your file or ZIP, or enter a website link.</span></li>
-      <li><b>Details</b><span>Name the app and set its package ID and version.</span></li>
-      <li><b>Icon</b><span>Add one square image. Every Android size is made for you.</span></li>
-      <li><b>Offline</b><span>Choose whether the app keeps working without a connection.</span></li>
-      <li><b>Preview</b><span>See your app on a phone-sized screen before you build.</span></li>
-      <li><b>Check</b><span>Fix anything the pre-build checks flag.</span></li>
-      <li><b>Build</b><span>Download your APK and AAB when the build finishes.</span></li>
+      <li><b>Add your site</b><span>Paste a link or upload your files.</span></li>
+      <li><b>Make it yours</b><span>Give it a name and an icon.</span></li>
+      <li><b>Get your app</b><span>Try it on your phone, then share or publish it.</span></li>
     </ol>
   </section>
 
-  <section class="wrap sec" id="outputs" aria-labelledby="outputs-title">
-    <div class="sec-head">
-      <h2 id="outputs-title">What you get</h2>
-      <p>Two files for two jobs, from the same project.</p>
-    </div>
-    <div class="outputs">
-      <article class="output">
-        <span class="ext">.apk</span>
-        <h3>A test build for your phone</h3>
-        <p>Install it directly on an Android device to try the app the way your users will, before you publish anything.</p>
+  <section class="wrap sec" id="plans" aria-labelledby="plans-title">
+    <div class="sec-head"><h2 id="plans-title">Start free. Upgrade when you're ready to launch.</h2></div>
+    <div class="plans">
+      <article class="plan">
+        <span class="tag">Free</span>
+        <h3>Try it out</h3>
+        <p>Make your app and test it on your phone.</p>
       </article>
-      <article class="output release">
-        <span class="ext">.aab</span>
-        <h3>A release bundle for Google Play</h3>
-        <p>The format Google Play requires for new apps, targeting Android API 36. Upload it to your own Play Console account to publish.</p>
+      <article class="plan pro">
+        <span class="tag">Pro</span>
+        <h3>Launch on Google Play</h3>
+        <p>A store-ready app with your own branding.</p>
+      </article>
+      <article class="plan">
+        <span class="tag">Business</span>
+        <h3>Apps for clients</h3>
+        <p>Everything in Pro, plus tools that make publishing easy.</p>
       </article>
     </div>
-    <dl class="behaviors">
-      <div><dt>Offline mode</dt><dd>Bundled pages and saved data keep working without a signal.</dd></div>
-      <div><dt>Back button</dt><dd>Android's back gesture moves through your pages, not straight out of the app.</dd></div>
-      <div><dt>External links</dt><dd>Links to other sites can open in the phone's browser.</dd></div>
-      <div><dt>Downloads and exports</dt><dd>Files and images your site creates save to the device.</dd></div>
-      <div><dt>Full screen</dt><dd>Hide the status bar for games and immersive pages.</dd></div>
-      <div><dt>Orientation</dt><dd>Lock to portrait or landscape, or follow the device.</dd></div>
-      <div><dt>Zoom control</dt><dd>Allow or block pinch-to-zoom.</dd></div>
-      <div><dt>Launcher icons</dt><dd>Standard and round icons for every screen density.</dd></div>
-    </dl>
-  </section>
-
-  <section class="wrap sec" aria-labelledby="checks-title">
-    <div class="checks">
-      <div class="sec-head">
-        <h2 id="checks-title">Checked before it's built</h2>
-        <p>Most rejected builds fail on small things. instApped looks for them first, so a build only starts when the project is ready for it.</p>
-      </div>
-      <ul class="checklist">
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Package ID</b><small>Valid format, and unique to your app.</small></div></li>
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Version name and code</b><small>Present, and in the form Google Play expects.</small></div></li>
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Target API level</b><small>Set to API 36, which Google Play requires for new apps and updates.</small></div></li>
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Icons and manifest</b><small>Every icon size present and the app manifest complete.</small></div></li>
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Source layout</b><small>An entry page is found and the website link uses HTTPS.</small></div></li>
-        <li><i><svg viewBox="0 0 16 16"><path d="m3.5 8.5 3 3 6-7"/></svg></i><div><b>Signing kept private</b><small>Release keys stay in secure storage, never in your project files.</small></div></li>
-      </ul>
-    </div>
-  </section>
-
-  <section class="wrap sec" aria-labelledby="privacy-title">
-    <div class="sec-head">
-      <h2 id="privacy-title">Your project, your app</h2>
-      <p>What happens to your files, in plain words.</p>
-    </div>
-    <ul class="plain">
-      <li><b>Saved on your device</b><span>Projects and settings stay in your browser until you send a build or delete them.</span></li>
-      <li><b>Sent only to build</b><span>Your source goes to the build service only when you ask for a build, and is processed in private storage.</span></li>
-      <li><b>Never sold</b><span>We don't sell your content or personal information, and the factory runs no advertising trackers.</span></li>
-    </ul>
-    <p class="plain-link">Read the full <a href="/privacy-policy.html">Privacy Policy</a> and <a href="/terms.html">Terms of Service</a>.</p>
   </section>
 
   <section class="wrap sec" id="faq" aria-labelledby="faq-title">
-    <div class="sec-head">
-      <h2 id="faq-title">Questions</h2>
-    </div>
+    <div class="sec-head"><h2 id="faq-title">Questions</h2></div>
     <div class="faq">
       <details>
-        <summary>Do I need to know Android development?</summary>
-        <p>No. instApped prepares the Android project and runs the build in the cloud. You need your web project, an app name and an icon.</p>
+        <summary>Do I need to know how to code?</summary>
+        <p>No. If you have a website or web project, you have everything you need.</p>
       </details>
       <details>
-        <summary>What's the difference between the APK and the AAB?</summary>
-        <p>The APK installs directly on a phone, so use it for testing. The AAB is the format Google Play requires when you publish. Both come from the same project.</p>
-      </details>
-      <details>
-        <summary>Can I publish the app on Google Play?</summary>
-        <p>Yes. Upload the AAB to your own Google Play Console account. You publish under your own developer name and are responsible for the store listing, content rating and the privacy disclosures Google Play asks for.</p>
+        <summary>Can I put my app on Google Play?</summary>
+        <p>Yes. With a Pro or Business plan you get a store-ready app to publish from your own Google Play account.</p>
       </details>
       <details>
         <summary>Who owns the app?</summary>
-        <p>You do. You keep the rights to your content and to the app built from it. See the <a href="/terms.html">Terms of Service</a> for details.</p>
+        <p>You do. Your app, your content, your name on the store.</p>
       </details>
       <details>
-        <summary>Will my app work offline?</summary>
-        <p>HTML and ZIP projects are bundled into the app and can run fully offline. Website-link apps need a connection for pages that aren't already cached. You choose the offline setting in step four.</p>
-      </details>
-      <details>
-        <summary>Is there a size limit?</summary>
-        <p>Uploaded HTML and ZIP projects can be up to about 21 MB. Website-link apps have no upload limit, because the site is loaded rather than uploaded.</p>
-      </details>
-      <details>
-        <summary>Can I package someone else's website?</summary>
-        <p>Only if you have permission. Packaging sites or content you don't have the rights to is not allowed. See the <a href="/acceptable-use.html">Acceptable Use Policy</a>.</p>
+        <summary>Will it work without internet?</summary>
+        <p>Yes. Apps made from your own files work fully offline, and website apps keep the pages you've already opened.</p>
       </details>
     </div>
   </section>
@@ -346,10 +293,10 @@ section{scroll-margin-top:80px}
   <section class="wrap" aria-labelledby="cta-title">
     <div class="band">
       <div>
-        <h2 id="cta-title">Your website is one build away from an app.</h2>
-        <p>Open the app factory and start a new project.</p>
+        <h2 id="cta-title">Your app is one tap away.</h2>
+        <p>Free to start. No coding needed.</p>
       </div>
-      <a class="btn primary" href="https://create.instapped.com/">Create your app</a>
+      <a class="btn primary" href="https://create.instapped.com/">Make my app</a>
       <span class="band-box" aria-hidden="true">📦</span>
     </div>
   </section>
@@ -360,13 +307,14 @@ section{scroll-margin-top:80px}
     <div class="foot-grid">
       <div class="foot-about">
         <a class="brand" href="/"><span class="logo" aria-hidden="true">📦</span>instApped</a>
-        <p>Turn a website or HTML project into an Android app.</p>
+        <p>Your website, now an app.</p>
       </div>
       <div>
         <h2>Product</h2>
         <ul>
           <li><a href="https://create.instapped.com/">App factory</a></li>
           <li><a href="/#how-it-works">How it works</a></li>
+          <li><a href="/#plans">Plans</a></li>
           <li><a href="/#faq">FAQ</a></li>
         </ul>
       </div>
