@@ -49,7 +49,9 @@ h2{font-size:22px;letter-spacing:-.02em;margin-bottom:4px}
 .bar div{height:100%;background:var(--a);width:0;transition:width .25s}
 .card{min-width:0;background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:18px;margin-bottom:14px}
 .card h3{font-size:16px;margin-bottom:2px}
-.card>p.h{color:var(--m);font-size:13.5px;margin-bottom:14px}
+.psub{border-top:1px solid var(--b);margin-top:14px;padding-top:14px}.psub h3{font-size:15px}#plansCard .plans{margin:12px 0}
+.card>p.h,.psub>p.h{color:var(--m);font-size:13.5px;margin-bottom:14px}
+#plansCard{scroll-margin-top:84px}
 .step{display:none}.step.on,.all .step{display:block}
 .all .steps,.all .bar,.all .foot{display:none}
 .all .step{margin-bottom:6px}
@@ -282,7 +284,6 @@ textarea.inp{min-height:110px;font:12.5px/1.5 ui-monospace,Menlo,Consolas,monosp
   <button data-view="create" class="on"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Create</button>
   <button data-view="projects"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Projects</button>
   <button data-view="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-1a7 7 0 0 0 2 1.2l.4 2.7h4l.4-2.7a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z"/></svg>Settings</button>
-  <button data-view="plans" class="buyonly"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>Plans</button>
   <button data-view="owner" class="mo"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>Owner</button>
 </nav>
 <main>
@@ -471,22 +472,6 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   <button class="btn pri" id="newProj">New project</button>
 </section>
 
-<!-- PLANS -->
-<section class="view" id="v-plans">
-  <h2>Plans</h2><p class="sub">Start free. Upgrade when you're ready to publish on Google Play.</p>
-  <div class="seg billseg" id="billSeg"><button data-v="monthly" class="on">Monthly</button><button data-v="annual">Yearly · 2 months free</button></div>
-  <div class="plans" id="planCards"></div>
-  <div class="card gp" id="gpCard"><h3>Google Play</h3><p class="h" id="gpNote">Plans are billed by Google Play and renew automatically until you cancel in the Play Store.</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="gpRestore">Restore purchases</button><button class="btn" id="gpManage">Manage subscriptions</button></div>
-  </div>
-  <label class="f pm" style="max-width:420px;margin-top:4px">Email for your receipt (optional)<input type="email" id="buyEmail" maxlength="200" placeholder="you@example.com" autocapitalize="none"></label>
-  <p class="sub" id="plansNote" style="font-size:13px"></p>
-  <div class="card pm"><h3>Already paid?</h3><p class="h">If your license didn't appear after checkout, recover it with the reference on your receipt (starts with IA-) or the checkout ID (starts with cs_).</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="inp" id="recRef" style="max-width:320px;margin:0" placeholder="IA-… or cs_…" autocapitalize="characters" spellcheck="false"><button class="btn" id="recBtn">Recover license</button></div>
-  </div>
-  <p class="legal gp">Subscriptions are sold through Google Play, renew automatically and can be cancelled any time in the Play Store. By subscribing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
-  <p class="legal pm">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
-</section>
 
 <!-- OWNER (master edition only) -->
 <section class="view" id="v-owner">
@@ -517,6 +502,20 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
     <div class="nomaster"><label class="f" style="margin-top:14px">Owner access token<input type="password" id="token" autocomplete="off" placeholder="Only for the factory owner"></label>
     <p style="font-size:13px;color:var(--m);margin-top:-6px">Kept for this browser tab only. Unlocks every feature and test builds.</p></div>
     <p class="mo" style="font-size:13.5px;margin-top:12px">Signed in as the owner on the master edition. <a href="/master/logout" id="moOut">Sign out</a></p>
+  </div>
+  <div class="card buyonly" id="plansCard"><h3>Plans</h3><p class="h">Start free. Upgrade when you're ready to publish on Google Play.</p>
+    <div class="seg billseg" id="billSeg"><button data-v="monthly" class="on">Monthly</button><button data-v="annual">Yearly · 2 months free</button></div>
+    <div class="plans" id="planCards"></div>
+    <div class="psub gp" id="gpCard"><h3>Google Play</h3><p class="h" id="gpNote">Plans are billed by Google Play and renew automatically until you cancel in the Play Store.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="gpRestore">Restore purchases</button><button class="btn" id="gpManage">Manage subscriptions</button></div>
+    </div>
+    <label class="f pm" style="max-width:420px;margin-top:4px">Email for your receipt (optional)<input type="email" id="buyEmail" maxlength="200" placeholder="you@example.com" autocapitalize="none"></label>
+    <p class="sub" id="plansNote" style="font-size:13px"></p>
+    <div class="psub pm"><h3>Already paid?</h3><p class="h">If your license didn't appear after checkout, recover it with the reference on your receipt (starts with IA-) or the checkout ID (starts with cs_).</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="inp" id="recRef" style="max-width:320px;margin:0" placeholder="IA-… or cs_…" autocapitalize="characters" spellcheck="false"><button class="btn" id="recBtn">Recover license</button></div>
+    </div>
+    <p class="legal gp">Subscriptions are sold through Google Play, renew automatically and can be cancelled any time in the Play Store. By subscribing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+    <p class="legal pm">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
   </div>
   <div class="card"><h3>Appearance</h3><p class="h">&nbsp;</p>
     <p style="color:var(--m);font-size:13.5px;margin-bottom:6px">Theme</p>
@@ -686,7 +685,7 @@ $("#gBump").onchange=e=>{G.bumpCode=e.target.checked;save(KEY.g,G)};
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",applyG);
 
 /* ============ NAVIGATION ============ */
-function view(v){if(v==="plans"&&EDITION==="play-lite")v="settings";if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();scrollTo(0,0)}
+function view(v){let toPlans=false;if(v==="plans"){v="settings";toPlans=EDITION!=="play-lite"}if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();if(toPlans)requestAnimationFrame(()=>$("#plansCard").scrollIntoView({block:"start",behavior:"smooth"}));else scrollTo(0,0)}
 $$("nav button").forEach(b=>b.onclick=()=>view(b.dataset.view));
 function go(n){
   step=Math.max(0,Math.min(STEPS.length-1,n));
