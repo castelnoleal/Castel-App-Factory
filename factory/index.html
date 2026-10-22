@@ -49,9 +49,14 @@ h2{font-size:22px;letter-spacing:-.02em;margin-bottom:4px}
 .bar div{height:100%;background:var(--a);width:0;transition:width .25s}
 .card{min-width:0;background:var(--s);border:1px solid var(--b);border-radius:var(--r);padding:18px;margin-bottom:14px}
 .card h3{font-size:16px;margin-bottom:2px}
-.psub{border-top:1px solid var(--b);margin-top:14px;padding-top:14px}.psub h3{font-size:15px}#plansCard .plans{margin:12px 0}
+.psub{border-top:1px solid var(--b);margin-top:14px;padding-top:14px}.psub h3{font-size:15px}#plansDlg .plans{margin:12px 0}
 .card>p.h,.psub>p.h{color:var(--m);font-size:13.5px;margin-bottom:14px}
-#plansCard{scroll-margin-top:84px}
+
+.pdh{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}.pdh .h{color:var(--m);font-size:13.5px}
+.pwhy{border:1px solid var(--a);background:color-mix(in srgb,var(--a) 12%,transparent);border-radius:10px;padding:10px 12px;font-size:14px;font-weight:600;margin:12px 0 0}
+.plan.need{border-color:var(--a);box-shadow:0 0 0 2px var(--a)}
+.planentry{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-color:var(--a);background:linear-gradient(135deg,color-mix(in srgb,var(--a) 14%,var(--s)),var(--s))}.planentry>div{flex:1;min-width:200px}.planentry .h{margin-bottom:0!important}
+
 .step{display:none}.step.on,.all .step{display:block}
 .all .steps,.all .bar,.all .foot{display:none}
 .all .step{margin-bottom:6px}
@@ -214,6 +219,9 @@ body.paid .prochip[data-min="pro"]{display:none}body.biz .prochip{display:none}
 .kit-ta{min-height:140px;font:14px/1.5 system-ui,sans-serif}
 dialog.dlg{border:1px solid var(--b);border-radius:16px;background:var(--s);color:var(--t);padding:20px;width:min(440px,calc(100vw - 32px))}
 dialog.dlg::backdrop{background:rgba(5,10,20,.5)}
+dialog.dlg{margin:auto}
+dialog.dlg.plansdlg{width:min(1000px,calc(100vw - 24px));max-width:none;max-height:calc(100dvh - 24px);overflow:auto;padding:24px}
+@media(max-width:600px){dialog.dlg.plansdlg{padding:16px;width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}}
 .dlg h3{font-size:18px;margin-bottom:6px}.dlgacts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 @media(max-width:900px){.plans{grid-template-columns:1fr}}
 @media(max-width:760px),(pointer:coarse) and (max-width:1024px){.planchip{padding:4px 8px}}
@@ -496,26 +504,14 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
 <!-- SETTINGS -->
 <section class="view" id="v-settings">
   <h2>Settings</h2><p class="sub">Preferences for this factory.</p>
+  <div class="card buyonly planentry" id="plansEntry"><div><h3>Plans</h3><p class="h" id="plansEntryNote">Free, Pro and Business. Upgrade when you're ready to publish on Google Play.</p></div>
+    <button class="btn pri" data-plans="" id="plansOpen">View plans</button></div>
   <div class="card" id="licCard"><h3>Plan and license</h3><p class="h" id="licStatus">You're on the Free plan.</p>
     <label class="f">License key<input class="inp" id="licKey" placeholder="IAL1.…" spellcheck="false" autocapitalize="none" autocomplete="off"></label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri" id="licSave">Activate</button><button class="btn sm" id="licCopy">Copy key</button><button class="btn sm dng" id="licRemove">Remove from this device</button><button class="btn sm buyonly" data-plans="pro">See plans</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm pri" id="licSave">Activate</button><button class="btn sm" id="licCopy">Copy key</button><button class="btn sm dng" id="licRemove">Remove from this device</button></div>
     <div class="nomaster"><label class="f" style="margin-top:14px">Owner access token<input type="password" id="token" autocomplete="off" placeholder="Only for the factory owner"></label>
     <p style="font-size:13px;color:var(--m);margin-top:-6px">Kept for this browser tab only. Unlocks every feature and test builds.</p></div>
     <p class="mo" style="font-size:13.5px;margin-top:12px">Signed in as the owner on the master edition. <a href="/master/logout" id="moOut">Sign out</a></p>
-  </div>
-  <div class="card buyonly" id="plansCard"><h3>Plans</h3><p class="h">Start free. Upgrade when you're ready to publish on Google Play.</p>
-    <div class="seg billseg" id="billSeg"><button data-v="monthly" class="on">Monthly</button><button data-v="annual">Yearly · 2 months free</button></div>
-    <div class="plans" id="planCards"></div>
-    <div class="psub gp" id="gpCard"><h3>Google Play</h3><p class="h" id="gpNote">Plans are billed by Google Play and renew automatically until you cancel in the Play Store.</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="gpRestore">Restore purchases</button><button class="btn" id="gpManage">Manage subscriptions</button></div>
-    </div>
-    <label class="f pm" style="max-width:420px;margin-top:4px">Email for your receipt (optional)<input type="email" id="buyEmail" maxlength="200" placeholder="you@example.com" autocapitalize="none"></label>
-    <p class="sub" id="plansNote" style="font-size:13px"></p>
-    <div class="psub pm"><h3>Already paid?</h3><p class="h">If your license didn't appear after checkout, recover it with the reference on your receipt (starts with IA-) or the checkout ID (starts with cs_).</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="inp" id="recRef" style="max-width:320px;margin:0" placeholder="IA-… or cs_…" autocapitalize="characters" spellcheck="false"><button class="btn" id="recBtn">Recover license</button></div>
-    </div>
-    <p class="legal gp">Subscriptions are sold through Google Play, renew automatically and can be cancelled any time in the Play Store. By subscribing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
-    <p class="legal pm">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
   </div>
   <div class="card"><h3>Appearance</h3><p class="h">&nbsp;</p>
     <p style="color:var(--m);font-size:13.5px;margin-bottom:6px">Theme</p>
@@ -549,6 +545,22 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   <div class="pvh"><h3 id="pvTitle">Preview</h3><button class="btn sm" id="pvClose" aria-label="Close preview">Close</button></div>
   <div class="pvb"><div id="pvStage" style="width:100%"></div><div class="pvchk" id="pvChecks"></div></div>
 </aside>
+<dialog class="dlg plansdlg" id="plansDlg" aria-labelledby="plansTitle">
+<div class="pdh"><div><h3 id="plansTitle">Plans</h3><p class="h">Start free. Upgrade when you're ready to publish on Google Play.</p></div><button class="btn sm" id="plansClose" aria-label="Close plans">Close</button></div>
+<p class="pwhy" id="plansWhy" role="status" hidden></p>
+  <div class="seg billseg" id="billSeg"><button data-v="monthly" class="on">Monthly</button><button data-v="annual">Yearly · 2 months free</button></div>
+  <div class="plans" id="planCards"></div>
+  <div class="psub gp" id="gpCard"><h3>Google Play</h3><p class="h" id="gpNote">Plans are billed by Google Play and renew automatically until you cancel in the Play Store.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="gpRestore">Restore purchases</button><button class="btn" id="gpManage">Manage subscriptions</button></div>
+  </div>
+  <label class="f pm" style="max-width:420px;margin-top:4px">Email for your receipt (optional)<input type="email" id="buyEmail" maxlength="200" placeholder="you@example.com" autocapitalize="none"></label>
+  <p class="sub" id="plansNote" style="font-size:13px"></p>
+  <div class="psub pm"><h3>Already paid?</h3><p class="h">If your license didn't appear after checkout, recover it with the reference on your receipt (starts with IA-) or the checkout ID (starts with cs_).</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><input class="inp" id="recRef" style="max-width:320px;margin:0" placeholder="IA-… or cs_…" autocapitalize="characters" spellcheck="false"><button class="btn" id="recBtn">Recover license</button></div>
+  </div>
+  <p class="legal gp">Subscriptions are sold through Google Play, renew automatically and can be cancelled any time in the Play Store. By subscribing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+  <p class="legal pm">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
+</dialog>
 <dialog class="dlg" id="upDlg" aria-labelledby="upTitle">
   <h3 id="upTitle">This is a Pro feature</h3>
   <p id="upBody" class="h"></p>
@@ -685,7 +697,7 @@ $("#gBump").onchange=e=>{G.bumpCode=e.target.checked;save(KEY.g,G)};
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",applyG);
 
 /* ============ NAVIGATION ============ */
-function view(v){let toPlans=false;if(v==="plans"){v="settings";toPlans=EDITION!=="play-lite"}if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();if(toPlans)requestAnimationFrame(()=>$("#plansCard").scrollIntoView({block:"start",behavior:"smooth"}));else scrollTo(0,0)}
+function view(v){if(v==="plans"){if(EDITION!=="play-lite")return openPlans();v="settings"}if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();scrollTo(0,0)}
 $$("nav button").forEach(b=>b.onclick=()=>view(b.dataset.view));
 function go(n){
   step=Math.max(0,Math.min(STEPS.length-1,n));
@@ -1361,6 +1373,9 @@ function applyPlanUI(){
     :"instApped "+({pro:"Pro",business:"Business"})[p]+" · active until "+exp+".";
   if(document.activeElement!==$("#licKey"))$("#licKey").value=LIC.key||"";
   $("#adCard").hidden=!LIC.owner;
+  $("#plansOpen").textContent=rankOf(p)>=1?"Change plan":"View plans";
+  $("#plansEntryNote").textContent=p==="free"?"You're on Free. Pro adds signed Google Play releases, splash art and update alerts; Business adds the publishing kit."
+    :p==="pro"?"You're on Pro. Business adds the publishing kit and Google Play Billing for your apps.":"You're on Business, the top plan.";
   // No factory ads on paid plans.
   // No factory ads on paid plans, the master edition or the Play apps.
   try{rankOf(p)>=1||EDITION!=="web"?Ads.api.hide():Ads.api.show()}catch{}
@@ -1381,14 +1396,34 @@ async function verifyLicenseKey(key,{quiet}={}){
 
 const plansView=()=>view(EDITION==="play-lite"?"settings":EDITION==="master"?"owner":"plans");
 $("#planChip").onclick=plansView;
-document.addEventListener("click",e=>{const b=e.target.closest("[data-plans]");if(!b)return;e.preventDefault();$("#upDlg").open&&$("#upDlg").close();if(EDITION==="play-lite"){view("settings");return setTimeout(()=>$("#licKey").focus(),50)}view("plans");if(b.dataset.plans==="business")setTimeout(()=>$('#planCards [data-plan="business"]')?.scrollIntoView({block:"center",behavior:"smooth"}),50)});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-plans]");if(!b)return;e.preventDefault();openPlans(b.dataset.plans||"",b.dataset.feature||"")});
 $("#licSave").onclick=async()=>{const k=$("#licKey").value.trim();if(!k)return toast("Paste your license key first.");if(await verifyLicenseKey(k))toast("License activated: instApped "+({pro:"Pro",business:"Business"})[LIC.plan])};
 $("#licCopy").onclick=async()=>{if(!LIC.key)return toast("No license key on this device.");try{await navigator.clipboard.writeText(LIC.key);toast("License key copied")}catch{toast("Copy failed. Select the key and copy it.")}};
 $("#licRemove").onclick=()=>{if(LIC.key&&!confirm("Remove the license from this device? You can paste it again later."))return;LIC={key:"",plan:"free",exp:0,owner:LIC.owner,checked:0};saveLic();applyPlanUI();toast("License removed from this device")};
 $("#token").addEventListener("change",async e=>{const t=e.target.value.trim();try{t?sessionStorage.setItem("instapped.owner",t):sessionStorage.removeItem("instapped.owner")}catch{}LIC.owner=false;if(t){if(!(await verifyLicenseKey(LIC.key,{quiet:true}))&&!LIC.owner)toast("That owner token isn't valid.")}applyPlanUI()});
 
 /* --- upgrade prompt --- */
+let PLAN_NEED="";
+/** Opens the Plans pop-up. With a feature, explains what it needs and highlights that plan. */
+function openPlans(min="",feature=""){
+  if(EDITION==="play-lite"){view("settings");return setTimeout(()=>$("#licKey").focus(),50)}
+  const plan=min&&(PLANS.plans.find(p=>p.id===min)||FALLBACK_PLANS.plans.find(p=>p.id===min));
+  const why=$("#plansWhy");
+  if(feature&&plan){why.textContent=feature+" is part of instApped "+plan.name+(rankOf(min)>=2?"":" and Business")+". Choose a plan to unlock it.";why.hidden=false}else why.hidden=true;
+  PLAN_NEED=feature&&min?min:"";
+  $("#upDlg").open&&$("#upDlg").close();
+  renderPlans();
+  const d=$("#plansDlg");try{if(!d.open)d.showModal()}catch{d.setAttribute("open","")}
+  d.scrollTop=0;
+  if(PLAN_NEED)requestAnimationFrame(()=>$(`#planCards [data-plan="${PLAN_NEED}"]`)?.scrollIntoView({block:"nearest",behavior:"smooth"}));
+  if(EDITION==="play-billing"&&!GB.loaded)gbLoad();
+}
+function closePlans(){const d=$("#plansDlg");if(d.open)d.close()}
+$("#plansClose").onclick=closePlans;
+$("#plansDlg").addEventListener("click",e=>{if(e.target===e.currentTarget)closePlans()});
+$("#plansDlg").addEventListener("close",()=>{PLAN_NEED="";$("#plansWhy").hidden=true;if(location.hash==="#plans")history.replaceState(null,"",location.pathname+location.search)});
 function upgrade(feature,min="pro"){
+  if(EDITION!=="play-lite")return openPlans(min,feature);
   const plan=PLANS.plans.find(p=>p.id===min)||FALLBACK_PLANS.plans[1];
   $("#upTitle").textContent=feature+" is part of instApped "+plan.name;
   const gp=EDITION==="play-billing"&&gbOffer(min,"monthly");
@@ -1398,7 +1433,7 @@ function upgrade(feature,min="pro"){
   $("#upGo").textContent=EDITION==="play-lite"?"Open Settings":"See plans";
   $("#upList").innerHTML=plan.features.map(f=>`<li>${esc(f)}</li>`).join("");
   $("#upGo").dataset.plans=min;
-  try{$("#upDlg").showModal()}catch{view("plans")}
+  try{$("#upDlg").showModal()}catch{view("settings")}
 }
 $("#upLater").onclick=()=>$("#upDlg").close();
 $("#upGo").onclick=()=>{$("#upDlg").close();if(EDITION==="play-lite"){view("settings");setTimeout(()=>$("#licKey").focus(),50)}else view("plans")};
@@ -1437,7 +1472,7 @@ function renderPlans(){
       :isCur?`<button class="btn pri" data-buy="${p.id}">Extend ${esc(p.name)}</button>`
       :lower?`<button class="btn" disabled>Included in your plan</button>`
       :`<button class="btn pri" data-buy="${p.id}" ${PLANS.paymentsEnabled?"":"disabled"}>${PLANS.paymentsEnabled?"Get "+esc(p.name):"Coming soon"}</button>`;
-    return `<div class="plan${p.id==="pro"?" hl":""}" data-plan="${p.id}"><h3>${esc(p.name)}${isCur?' <i class="prochip" style="display:inline">Your plan</i>':""}</h3><p class="ptag">${esc(p.tagline)}</p>
+    return `<div class="plan${p.id==="pro"?" hl":""}${p.id===PLAN_NEED?" need":""}" data-plan="${p.id}"><h3>${esc(p.name)}${isCur?' <i class="prochip" style="display:inline">Your plan</i>':""}</h3><p class="ptag">${esc(p.tagline)}</p>
       <div class="price">${p.id==="free"?"₱0":peso(price)}<small> ${p.id==="free"?"forever":per}</small></div>
       <ul class="feat">${p.features.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>${btn}</div>`;
   }).join("");
@@ -1465,6 +1500,7 @@ async function claimLicense(body,url="/license/claim"){
   throw new Error("The payment is still processing. Use Recover license on the Plans page in a few minutes.");
 }
 function celebrate(d){
+  closePlans();
   LIC.key=d.key;LIC.plan=d.plan;LIC.exp=d.exp;LIC.checked=Date.now();saveLic();
   try{localStorage.removeItem(PENDING_KEY)}catch{}
   applyPlanUI();
@@ -1528,7 +1564,7 @@ function renderPlayPlans(){
       :isCur?`<button class="btn" disabled>Your plan</button>`
       :lower?`<button class="btn" disabled>Included in your plan</button>`
       :`<button class="btn pri" data-gbuy="${p.id}" ${off?"":"disabled"}>${off?(off.trial?"Start free trial":"Subscribe to "+esc(p.name)):GB.loaded||GB.error?"Not available":"Loading…"}</button>`;
-    return `<div class="plan${p.id==="pro"?" hl":""}" data-plan="${p.id}"><h3>${esc(p.name)}${isCur?' <i class="prochip" style="display:inline">Your plan</i>':""}</h3><p class="ptag">${esc(p.tagline)}</p>
+    return `<div class="plan${p.id==="pro"?" hl":""}${p.id===PLAN_NEED?" need":""}" data-plan="${p.id}"><h3>${esc(p.name)}${isCur?' <i class="prochip" style="display:inline">Your plan</i>':""}</h3><p class="ptag">${esc(p.tagline)}</p>
       <div class="price">${p.id==="free"?"Free":off?esc(off.price):"—"}<small> ${p.id==="free"?"forever":per}</small></div>
       ${off&&off.trial?`<p class="ptag">${esc(isoPeriod(off.trial))} free, then ${esc(off.price)}${per}</p>`:""}
       <ul class="feat">${p.features.filter(f=>!/ads in the factory/i.test(f)).map(f=>`<li>${esc(f)}</li>`).join("")}</ul>${btn}</div>`;

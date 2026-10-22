@@ -79,7 +79,7 @@ try {
     assert(!(await page.locator('#token').isVisible()), 'no owner token field needed');
     // Nothing is gated.
     await page.evaluate(() => { const el = document.querySelector('[data-k=sign]'); el.checked = true; el.dispatchEvent(new Event('change', { bubbles: true })); });
-    assert(!(await page.locator('#upDlg').evaluate(d => d.open)), 'premium options work without a license');
+    assert(!(await page.locator('#upDlg').evaluate(d => d.open)) && !(await page.locator('#plansDlg').evaluate(d => d.open)), 'premium options work without a license');
     // Owner tools: status, issue, look up, revoke — against the real worker.
     await page.click('nav button[data-view=owner]');
     await page.waitForFunction(() => document.querySelectorAll('#oStat div').length > 3);
@@ -136,7 +136,7 @@ try {
     await page.goto('http://127.0.0.1:4176/');
     await page.waitForTimeout(400);
     await page.click('nav button[data-view=settings]');
-    assert(!(await page.locator('#plansCard').isVisible()), 'play-lite has no Plans section in Settings');
+    assert(!(await page.locator('#plansEntry').isVisible()), 'play-lite has no Plans entry in Settings');
     await page.click('nav button[data-view=create]');
     assert(!(await page.locator('#ad-slot').isVisible()), 'play-lite shows no Pro ad');
     const text = await page.evaluate(() => document.body.innerText);
@@ -149,7 +149,7 @@ try {
     assert(await page.locator('#v-settings').isVisible(), 'the prompt opens Settings');
     await page.evaluate(() => { location.hash = '#plans'; });
     await page.waitForTimeout(150);
-    assert(!(await page.locator('#plansCard').isVisible()), 'the Plans section can\'t be opened by link');
+    assert(!(await page.locator('#plansDlg').evaluate(d => d.open)), 'the Plans pop-up can\'t be opened by link');
     await page.fill('#licKey', lic('pro', 'IA-LITE'));
     await page.click('#licSave');
     await page.waitForFunction(() => document.querySelector('#planChip').textContent === 'Pro');
@@ -201,7 +201,7 @@ try {
     await page.waitForTimeout(400);
     await page.click('#planChip');
     await page.waitForFunction(() => /₱499\.00/.test(document.querySelector('#planCards').textContent));
-    const plansText = await page.locator('#plansCard').innerText();
+    const plansText = await page.locator('#plansDlg').innerText();
     assert(!/PayMongo|GCash|Already paid|IA-…/.test(plansText), 'play-billing hides PayMongo checkout and recovery');
     assert(/Google Play/.test(plansText), 'play-billing explains Google Play billing and renewals');
     assert(/₱1,690\.00/.test(plansText), 'prices come from Google Play product details');
