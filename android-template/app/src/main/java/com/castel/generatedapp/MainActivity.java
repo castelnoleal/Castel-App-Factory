@@ -144,6 +144,7 @@ public class MainActivity extends ComponentActivity {
     private static final int UPDATE_CHECK_HOURS = 12;
     private static final boolean PAGE_NOTIFICATIONS = false;
     private static final boolean SPLASH_BADGE = false;
+    private static final boolean PLAY_BILLING = false;
     private static final String START_URL = "__TARGET_URL__";
     // ---- End of build options ----
 
@@ -312,6 +313,7 @@ public class MainActivity extends ComponentActivity {
         offlineDataDir = new File(getFilesDir(), "offline-data");
         if (OFFLINE_STORAGE) offlineDataDir.mkdirs();
         webView.addJavascriptInterface(new OfflineStorageBridge(), "CastelApp");
+        if (PLAY_BILLING) attachPlayBilling();
 
         connectivity = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         applyCacheMode();
@@ -1120,6 +1122,38 @@ public class MainActivity extends ComponentActivity {
         runOnUiThread(() -> { if (webView != null) webView.evaluateJavascript(js, null); });
     }
 
+    // ---- Google Play Billing (only compiled in when the playBilling option is on) ----
+    private Object playBilling;
+
+    private void attachPlayBilling() {
+        try {
+            Class<?> type = Class.forName(MainActivity.class.getPackage().getName() + ".PlayBilling");
+            playBilling = type.getConstructor(MainActivity.class).newInstance(this);
+            webView.addJavascriptInterface(playBilling, "CastelBilling");
+        } catch (Throwable t) {
+            Log.w(TAG, "Play Billing isn't available in this build", t);
+        }
+    }
+
+    /** Runs a billing request only for this app's own pages, never for third-party sites opened inside it. */
+    void billingGuard(String callback, Runnable task) {
+        runOnUiThread(() -> {
+            String url = webView == null ? null : webView.getUrl();
+            String host = url == null ? null : Uri.parse(url).getHost();
+            if (!isInternalHost(host)) {
+                billingReply(callback, "{\"error\":\"Purchases are only available on this app's own pages.\"}");
+                return;
+            }
+            task.run();
+        });
+    }
+
+    void billingReply(String callback, String json) {
+        if (callback == null || !callback.matches("[A-Za-z_$][A-Za-z0-9_$]*")) return;
+        String js = "window['" + callback + "']&&window['" + callback + "'](" + org.json.JSONObject.quote(json) + ")";
+        runOnUiThread(() -> { if (webView != null) webView.evaluateJavascript(js, null); });
+    }
+
     private void showLaunchError(Throwable error) {
         TextView message = new TextView(this);
         message.setTextColor(Color.WHITE);
@@ -1622,6 +1656,9 @@ public class MainActivity extends ComponentActivity {
     @Override
     protected void onDestroy() {
         dataExecutor.shutdownNow();
+        if (playBilling instanceof java.io.Closeable) {
+            try { ((java.io.Closeable) playBilling).close(); } catch (Exception ignored) { }
+        }
         if (appUpdateManager != null && installListener != null) {
             try { appUpdateManager.unregisterListener(installListener); } catch (Exception ignored) { }
         }

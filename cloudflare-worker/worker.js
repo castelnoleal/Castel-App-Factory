@@ -7,6 +7,8 @@ async function superviseBuild(env, context = {}) {
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
 }
 
+import { handleMaster, isOwner, isOwnerSession, configStatus, adminIssue, adminRevoke } from "./owner.js";
+import { claimPlayPurchase } from "./play.js";
 import { plansPayload, createCheckout, claimCheckout, verifyLicense, resolveTier, premiumFeaturesUsed, tierRank, verifyWebhook, sessionForReference, freeBuildAllowed, PLAN_INFO } from "./billing.js";
 
 const ORIGIN = "https://create.instapped.com";
@@ -16,7 +18,7 @@ const MAX_ICON_BASE64 = 8_000_000;
 const MAX_SPLASH_BASE64 = 11_000_000;
 const CHUNK_CHARS = 800_000;
 // Re-deploy to verify the live GitHub and signing secret configuration.
-const BUILD_BRIDGE_REVISION = "instapped-premium-v1";
+const BUILD_BRIDGE_REVISION = "instapped-editions-v1";
 const SIGNING_ACCESS_HEADER = "X-Castel-Signing-Access";
 
 async function signingTokenMatches(candidate, expected) {
@@ -74,6 +76,32 @@ export default {
     if (u.pathname === "/health" && request.method === "GET") {
       return reply({ok:true,service:"instApped API",status:"online",revision:BUILD_BRIDGE_REVISION,repo:`${env.GITHUB_OWNER || "castelnoleal"}/${env.GITHUB_REPO || "instApped"}`,githubConfigured: Boolean(env.GITHUB_TOKEN && (env.GITHUB_OWNER || "castelnoleal") && (env.GITHUB_REPO || "instApped")),signingConfigured: Boolean(env.CASTEL_SIGNING_ACCESS_TOKEN),aiSupervisor: Boolean(env.OPENAI_API_KEY)});
     }
+    // ---------------- owner-only master edition (mirrors factory/index.html on main)
+    const master = await handleMaster(request, env, async () => {
+      if (!env.GITHUB_TOKEN) throw new Error("GITHUB_TOKEN is not configured");
+      const f = await getFile(env, "factory/index.html", "main");
+      const raw = atob(String(f.content || "").replace(/\n/g, ""));
+      return new TextDecoder().decode(Uint8Array.from(raw, c => c.charCodeAt(0)));
+    });
+    if (master) return master;
+    if (u.pathname.startsWith("/admin/")) {
+      const b = request.method === "POST" ? await request.json().catch(() => ({})) : {};
+      if (!(await isOwner(env, request, b.ownerToken || request.headers.get(SIGNING_ACCESS_HEADER)))) return reply({ ok: false, error: "Owner access only." }, 401);
+      try {
+        if (u.pathname === "/admin/status" && request.method === "GET") return reply({ ok: true, revision: BUILD_BRIDGE_REVISION, config: configStatus(env) });
+        if (u.pathname === "/admin/license" && request.method === "POST") return reply({ ok: true, ...(await adminIssue(env, b)) });
+        if (u.pathname === "/admin/revoke" && request.method === "POST") return reply({ ok: true, ...(await adminRevoke(env, b)) });
+      } catch (e) { return reply({ ok: false, error: e.message || "Owner action failed." }, e.status || 500); }
+      return reply({ ok: false, error: "Endpoint not found." }, 404);
+    }
+    if (u.pathname === "/license/play" && request.method === "POST") {
+      try {
+        const b = await request.json().catch(() => ({}));
+        const out = await claimPlayPurchase(env, b);
+        return reply(out, out.ok ? 200 : 409);
+      } catch (e) { return reply({ ok: false, error: e.message || "Couldn't confirm the Google Play purchase." }, e.status && (e.status < 500 || e.status === 503) ? e.status : 502); }
+    }
+
     // ---------------- plans, checkout and licenses (no GitHub token needed)
     if (u.pathname === "/plans" && request.method === "GET") return reply(plansPayload(env));
     if (u.pathname === "/checkout" && request.method === "POST") {
@@ -94,9 +122,12 @@ export default {
     }
     if (u.pathname === "/license/verify" && request.method === "POST") {
       const b = await request.json().catch(() => ({}));
-      const owner = b.ownerToken && env.CASTEL_SIGNING_ACCESS_TOKEN ? (await resolveTier(env, { ownerToken: b.ownerToken })).owner : false;
+      const owner = await isOwner(env, request, b.ownerToken);
       if (owner) return reply({ ok: true, valid: true, plan: "business", owner: true });
       const v = await verifyLicense(env.LICENSE_SECRET, b.key);
+      if (v.valid && v.ref && env.LICENSES) {
+        try { if (await env.LICENSES.get("revoked:" + v.ref)) return reply({ ok: true, valid: false, plan: "free", exp: null, expired: false, revoked: true, reason: "This license was revoked. Contact support.", name: "Free" }); } catch {}
+      }
       return reply({ ok: true, valid: v.valid, plan: v.plan || "free", exp: v.exp || null, expired: Boolean(v.expired), reason: v.valid ? "" : v.reason, name: v.plan ? PLAN_INFO[v.plan].name : "Free" });
     }
     if (u.pathname === "/webhooks/paymongo" && request.method === "POST") {
@@ -189,7 +220,8 @@ export default {
         const signingRequested = Boolean(b.signing);
         const signingAccess = String(b.signingAccessToken || request.headers.get(SIGNING_ACCESS_HEADER) || "");
         // Plan enforcement happens here, on the server, so it can't be skipped from the page.
-        const tierInfo = await resolveTier(env, { licenseKey: String(b.licenseKey || request.headers.get("X-Instapped-License") || ""), ownerToken: signingAccess });
+        const tierInfo = (await isOwnerSession(env, request)) ? { tier: "business", owner: true }
+          : await resolveTier(env, { licenseKey: String(b.licenseKey || request.headers.get("X-Instapped-License") || ""), ownerToken: signingAccess });
         const tier = tierInfo.tier;
         // Test builds publish to the shared test release, so only the owner may request them.
         if (testBuild && !tierInfo.owner) return reply({ok:false,error:"Test builds are reserved for the factory owner."},403);
@@ -207,17 +239,18 @@ export default {
         if (splashBase64.length > MAX_SPLASH_BASE64) return reply({ok:false,error:"Splash art is too large. Use an image under about 8 MB."},413);
         if (splashBase64 && !/^[A-Za-z0-9+/]*={0,2}$/.test(splashBase64)) return reply({ok:false,error:"Splash art encoding is invalid."},400);
         if (splashBase64 && !/\.(png|jpe?g|webp)$/i.test(splashFileName)) return reply({ok:false,error:"Splash art must be PNG, JPG, JPEG, or WebP."},400);
-        const premiumUsed = premiumFeaturesUsed({ signing: signingRequested, splashMode, themeColor, splashBackground, updateAlerts: Boolean(b.updateAlerts), pageNotifications: Boolean(b.pageNotifications) });
+        const premiumUsed = premiumFeaturesUsed({ signing: signingRequested, splashMode, themeColor, splashBackground, updateAlerts: Boolean(b.updateAlerts), pageNotifications: Boolean(b.pageNotifications), playBilling: Boolean(b.playBilling) });
         const blocked = premiumUsed.filter(f => tierRank(tier) < tierRank(f.minTier));
         if (blocked.length) {
           const labels = blocked.map(f => f.label);
-          return reply({ok:false, code:"upgrade_required", requiredPlan:"pro", tier, features:labels, licenseError: tierInfo.licenseError || "",
-            error: `${labels.join(", ")} ${labels.length > 1 ? "need" : "needs"} instApped Pro.${tierInfo.licenseError ? " " + tierInfo.licenseError : " Add a license key in Settings or choose a plan."}`}, 402);
+          const requiredPlan = blocked.some(f => f.minTier === "business") ? "business" : "pro";
+          return reply({ok:false, code:"upgrade_required", requiredPlan, tier, features:labels, licenseError: tierInfo.licenseError || "",
+            error: `${labels.join(", ")} ${labels.length > 1 ? "need" : "needs"} instApped ${requiredPlan === "business" ? "Business" : "Pro"}.${tierInfo.licenseError ? " " + tierInfo.licenseError : " Add a license key in Settings."}`}, 402);
         }
         const signing = signingRequested;
         if (tier === "free") {
           const quota = await freeBuildAllowed(env, request.headers.get("CF-Connecting-IP") || "unknown");
-          if (!quota.allowed) return reply({ok:false, code:"free_limit", tier, error:`The free plan includes ${quota.limit} builds a day. Upgrade to Pro for unlimited builds, or try again tomorrow.`}, 429);
+          if (!quota.allowed) return reply({ok:false, code:"free_limit", tier, error:`The free plan includes ${quota.limit} builds a day. Try again tomorrow, or use a Pro license for unlimited builds.`}, 429);
         }
         const ai = await superviseBuild(env, {sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceUrl: websiteUrl, sourceFileName, appName, packageName, versionName, versionCode, orientation: b.orientation || "unspecified", backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks)});
         const buildId = crypto.randomUUID();
@@ -231,7 +264,7 @@ export default {
         if (iconBase64) for (let i=0;i<iconBase64.length;i+=CHUNK_CHARS) iconChunks.push(iconBase64.slice(i,i+CHUNK_CHARS));
         const splashChunks = [];
         if (splashMode === "art") for (let i=0;i<splashBase64.length;i+=CHUNK_CHARS) splashChunks.push(splashBase64.slice(i,i+CHUNK_CHARS));
-        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, splashChunkCount: splashChunks.length, splashFileName: splashMode === "art" ? splashFileName : "", splashMode, splashFit, splashMinMs, splashBackground, themeColor, tier, brandBadge: tier === "free", pullToRefresh: Boolean(b.pullToRefresh), keepAwake: Boolean(b.keepAwake), allowLocation: Boolean(b.allowLocation), allowCamera: Boolean(b.allowCamera), allowMicrophone: Boolean(b.allowMicrophone), allowCleartext: Boolean(b.allowCleartext), updateAlerts: Boolean(b.updateAlerts), playUpdates: b.playUpdates !== false, updateFeedUrl, updateCheckHours, pageNotifications: Boolean(b.pageNotifications), internalHosts, userAgentSuffix, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
+        const manifest = {buildId, projectId, previousBuildId: /^[0-9a-f-]{36}$/i.test(previousBuildId) ? previousBuildId : "", appName, packageName, versionName, versionCode, sourceMode: sourceType, orientation: b.orientation || "unspecified", sourceType: sourceType === "website" ? "HTTPS website" : (sourceFileName.toLowerCase().endsWith(".zip") ? "Uploaded HTML/ZIP" : "Uploaded HTML"), sourceFileName, sourceUrl: websiteUrl, backNavigation: Boolean(b.backNavigation), zoom: Boolean(b.zoom), fullscreen: Boolean(b.fullscreen), externalLinks: Boolean(b.externalLinks), offlineStorage: Boolean(b.offlineStorage), autoUpdate: Boolean(b.autoUpdate), cacheMode: ["off","standard","offline","aggressive"].includes(String(b.cacheMode || "standard").toLowerCase()) ? String(b.cacheMode || "standard").toLowerCase() : "standard", signing, sourceChunkCount: chunks.length, iconChunkCount: iconChunks.length, iconFileName, splashChunkCount: splashChunks.length, splashFileName: splashMode === "art" ? splashFileName : "", splashMode, splashFit, splashMinMs, splashBackground, themeColor, tier, brandBadge: tier === "free", pullToRefresh: Boolean(b.pullToRefresh), keepAwake: Boolean(b.keepAwake), allowLocation: Boolean(b.allowLocation), allowCamera: Boolean(b.allowCamera), allowMicrophone: Boolean(b.allowMicrophone), allowCleartext: Boolean(b.allowCleartext), updateAlerts: Boolean(b.updateAlerts), playUpdates: b.playUpdates !== false, updateFeedUrl, updateCheckHours, pageNotifications: Boolean(b.pageNotifications), playBilling: Boolean(b.playBilling), internalHosts, userAgentSuffix, testBuild, aiSupervisor: ai.enabled ? {enabled:true,model:ai.model,reason:ai.reason} : {enabled:false,reason:ai.reason}, createdAt: new Date().toISOString()};
         await putFile(env, `${base}/manifest.json`, b64utf8(JSON.stringify(manifest,null,2)), `Queue build ${buildId} manifest`, buildBranch);
         await putFile(env, `${base}/status.json`, b64utf8(JSON.stringify({buildId,status:"queued",testBuild,aiSupervisor:manifest.aiSupervisor,updatedAt:new Date().toISOString()})), `Queue build ${buildId} status`, buildBranch);
         for (let i=0;i<chunks.length;i++) await putFile(env, `${base}/source-${String(i).padStart(4,"0")}.bin`, chunks[i], `Queue build ${buildId} source ${i+1}/${chunks.length}`, buildBranch);

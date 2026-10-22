@@ -48,6 +48,10 @@ def run_case(name, package_name, source_type, source_bytes=b"", source_file_name
         assert "com.castel.generatedapp" not in text
         assert 'Log.i("CastelAppFactory", "PAGE_LOADED:" + url);' in text
         assert "BACK_NAVIGATION" in text
+        assert "PLAY_BILLING = false;" in text
+        assert not list((output / "app" / "src").rglob("PlayBilling.java")), "Play Billing must only be compiled in when asked for"
+        assert not (output / "optional").exists()
+        assert "billingclient" not in (output / "app" / "build.gradle").read_text(encoding="utf-8")
 
         if source_type.startswith("HTTPS"):
             assert 'webView.loadUrl("https://example.com/")' in text
@@ -134,3 +138,37 @@ def option_case():
 
 option_case()
 print("Generator option checks passed")
+
+
+def billing_case():
+    """The playBilling option compiles Google Play Billing into the app (Play edition of the factory)."""
+    with tempfile.TemporaryDirectory() as td:
+        tmp = Path(td)
+        manifest = tmp / "manifest.json"
+        output = tmp / "generated"
+        manifest.write_text(json.dumps({
+            "appName": "instApped", "packageName": "com.castel.billingcheck", "versionName": "1.0.0", "versionCode": 1,
+            "sourceType": "HTTPS website", "sourceMode": "website", "sourceUrl": "https://create.instapped.com/",
+            "userAgentSuffix": "instApped-Play/billing", "playBilling": True,
+        }), encoding="utf-8")
+        env = os.environ.copy()
+        env.update(BUILD_MANIFEST=str(manifest), BUILD_OUTPUT=str(output), SOURCE_FILE="", ICON_FILE="", SPLASH_FILE="")
+        subprocess.run(["python3", str(GENERATOR)], cwd=ROOT, env=env, check=True)
+        java_root = output / "app" / "src" / "main" / "java"
+        main = next(java_root.rglob("MainActivity.java")).read_text(encoding="utf-8")
+        billing = next(java_root.rglob("PlayBilling.java")).read_text(encoding="utf-8")
+        assert "PLAY_BILLING = true;" in main and 'USER_AGENT_SUFFIX = "instApped-Play/billing";' in main
+        assert "package com.castel.billingcheck;" in billing
+        assert "implementation 'com.android.billingclient:billing:8.0.0'" in (output / "app" / "build.gradle").read_text(encoding="utf-8")
+        assert not (output / "optional").exists()
+        if os.environ.get("BILLING_BUILD", "1") != "0":
+            subprocess.run(["gradle", "-p", str(output), "lintDebug", "assembleDebug", "--no-daemon", "--stacktrace"], cwd=ROOT, check=True)
+            apk = output / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
+            with zipfile.ZipFile(apk) as z:
+                assert any(n.startswith("classes") for n in z.namelist())
+            merged = [m.read_text(encoding="utf-8") for m in (output / "app" / "build" / "intermediates").rglob("AndroidManifest.xml") if "merged_manifest" in str(m)]
+            assert merged and any("com.android.vending.BILLING" in m for m in merged), "BILLING permission missing from the merged manifest"
+
+
+billing_case()
+print("Generator option and Play Billing checks passed.")
