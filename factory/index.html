@@ -697,7 +697,7 @@ $("#gBump").onchange=e=>{G.bumpCode=e.target.checked;save(KEY.g,G)};
 matchMedia("(prefers-color-scheme:dark)").addEventListener("change",applyG);
 
 /* ============ NAVIGATION ============ */
-function view(v){if(v==="plans"){if(EDITION!=="play-lite")return openPlans();v="settings"}if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();scrollTo(0,0)}
+function view(v){if(v==="plans"){if(EDITION!=="play-lite")return openPlans();v="settings"}if(v==="owner"&&EDITION!=="master")v="create";$$(".view").forEach(e=>e.classList.toggle("on",e.id==="v-"+v));$$("nav button").forEach(b=>b.classList.toggle("on",b.dataset.view===v));if(v==="projects")renderProjects();if(v==="settings")renderAdSettings();if(v==="owner")ownerStatus();curView=v;navSync();scrollTo(0,0)}
 $$("nav button").forEach(b=>b.onclick=()=>view(b.dataset.view));
 function go(n){
   step=Math.max(0,Math.min(STEPS.length-1,n));
@@ -708,6 +708,7 @@ function go(n){
   $("#next").style.display=step===STEPS.length-1?"none":"";
   if(step===4)preview(true);
   if(step===5)runCheck();
+  navSync();
   paintStepBadges();
   const a=$("#steps .on");a&&a.scrollIntoView({inline:"center",block:"nearest"});
 }
@@ -939,6 +940,7 @@ function setPanel(on){
   $("#pvOpen").classList.toggle("on",on);$("#pvOpen").setAttribute("aria-expanded",String(on));
   placeStage();pvKey="";if(on||step===4)preview(true);
   if(on){renderPanelChecks();$("#pvClose").focus()}
+  navSync();
 }
 $("#pvOpen").onclick=()=>setPanel(!pvOpen);
 $("#pvClose").onclick=$("#pvDim").onclick=$("#pvBack").onclick=()=>setPanel(false);
@@ -1421,7 +1423,7 @@ function openPlans(min="",feature=""){
 function closePlans(){const d=$("#plansDlg");if(d.open)d.close()}
 $("#plansClose").onclick=closePlans;
 $("#plansDlg").addEventListener("click",e=>{if(e.target===e.currentTarget)closePlans()});
-$("#plansDlg").addEventListener("close",()=>{PLAN_NEED="";$("#plansWhy").hidden=true;if(location.hash==="#plans")history.replaceState(null,"",location.pathname+location.search)});
+$("#plansDlg").addEventListener("close",()=>{PLAN_NEED="";$("#plansWhy").hidden=true});
 function upgrade(feature,min="pro"){
   if(EDITION!=="play-lite")return openPlans(min,feature);
   const plan=PLANS.plans.find(p=>p.id===min)||FALLBACK_PLANS.plans[1];
@@ -1766,6 +1768,55 @@ $("#kitZip").onclick=async()=>{
   }catch(e){toast("Couldn't build the kit: "+e.message)}finally{b.disabled=false}
 };
 
+/* ============ BACK BUTTON ============ */
+// Every page, create step, pop-up and the preview panel gets its own history entry, so the
+// phone's back button (and the Android app's back key) steps back inside the factory:
+// it closes the open pop-up or panel first, then returns to the previous step or page,
+// and only leaves the factory from the first screen.
+let curView="create",navReady=false,navApplying=false,navQueued=false;
+const NAV_LAYERS=["okDlg","plansDlg","upDlg","pv"]; // top-most first
+const layerOpen=id=>id==="pv"?pvOpen:!!$("#"+id)?.open;
+const navTop=()=>NAV_LAYERS.find(layerOpen)||"";
+const navNow=()=>({ia:1,v:curView,s:step,o:navTop()});
+const navUrl=()=>location.pathname+location.search;
+const sameNav=(a,b)=>a&&b&&a.ia&&a.v===b.v&&a.s===b.s&&a.o===b.o;
+function navSync(){
+  if(!navReady||navApplying||navQueued)return;
+  navQueued=true;
+  queueMicrotask(()=>{
+    navQueued=false;
+    if(navApplying)return;
+    const want=navNow(),cur=history.state;
+    if(sameNav(cur,want))return;
+    if(cur&&cur.ia&&cur.o&&!layerOpen(cur.o)){
+      // The pop-up on top of the history was closed with its own button, Escape or a tap outside.
+      if(cur.v===want.v&&cur.s===want.s&&!want.o)return history.back();
+      return history.replaceState(want,"",navUrl());
+    }
+    history.pushState(want,"",navUrl());
+  });
+}
+addEventListener("popstate",e=>{
+  const st=e.state;
+  if(!st||!st.ia)return; // a #link entry; hashchange handles it
+  navApplying=true;
+  try{
+    for(const id of NAV_LAYERS)if(layerOpen(id)&&id!==st.o)id==="pv"?setPanel(false):$("#"+id).close();
+    if(st.v!==curView)view(st.v);
+    if(st.v==="create"&&st.s!==step)go(st.s);
+    // Going forward into a pop-up that's no longer open: keep the page, drop the pop-up.
+    if(st.o&&!layerOpen(st.o))history.replaceState({...st,o:""},"",navUrl());
+  }finally{navApplying=false}
+});
+// Dialogs opened or closed anywhere (including Escape and taps outside) keep history in step.
+const navObserver=new MutationObserver(navSync);
+["okDlg","plansDlg","upDlg"].forEach(id=>navObserver.observe($("#"+id),{attributes:true,attributeFilter:["open"]}));
+function navStart(){
+  history.replaceState({ia:1,v:curView,s:step,o:""},"",navUrl());
+  navReady=true;
+  if(navTop())navSync();
+}
+
 /* ============ INIT ============ */
 addEventListener("online",()=>scheduleCheck());
 addEventListener("offline",()=>toast("You're offline. Editing still works; building needs a connection."));
@@ -1782,9 +1833,16 @@ addEventListener("offline",()=>toast("You're offline. Editing still works; build
   go(0);
   if(location.hash==="#plans"&&EDITION!=="play-lite")view("plans");
   if(location.hash==="#owner"&&EDITION==="master")view("owner");
-  if(!IS_PLAY)handlePurchaseReturn();
+  const wantPlans=location.hash==="#plans"&&EDITION!=="play-lite",wantOwner=location.hash==="#owner"&&EDITION==="master",purchase=/^#purchase=/.test(location.hash);
+  if(!purchase)navStart();
+  if(wantOwner)view("owner");
+  if(wantPlans)view("plans");
+  if(!IS_PLAY&&purchase){await handlePurchaseReturn();navStart()}
 })();
-addEventListener("hashchange",()=>{if(location.hash==="#plans")view("plans");else if(/^#purchase=/.test(location.hash))handlePurchaseReturn()});
+addEventListener("hashchange",()=>{
+  if(location.hash==="#plans"){if(navReady)history.replaceState({ia:1,v:curView,s:step,o:""},"",navUrl());view("plans")}
+  else if(/^#purchase=/.test(location.hash))handlePurchaseReturn();
+});
 </script>
 </body>
 </html>
