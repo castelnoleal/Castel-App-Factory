@@ -7,9 +7,9 @@ async function superviseBuild(env, context = {}) {
   return { enabled: true, model: "configured-supervisor", reason: `Advisory supervision enabled for ${String(context.sourceType || "unknown")}` };
 }
 
-import { handleMaster, isOwner, isOwnerSession, configStatus, adminIssue, adminRevoke } from "./owner.js";
+import { handleMaster, isOwner, isOwnerSession, configStatus, adminIssue, adminRevoke, listLicenses } from "./owner.js";
 import { claimPlayPurchase } from "./play.js";
-import { listBuilds, describeBranches, deleteBuilds } from "./cleanup.js";
+import { listBuilds, describeBranches, deleteBuilds, deleteReleases, listArtifacts, deleteArtifacts, listBranches, deleteBranches, activity } from "./cleanup.js";
 import { plansPayload, createCheckout, claimCheckout, verifyLicense, resolveTier, premiumFeaturesUsed, tierRank, verifyWebhook, sessionForReference, freeBuildAllowed, PLAN_INFO } from "./billing.js";
 
 const ORIGIN = "https://create.instapped.com";
@@ -128,6 +128,13 @@ export default {
         if (u.pathname === "/admin/builds" && request.method === "GET") return reply({ ok: true, ...(await listBuilds(env, gh, { page: u.searchParams.get("page") })) });
         if (u.pathname === "/admin/builds/describe" && request.method === "POST") return reply({ ok: true, builds: await describeBranches(env, gh, b.ids) });
         if (u.pathname === "/admin/builds/delete" && request.method === "POST") return reply({ ok: true, ...(await deleteBuilds(env, gh, b.ids)) });
+        if (u.pathname === "/admin/releases/delete" && request.method === "POST") return reply({ ok: true, ...(await deleteReleases(env, gh, b.tags)) });
+        if (u.pathname === "/admin/artifacts" && request.method === "GET") return reply({ ok: true, ...(await listArtifacts(env, gh)) });
+        if (u.pathname === "/admin/artifacts/delete" && request.method === "POST") return reply({ ok: true, ...(await deleteArtifacts(env, gh, b.ids)) });
+        if (u.pathname === "/admin/branches" && request.method === "GET") return reply({ ok: true, ...(await listBranches(env, gh)) });
+        if (u.pathname === "/admin/branches/delete" && request.method === "POST") return reply({ ok: true, ...(await deleteBranches(env, gh, b.names)) });
+        if (u.pathname === "/admin/activity" && request.method === "GET") return reply({ ok: true, ...(await activity(env, gh)) });
+        if (u.pathname === "/admin/licenses" && request.method === "GET") return reply({ ok: true, ...(await listLicenses(env)) });
       } catch (e) { return reply({ ok: false, error: e.message || "Owner action failed." }, e.status || 500); }
       return reply({ ok: false, error: "Endpoint not found." }, 404);
     }

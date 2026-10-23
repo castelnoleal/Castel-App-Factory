@@ -178,3 +178,32 @@ export async function adminRevoke(env, { ref }) {
   await env.LICENSES.put("revoked:" + r, String(Date.now()));
   return { revoked: r };
 }
+
+function decodeKeyPayload(key) {
+  try {
+    const part = String(key || "").split(".")[1] || "";
+    const raw = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(raw, (c) => c.charCodeAt(0))));
+  } catch { return null; }
+}
+
+/** Licenses on record: website sales, Google Play sales, complimentary keys, and revoked references. */
+export async function listLicenses(env) {
+  if (!env.LICENSES) return { available: false, sales: [], play: [], complimentary: [], revoked: [] };
+  const read = async (prefix, limit = 60) => {
+    const out = [];
+    try {
+      const l = await env.LICENSES.list({ prefix, limit });
+      for (const k of l.keys || []) out.push({ key: k.name.slice(prefix.length), value: await env.LICENSES.get(k.name) });
+    } catch {}
+    return out;
+  };
+  const revokedRows = await read("revoked:", 200);
+  const revokedSet = new Set(revokedRows.map((r) => r.key));
+  const sales = (await read("session:")).map(({ key, value }) => { const p = decodeKeyPayload(value) || {}; return { source: "website", ref: p.ref || key, plan: p.plan || "", exp: p.exp || 0, revoked: revokedSet.has(p.ref || key) }; });
+  const play = (await read("play:")).map(({ value }) => { let p = {}; try { p = JSON.parse(value); } catch {} return { source: "google-play", ref: p.ref || "", plan: p.plan || "", exp: (p.expiry || 0) + 86400000, revoked: revokedSet.has(p.ref || "") }; });
+  const complimentary = (await read("issued:")).map(({ key, value }) => { let p = {}; try { p = JSON.parse(value); } catch {} return { source: "complimentary", ref: key, plan: p.plan || "", exp: p.exp || 0, note: p.note || "", issuedAt: p.at || 0, revoked: revokedSet.has(key) }; });
+  const revoked = revokedRows.map(({ key, value }) => ({ ref: key, at: Number(value) || 0 }));
+  const byExp = (a, b) => (b.exp || 0) - (a.exp || 0);
+  return { available: true, sales: sales.sort(byExp), play: play.sort(byExp), complimentary: complimentary.sort(byExp), revoked };
+}

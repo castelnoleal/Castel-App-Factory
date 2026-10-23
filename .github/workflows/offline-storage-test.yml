@@ -7,7 +7,6 @@ on:
       - '.github/workflows/offline-storage-test.yml'
       - 'android-template/**'
       - 'scripts/generate-app.py'
-      - 'offline-test/payload.txt'
       - 'scripts/ci/offline-emulator.sh'
   workflow_dispatch:
 
