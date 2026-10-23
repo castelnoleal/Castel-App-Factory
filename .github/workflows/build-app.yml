@@ -359,6 +359,8 @@ jobs:
         with:
           name: app-${{ inputs.build_id }}
           if-no-files-found: error
+          # Files also live in the build's release; keep this copy briefly so it doesn't use Actions storage.
+          retention-days: 2
           path: |
             ${{ env.APK_NAMED }}
             ${{ env.AAB_NAMED }}
