@@ -22,13 +22,16 @@ body{font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;backgrou
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--a);outline-offset:2px}
-.app{display:grid;grid-template-rows:auto 1fr;min-height:100vh;min-height:100dvh}
+.app{display:grid;grid-template-rows:auto 1fr;grid-template-columns:minmax(0,1fr);min-height:100vh;min-height:100dvh}
 header{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:14px 24px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--s);border-bottom:1px solid var(--b)}
 .logo{width:34px;height:34px;border-radius:9px;background:var(--p);display:grid;place-items:center;flex:none;font-size:21px;line-height:1}
 .logo svg{width:20px;height:20px;fill:none;stroke:var(--pt);stroke-width:1.8;stroke-linejoin:round}
 header h1{font-size:17px;letter-spacing:-.01em}
 header p{font-size:12.5px;color:var(--m)}
-.pill{margin-left:auto;font-size:12.5px;padding:4px 10px;border-radius:99px;background:var(--s2);color:var(--m);white-space:nowrap}
+.pill{margin-left:auto;font-size:12.5px;padding:4px 10px;border-radius:99px;background:var(--s2);color:var(--m);white-space:nowrap;min-width:0;flex:0 1 auto;overflow:hidden;text-overflow:ellipsis}
+header>*{min-width:0}header>.logo,header>.logo+div,header>.planchip,header>.hbtn{flex:none}
+/* Never let one long line (an error, a URL, a build ID) widen the page and make phones zoom out. */
+html,body{overflow-x:clip;max-width:100%}.log>div,.toast,.pwhy,.chk small{overflow-wrap:anywhere}
 .pill.ok{color:var(--ok)}.pill.run{color:var(--w)}.pill.err{color:var(--e)}
 .shell{display:grid;grid-template-columns:220px minmax(0,1fr);min-width:0}
 nav{padding:16px 12px;border-right:1px solid var(--b);display:flex;flex-direction:column;gap:4px;background:var(--s);position:sticky;top:64px;align-self:start;height:calc(100vh - 64px);height:calc(100dvh - 64px)}
@@ -100,7 +103,7 @@ label.f input:focus,.inp:focus{border-color:var(--a);outline:0;box-shadow:0 0 0 
 .prog{height:6px;background:var(--s2);border-radius:6px;overflow:hidden;margin-top:12px;display:none}
 .prog div{height:100%;width:0;background:var(--a);transition:width .4s}
 .dl{display:none;gap:10px;margin-top:14px;flex-wrap:wrap}
-.pc{display:flex;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--b)}
+.pc{display:flex;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--b)}.pc>*{min-width:0}.pc small,.pc .meta{overflow-wrap:anywhere}
 .pc:first-child{border-top:0}
 .pc img,.pc .ph{width:48px;height:48px;border-radius:11px;background:var(--s2);object-fit:cover;flex:none}
 .pc div.i{flex:1;min-width:0}
@@ -111,7 +114,7 @@ label.f input:focus,.inp:focus{border-color:var(--a);outline:0;box-shadow:0 0 0 
 .tag.ok{color:var(--ok)}.tag.err{color:var(--e)}
 .soon{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--b);color:var(--m)}
 .soon:first-of-type{border-top:0}
-.toast{position:fixed;left:50%;bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--t);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:50}
+.toast{position:fixed;left:50%;max-width:calc(100vw - 32px);bottom:calc(var(--nav) + 18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--t);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:.2s;z-index:50}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .row{cursor:pointer}
 .view:not(#v-create){max-width:720px}
@@ -1767,6 +1770,10 @@ $("#kitZip").onclick=async()=>{
     dl(fileSlug()+"-publishing-kit.zip",makeZip(files));toast("Publishing kit downloaded");
   }catch(e){toast("Couldn't build the kit: "+e.message)}finally{b.disabled=false}
 };
+
+/* The header status is shortened with "…" on small screens; keep the full text as its tooltip. */
+new MutationObserver(()=>{const st=$("#status");st.title=st.textContent}).observe($("#status"),{childList:true,characterData:true,subtree:true});
+$("#status").addEventListener("click",()=>{const st=$("#status");if(st.scrollWidth>st.clientWidth)toast(st.textContent)});
 
 /* ============ BACK BUTTON ============ */
 // Every page, create step, pop-up and the preview panel gets its own history entry, so the

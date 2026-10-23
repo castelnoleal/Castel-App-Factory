@@ -232,3 +232,52 @@ test("/license/verify reports revoked keys as invalid", async () => {
   assert.equal(v.valid, false);
   assert.equal(v.revoked, true);
 });
+
+// ------------------------------------------------- builds GitHub never ran
+
+function stalledBuild(id, { run, jobs, annotations, ageMs = 5 * 60000 }) {
+  const status = { buildId: id, status: "queued", updatedAt: new Date(Date.now() - ageMs).toISOString() };
+  const prev = globalThis.fetch;
+  globalThis.fetch = async (url, opt) => {
+    url = String(url);
+    if (url.includes(`/contents/build-inputs/${id}/status.json`)) return new Response(JSON.stringify({ content: Buffer.from(JSON.stringify(status)).toString("base64") }), { status: 200 });
+    if (url.includes(`/actions/runs?branch=build-${id}`)) return new Response(JSON.stringify({ workflow_runs: run ? [run] : [] }), { status: 200 });
+    if (run && url.endsWith(`/actions/runs/${run.id}/jobs`)) return new Response(JSON.stringify({ jobs }), { status: 200 });
+    if (url.includes("/check-runs/") && url.endsWith("/annotations")) return new Response(JSON.stringify(annotations || []), { status: 200 });
+    return prev(url, opt);
+  };
+}
+
+test("a build GitHub refused to start for billing reasons is reported as failed with the reason", async () => {
+  const id = "846d760b-6b59-48bf-8fcb-837bd331e820";
+  stalledBuild(id, {
+    run: { id: 39901377592, name: "Build Generated App", status: "completed", conclusion: "failure", html_url: "https://github.com/o/r/actions/runs/39901377592" },
+    jobs: [{ id: 120243509390, steps: [] }],
+    annotations: [{ message: "The job was not started because recent account payments have failed or your spending limit needs to be increased. Please check the 'Billing & plans' section in your settings" }],
+  });
+  const d = await (await req(`/build/${id}`)).json();
+  assert.equal(d.status, "failed");
+  assert.equal(d.code, "github_billing");
+  assert.match(d.error, /billing problem on the GitHub account/);
+  assert.match(d.runUrl, /39901377592/);
+});
+
+test("a build that failed on GitHub without updating its status is reported as failed", async () => {
+  const id = "909dd599-f123-4aba-b3a0-ffc66b68dbd8";
+  stalledBuild(id, { run: { id: 5, name: "Build Generated App", status: "completed", conclusion: "failure", html_url: "u" }, jobs: [{ id: 6, steps: [{ name: "Checkout" }] }], annotations: [{ message: "Process completed with exit code 1." }] });
+  const d = await (await req(`/build/${id}`)).json();
+  assert.equal(d.status, "failed");
+  assert.match(d.error, /exit code 1/);
+});
+
+test("a queued build that's still running on GitHub, or only just queued, stays queued", async () => {
+  const id = "11111111-2222-3333-4444-555555555555";
+  stalledBuild(id, { run: { id: 7, name: "Build Generated App", status: "in_progress", conclusion: null } });
+  assert.equal((await (await req(`/build/${id}`)).json()).status, "queued");
+  stalledBuild(id, { run: null, ageMs: 2 * 60000 });
+  assert.equal((await (await req(`/build/${id}`)).json()).status, "queued");
+  stalledBuild(id, { run: null, ageMs: 15 * 60000 });
+  const d = await (await req(`/build/${id}`)).json();
+  assert.equal(d.status, "failed");
+  assert.equal(d.code, "not_started");
+});
