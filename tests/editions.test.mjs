@@ -281,3 +281,76 @@ test("a queued build that's still running on GitHub, or only just queued, stays 
   assert.equal(d.status, "failed");
   assert.equal(d.code, "not_started");
 });
+
+// ------------------------------------------------------- builds cleanup
+
+function fakeGitHub() {
+  const ids = ["aaaaaaaa-0000-0000-0000-000000000001", "aaaaaaaa-0000-0000-0000-000000000002", "aaaaaaaa-0000-0000-0000-000000000003"];
+  const gh = {
+    releases: [
+      { id: 11, tag_name: "build-" + ids[0], created_at: "2026-10-22T10:00:00Z", assets: [{ size: 3000000 }, { size: 3500000 }] },
+      { id: 12, tag_name: "build-" + ids[1], created_at: "2026-10-12T10:00:00Z", assets: [{ size: 4900000 }] },
+      { id: 13, tag_name: "test-latest", created_at: "2026-08-28T10:00:00Z", assets: [{ size: 4000000 }] },
+    ],
+    branches: ["main", "build-" + ids[0], "build-" + ids[1], "build-" + ids[2]],
+    manifests: { [ids[0]]: { packageName: "com.duelsynapse.kodex", appName: "Meiocg KodeX", versionName: "1.0.3", versionCode: 3 }, [ids[1]]: { packageName: "com.duelsynapse.kodex", appName: "Meiocg KodeX", versionName: "1.1.0", versionCode: 2 }, [ids[2]]: { packageName: "com.duelsynapse.kodex", appName: "Meiocg KodeX", versionName: "1.0.3", versionCode: 3 } },
+    deleted: [], ids,
+  };
+  const prev = globalThis.fetch;
+  globalThis.fetch = async (url, opt = {}) => {
+    url = String(url);
+    const json = (d, s = 200) => new Response(d == null ? "" : JSON.stringify(d), { status: s });
+    if (!url.startsWith("https://api.github.com")) return prev(url, opt);
+    const path = url.replace("https://api.github.com/repos/o/r", "");
+    if (opt.method === "DELETE") { gh.deleted.push(path); return new Response(null, { status: 204 }); }
+    if (path.startsWith("/releases?")) { const page = Number(new URL(url).searchParams.get("page")); return json(page === 1 ? gh.releases : []); }
+    if (path.startsWith("/releases/tags/")) { const r = gh.releases.find(x => x.tag_name === path.split("/").pop()); return r ? json(r) : json({ message: "Not Found" }, 404); }
+    if (path.startsWith("/branches?")) return json(gh.branches.map(name => ({ name })));
+    const m = path.match(/^\/contents\/build-inputs\/([0-9a-f-]+)\/manifest\.json/);
+    if (m) return gh.manifests[m[1]] ? json({ content: Buffer.from(JSON.stringify(gh.manifests[m[1]])).toString("base64") }) : json({ message: "Not Found" }, 404);
+    if (path.startsWith("/actions/artifacts?")) return json({ artifacts: [{ id: 99 }] });
+    return json({ message: "Not Found" }, 404);
+  };
+  return gh;
+}
+
+test("owner can list builds with app details, including failed builds that have no release", async () => {
+  const gh = fakeGitHub();
+  assert.equal((await req("/admin/builds")).status, 401, "owner only");
+  const cookie = await login();
+  const d = await (await req("/admin/builds?page=1", { headers: { Cookie: cookie } })).json();
+  assert.equal(d.done, true);
+  assert.equal(d.builds.length, 3);
+  assert.equal(d.builds[0].packageName, "com.duelsynapse.kodex");
+  assert.equal(d.builds[0].versionName, "1.0.3");
+  assert.equal(d.builds[0].size, 6500000);
+  assert.equal(d.builds[2].special, true, "test-latest isn't a deletable build");
+  assert.deepEqual(d.branchIds, gh.ids);
+  const orphans = await (await req("/admin/builds/describe", { method: "POST", headers: { Cookie: cookie }, body: { ids: [gh.ids[2]] } })).json();
+  assert.equal(orphans.builds[0].hasRelease, false);
+  assert.equal(orphans.builds[0].appName, "Meiocg KodeX");
+});
+
+test("deleting a build removes its release, tag, branch and artifact, and nothing else", async () => {
+  const gh = fakeGitHub();
+  const cookie = await login();
+  const d = await (await req("/admin/builds/delete", { method: "POST", headers: { Cookie: cookie }, body: { ids: [gh.ids[1]] } })).json();
+  assert.equal(d.ok, true);
+  assert.deepEqual(d.results[0], { id: gh.ids[1], release: true, tag: true, branch: true, artifacts: 1, errors: [] });
+  assert.deepEqual(gh.deleted.sort(), ["/actions/artifacts/99", "/git/refs/heads/build-" + gh.ids[1], "/git/refs/tags/build-" + gh.ids[1], "/releases/12"].sort());
+  // A build with no release (failed) still has its branch removed.
+  gh.deleted.length = 0;
+  const f = await (await req("/admin/builds/delete", { method: "POST", headers: { Cookie: cookie }, body: { ids: [gh.ids[2]] } })).json();
+  assert.equal(f.results[0].branch, true);
+  assert.equal(f.results[0].release, false);
+  assert.deepEqual(f.results[0].errors, []);
+});
+
+test("build deletion refuses non-builds, too many at once, and non-owners", async () => {
+  fakeGitHub();
+  const cookie = await login();
+  for (const ids of [[], ["main"], ["test-latest"], Array.from({ length: 7 }, (_, i) => `aaaaaaaa-0000-0000-0000-00000000001${i}`)]) {
+    assert.equal((await req("/admin/builds/delete", { method: "POST", headers: { Cookie: cookie }, body: { ids } })).status, 400, JSON.stringify(ids));
+  }
+  assert.equal((await req("/admin/builds/delete", { method: "POST", body: { ids: ["aaaaaaaa-0000-0000-0000-000000000001"] } })).status, 401);
+});

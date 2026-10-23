@@ -9,6 +9,7 @@ async function superviseBuild(env, context = {}) {
 
 import { handleMaster, isOwner, isOwnerSession, configStatus, adminIssue, adminRevoke } from "./owner.js";
 import { claimPlayPurchase } from "./play.js";
+import { listBuilds, describeBranches, deleteBuilds } from "./cleanup.js";
 import { plansPayload, createCheckout, claimCheckout, verifyLicense, resolveTier, premiumFeaturesUsed, tierRank, verifyWebhook, sessionForReference, freeBuildAllowed, PLAN_INFO } from "./billing.js";
 
 const ORIGIN = "https://create.instapped.com";
@@ -124,6 +125,9 @@ export default {
         if (u.pathname === "/admin/status" && request.method === "GET") return reply({ ok: true, revision: BUILD_BRIDGE_REVISION, config: configStatus(env) });
         if (u.pathname === "/admin/license" && request.method === "POST") return reply({ ok: true, ...(await adminIssue(env, b)) });
         if (u.pathname === "/admin/revoke" && request.method === "POST") return reply({ ok: true, ...(await adminRevoke(env, b)) });
+        if (u.pathname === "/admin/builds" && request.method === "GET") return reply({ ok: true, ...(await listBuilds(env, gh, { page: u.searchParams.get("page") })) });
+        if (u.pathname === "/admin/builds/describe" && request.method === "POST") return reply({ ok: true, builds: await describeBranches(env, gh, b.ids) });
+        if (u.pathname === "/admin/builds/delete" && request.method === "POST") return reply({ ok: true, ...(await deleteBuilds(env, gh, b.ids)) });
       } catch (e) { return reply({ ok: false, error: e.message || "Owner action failed." }, e.status || 500); }
       return reply({ ok: false, error: "Endpoint not found." }, 404);
     }

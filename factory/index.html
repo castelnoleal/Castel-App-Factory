@@ -203,6 +203,10 @@ h2{font-size:24px}
 .planchip.master{background:#e0b050;border-color:#e0b050;color:#1a1405}
 body.ed-lite .buyonly,body.ed-play .pm,body:not(.ed-billing) .gp,body:not(.ed-master) .mo,body.ed-master .nomaster{display:none!important}
 .ostat{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:4px 0 2px}.ostat div{border:1px solid var(--b);border-radius:10px;padding:9px 11px;font-size:13.5px;display:flex;justify-content:space-between;gap:8px}.ostat b{font-weight:700}.ostat .y{color:var(--ok,#3fb27f)}.ostat .n{color:var(--err,#e06c75)}
+.bsel{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:14px 0 8px;font-size:13.5px;color:var(--m)}
+.bgrp{border:1px solid var(--b);border-radius:12px;margin:10px 0;overflow:hidden}.bgrp>label{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--s2);font-weight:700;font-size:14px}.bgrp>label small{font-weight:400;color:var(--m);overflow-wrap:anywhere}
+.brow{display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--b);font-size:13.5px}.brow span{flex:1;min-width:0;overflow-wrap:anywhere}.brow small{color:var(--m)}.brow i{font-style:normal;font-size:11px;font-weight:700;border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:6px}.brow i.new{color:var(--a)}.brow i.bad{color:var(--err,#d0473e)}
+.bfoot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:0;background:var(--s);padding:8px 0}.bfoot p{font-size:13.5px;color:var(--m)}
 .okey{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
 .prochip{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--a);border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:6px;vertical-align:2px;white-space:nowrap}
 .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:14px 0}
@@ -500,6 +504,13 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
     <label class="f">License key or reference<input class="inp" id="oRef" spellcheck="false" autocapitalize="none" placeholder="IAL1.… or reference"></label>
     <p style="font-size:13px;color:var(--m)" id="oInfo"></p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" id="oLook">Look up</button><button class="btn sm dng" id="oRevoke">Revoke</button></div></div>
+  <div class="card" id="bCard"><h3>Builds and storage</h3><p class="h">Each build keeps its APK/AAB download, the uploaded source and a build copy on GitHub. Delete old builds you no longer need. Deleting can't be undone.</p>
+    <button class="btn" id="bLoad">Load builds</button>
+    <div id="bTools" hidden>
+      <p class="bsel">Select: <button class="btn sm" data-bsel="kodex">Old KodeX versions</button><button class="btn sm" data-bsel="old">Old versions of every app</button><button class="btn sm" data-bsel="none">Clear</button></p>
+      <div id="bList"></div>
+      <div class="bfoot"><p id="bSum" aria-live="polite">Nothing selected.</p><button class="btn dng" id="bDelete" disabled>Delete selected</button></div>
+    </div></div>
   <div class="card"><h3>Your projects</h3><p class="h">The master edition keeps its own project list. To bring projects over from create.instapped.com, export them there (Settings → Backup) and import them here.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="https://create.instapped.com/" target="_blank" rel="noopener">Open the public factory</a><a class="btn sm" href="/master/logout">Sign out</a></div></div>
 </section>
@@ -1644,6 +1655,80 @@ $("#oLook").onclick=()=>{const k=decodeKey($("#oRef").value);
 $("#oRevoke").onclick=async()=>{const ref=refOf($("#oRef").value);if(!ref)return toast("Paste a license key or reference first.");
   if(!confirm("Revoke "+ref+"? Keys with this reference stop unlocking builds."))return;
   try{await ownerApi("/admin/revoke",{ref});$("#oInfo").textContent="Revoked "+ref+".";toast("License revoked")}catch(e){toast(e.message)}};
+
+/* --- Owner tools: builds and storage --- */
+let BUILDS=[];
+const KODEX=/kodex/i;
+const mb=n=>(n/1048576).toFixed(1)+" MB";
+function buildGroups(){
+  const g=new Map();
+  for(const b of BUILDS){const k=b.special?"(other)":b.packageName||"(unknown app)";if(!g.has(k))g.set(k,[]);g.get(k).push(b)}
+  for(const list of g.values())list.sort((a,b)=>Date.parse(b.createdAt||0)-Date.parse(a.createdAt||0)||(b.versionCode-a.versionCode));
+  return [...g.entries()].sort((a,b)=>Date.parse(b[1][0].createdAt||0)-Date.parse(a[1][0].createdAt||0));
+}
+/** The build kept by "old versions" presets: the newest one that has downloads. */
+const newestOf=list=>list.find(b=>b.hasRelease&&!b.special);
+function renderBuilds(){
+  const box=$("#bList");
+  box.innerHTML=buildGroups().map(([pkg,list])=>{
+    const keep=newestOf(list),name=(list.find(b=>b.appName)||{}).appName||pkg;
+    return `<div class="bgrp" data-pkg="${esc(pkg)}"><label><input type="checkbox" data-bgrp="${esc(pkg)}"><span>${esc(name)} <small>${esc(pkg)} · ${list.length} build${list.length>1?"s":""} · ${mb(list.reduce((s,b)=>s+b.size,0))}</small></span></label>
+      ${list.map(b=>`<label class="brow"><input type="checkbox" data-bid="${esc(b.id)}" ${b.special?"disabled":""}><span>${b.special?esc(b.name):"v"+esc(b.versionName||"?")+" ("+esc(b.versionCode||"?")+")"}${b===keep?'<i class="new">Newest</i>':""}${!b.hasRelease?'<i class="bad">Failed or unfinished</i>':""}${b.testBuild?"<i>Test</i>":""}<br><small>${b.createdAt?fmtDate(b.createdAt):"date unknown"}${b.size?" · "+mb(b.size):""}${b.appName&&b.appName!==name?" · "+esc(b.appName):""}</small></span></label>`).join("")}</div>`;
+  }).join("")||'<p class="h">No builds found.</p>';
+  updateBuildSum();
+}
+function selectedBuilds(){return $$("#bList [data-bid]:checked").map(c=>BUILDS.find(b=>b.id===c.dataset.bid)).filter(Boolean)}
+function updateBuildSum(){
+  const sel=selectedBuilds();
+  $$("#bList [data-bgrp]").forEach(g=>{const rows=$$(`#bList .bgrp[data-pkg="${CSS.escape(g.dataset.bgrp)}"] [data-bid]:not(:disabled)`);const n=rows.filter(r=>r.checked).length;g.checked=rows.length>0&&n===rows.length;g.indeterminate=n>0&&n<rows.length});
+  $("#bSum").textContent=sel.length?`${sel.length} build${sel.length>1?"s":""} selected · ${mb(sel.reduce((s,b)=>s+b.size,0))}`:"Nothing selected.";
+  $("#bDelete").disabled=!sel.length;
+}
+function presetBuilds(kind){
+  const pick=new Set();
+  if(kind!=="none")for(const [pkg,list] of buildGroups()){
+    if(kind==="kodex"&&!list.some(b=>KODEX.test(pkg)||KODEX.test(b.appName||"")))continue;
+    const keep=newestOf(list);
+    for(const b of list)if(!b.special&&b!==keep)pick.add(b.id);
+  }
+  $$("#bList [data-bid]").forEach(c=>{c.checked=pick.has(c.dataset.bid)});
+  updateBuildSum();
+}
+$("#bLoad").onclick=async()=>{
+  const btn=$("#bLoad");btn.disabled=true;BUILDS=[];
+  try{
+    let page=1,branchIds=[];
+    for(;page<=50;page++){btn.textContent="Loading builds… "+BUILDS.length;const d=await ownerApi("/admin/builds?page="+page);BUILDS.push(...d.builds);if(d.done){branchIds=d.branchIds||[];break}}
+    const known=new Set(BUILDS.map(b=>b.id)),orphans=branchIds.filter(id=>!known.has(id));
+    for(let i=0;i<orphans.length;i+=20){btn.textContent="Loading builds… "+BUILDS.length;const d=await ownerApi("/admin/builds/describe",{ids:orphans.slice(i,i+20)});BUILDS.push(...d.builds)}
+    $("#bTools").hidden=false;renderBuilds();btn.textContent="Reload builds";
+  }catch(e){toast(e.message);btn.textContent="Load builds"}finally{btn.disabled=false}
+};
+$("#bList").addEventListener("change",e=>{
+  const g=e.target.closest("[data-bgrp]");
+  if(g)$$(`#bList .bgrp[data-pkg="${CSS.escape(g.dataset.bgrp)}"] [data-bid]:not(:disabled)`).forEach(c=>{c.checked=g.checked});
+  updateBuildSum();
+});
+$$("[data-bsel]").forEach(b=>b.onclick=()=>presetBuilds(b.dataset.bsel));
+$("#bDelete").onclick=async()=>{
+  const sel=selectedBuilds();if(!sel.length)return;
+  const newest=sel.filter(b=>{const list=BUILDS.filter(x=>(x.packageName||"")===(b.packageName||""));return newestOf(list)===b});
+  const msg=`Delete ${sel.length} build${sel.length>1?"s":""} (${mb(sel.reduce((s,b)=>s+b.size,0))})?\n\nThis permanently removes their APK/AAB downloads, uploaded source and build copies on GitHub. It can't be undone.`+(newest.length?`\n\n${newest.length} of them ${newest.length>1?"are":"is"} the newest build of ${newest.length>1?"their apps":"its app"} (${newest.map(b=>b.appName||b.packageName).join(", ")}).`:"");
+  if(!confirm(msg))return;
+  const btn=$("#bDelete");btn.disabled=true;let removed=0,problems=[];
+  try{
+    for(let i=0;i<sel.length;i+=6){
+      btn.textContent=`Deleting… ${removed}/${sel.length}`;
+      const d=await ownerApi("/admin/builds/delete",{ids:sel.slice(i,i+6).map(b=>b.id)});
+      for(const r of d.results){if(r.errors.length)problems.push(r.id.slice(0,8)+": "+r.errors[0]);else removed++;BUILDS=BUILDS.filter(b=>b.id!==r.id||r.errors.length)}
+    }
+    // Projects on this device that pointed at a deleted build no longer have downloads.
+    const dead=new Set(sel.map(b=>b.id));let touched=false;
+    for(const p of P){if(dead.has(p.buildId)){p.buildId="";p.apkUrl="";p.aabUrl="";p.status="draft";touched=true}if(dead.has(p.pendingBuildId)){p.pendingBuildId="";touched=true}}
+    if(touched){save(KEY.p,P);renderProjects()}
+    toast(problems.length?`Deleted ${removed}; ${problems.length} had problems: ${problems[0]}`:`Deleted ${removed} build${removed===1?"":"s"}`);
+  }catch(e){toast(e.message)}finally{btn.textContent="Delete selected";renderBuilds()}
+};
 
 /* ============ PUBLISHING KIT (Business) ============ */
 const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
