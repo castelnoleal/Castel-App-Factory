@@ -178,6 +178,8 @@ jobs:
         with:
           name: generic-html-zip-acceptance
           if-no-files-found: error
+          # Files also live in the build's release; keep this copy briefly so it doesn't use Actions storage.
+          retention-days: 1
           path: |
             build/local-html/app/build/outputs/apk/debug/app-debug.apk
             build/local-html/app/build/outputs/bundle/release/app-release.aab

@@ -63,6 +63,39 @@ async function gh(env, path, options={}) {
   if (!r.ok) throw new Error(`GitHub ${r.status}: ${data?.message || text || "request failed"}`);
   return data;
 }
+const BILLING_HINT = "GitHub didn't start the build because of a billing problem on the GitHub account that runs the builds (a failed payment or a spending limit of $0). Fix it under GitHub Settings → Billing and plans, then build again.";
+/** Looks up the GitHub Actions run for a build whose status file stopped updating. Returns a status to report, or null. */
+async function checkStalledBuild(env, id, status, host) {
+  const repo = `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}`;
+  let run = null;
+  if (status.runId) run = await gh(env, `${repo}/actions/runs/${status.runId}`);
+  else {
+    const list = await gh(env, `${repo}/actions/runs?branch=${encodeURIComponent("build-" + id)}&per_page=5`);
+    run = (list?.workflow_runs || []).find(r => /build/i.test(r.name || r.display_title || "")) || (list?.workflow_runs || [])[0] || null;
+  }
+  const age = Date.now() - Date.parse(status.updatedAt || 0);
+  if (!run) {
+    if (age > 10 * 60000) return { ...status, status: "failed", code: "not_started", error: "GitHub Actions never started this build. Check that Actions is enabled for the repository and that the GitHub account's billing is in order, then build again." };
+    return null;
+  }
+  if (run.status !== "completed") return null;
+  if (run.conclusion === "success") return null; // the success path below and the workflow's own status update handle this
+  let reason = "", code = "build_failed";
+  try {
+    const jobs = await gh(env, `${repo}/actions/runs/${run.id}/jobs`);
+    const job = (jobs?.jobs || [])[0];
+    if (job) {
+      const ran = (job.steps || []).length > 0;
+      const notes = await gh(env, `${repo}/check-runs/${job.id}/annotations`).catch(() => []);
+      const text = (notes || []).map(n => n.message || "").filter(m => !/Node\.js \d+ is deprecated/.test(m)).join(" ");
+      if (/payments have failed|spending limit|billing/i.test(text)) { code = "github_billing"; reason = BILLING_HINT; }
+      else if (!ran) { code = "not_started"; reason = "GitHub Actions didn't start the build" + (text ? ": " + text.slice(0, 300) : ".") + " Build again in a few minutes."; }
+      else if (text) reason = "The build failed: " + text.slice(0, 400);
+    }
+  } catch {}
+  if (run.conclusion === "cancelled" && !reason) { code = "cancelled"; reason = "The build was cancelled on GitHub Actions. Build again."; }
+  return { ...status, status: "failed", code, error: reason || `GitHub Actions concluded: ${run.conclusion || "failure"}.`, runId: run.id, runUrl: run.html_url };
+}
 function repoPath(env, p) { return `/repos/${env.GITHUB_OWNER}/${env.GITHUB_REPO}/contents/${p}`; }
 async function putFile(env, path, contentBase64, message, branch="main") {
   return gh(env, repoPath(env, path), {method:"PUT", body:JSON.stringify({message,content:contentBase64,branch})});
@@ -283,6 +316,14 @@ export default {
         const raw = atob(String(f.content || "").replace(/\n/g,""));
         const bytes = Uint8Array.from(raw,c=>c.charCodeAt(0));
         const status = JSON.parse(new TextDecoder().decode(bytes));
+        // A build still marked queued/running may never have started on GitHub (billing, outage,
+        // cancelled run). Ask GitHub Actions directly once the status file has gone quiet.
+        if ((status.status === "queued" || status.status === "running") && Date.now() - Date.parse(status.updatedAt || 0) > 90000) {
+          try {
+            const stuck = await checkStalledBuild(env, id, status, u.host);
+            if (stuck) return reply(stuck);
+          } catch (stallError) { console.error(stallError); }
+        }
         // GitHub Actions is authoritative; recover from a stale/intermediate failure status.
         if (status.status === "failed" && status.runId) {
           try {

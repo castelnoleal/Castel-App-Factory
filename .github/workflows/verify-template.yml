@@ -61,6 +61,8 @@ jobs:
         with:
           name: castel-template-verification
           if-no-files-found: error
+          # Files also live in the build's release; keep this copy briefly so it doesn't use Actions storage.
+          retention-days: 1
           path: |
             android-template/app/build/outputs/apk/debug/app-debug.apk
             android-template/app/build/outputs/bundle/release/app-release.aab
