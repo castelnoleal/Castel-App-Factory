@@ -9,6 +9,7 @@ on:
       - 'tests/factory-editions.mjs'
       - 'tests/factory-back.mjs'
       - 'tests/factory-mobile-width.mjs'
+      - 'tests/factory-cleanup.mjs'
       - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   pull_request:
@@ -19,6 +20,7 @@ on:
       - 'tests/factory-editions.mjs'
       - 'tests/factory-back.mjs'
       - 'tests/factory-mobile-width.mjs'
+      - 'tests/factory-cleanup.mjs'
       - 'cloudflare-worker/**'
       - '.github/workflows/factory-smoke-test.yml'
   workflow_dispatch:
@@ -49,3 +51,5 @@ jobs:
         run: node tests/factory-back.mjs
       - name: Long text never widens the page on phones
         run: node tests/factory-mobile-width.mjs
+      - name: Owner tools build cleanup
+        run: node tests/factory-cleanup.mjs
