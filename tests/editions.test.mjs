@@ -354,3 +354,70 @@ test("build deletion refuses non-builds, too many at once, and non-owners", asyn
   }
   assert.equal((await req("/admin/builds/delete", { method: "POST", body: { ids: ["aaaaaaaa-0000-0000-0000-000000000001"] } })).status, 401);
 });
+
+// ------------------------------------- test apps, stored files, branches, activity, licenses
+
+function fakeRepo() {
+  const st = { deleted: [] };
+  const prev = globalThis.fetch;
+  globalThis.fetch = async (url, opt = {}) => {
+    url = String(url);
+    const json = (d, s = 200) => new Response(JSON.stringify(d), { status: s });
+    if (!url.startsWith("https://api.github.com")) return prev(url, opt);
+    const path = url.replace("https://api.github.com/repos/o/r", "");
+    if (opt.method === "DELETE") { st.deleted.push(path); return new Response(null, { status: 204 }); }
+    if (path === "") return json({ full_name: "o/r", default_branch: "main", visibility: "public", size: 6000, html_url: "https://github.com/o/r" });
+    if (path.startsWith("/releases/tags/")) return json({ id: 77 });
+    if (path.startsWith("/actions/artifacts?")) return json({ artifacts: [{ id: 1, name: "castel-template-verification", size_in_bytes: 5e6, expired: false, created_at: "2026-10-20T00:00:00Z", expires_at: "2027-01-18T00:00:00Z", workflow_run: { head_branch: "main" } }, { id: 2, name: "old", size_in_bytes: 1, expired: true }] });
+    if (path.startsWith("/branches?")) return json([{ name: "main" }, { name: "editions" }, { name: "synapse-android" }, { name: "build-aaaaaaaa-0000-0000-0000-000000000001" }]);
+    if (path.startsWith("/pulls?")) return json([{ number: 9, merged_at: "2026-10-22T00:00:00Z", head: { ref: "editions", repo: { full_name: "o/r" } } }, { number: 3, merged_at: null, head: { ref: "synapse-android", repo: { full_name: "o/r" } } }]);
+    if (path.startsWith("/compare/main...editions")) return json({ ahead_by: 2, behind_by: 5, commits: [{ commit: { committer: { date: "2026-10-22T00:00:00Z" } } }] });
+    if (path.startsWith("/compare/main...synapse-android")) return json({ ahead_by: 14, behind_by: 90, commits: [{ commit: { committer: { date: "2026-09-01T00:00:00Z" } } }] });
+    if (path.startsWith("/actions/workflows/build-app.yml/runs")) return json({ workflow_runs: [{ id: 5, html_url: "u5", status: "completed", conclusion: "failure", created_at: "2026-10-23T04:38:18Z", head_branch: "build-aaaaaaaa-0000-0000-0000-000000000009" }] });
+    if (path === "/actions/runs/5/jobs") return json({ jobs: [{ id: 50, steps: [] }] });
+    if (path === "/check-runs/50/annotations") return json([{ message: "The job was not started because recent account payments have failed or your spending limit needs to be increased." }]);
+    return json({ message: "Not Found" }, 404);
+  };
+  return st;
+}
+
+test("owner can delete test apps, stored files and branches, but never main", async () => {
+  const st = fakeRepo();
+  const cookie = await login();
+  const rel = await (await req("/admin/releases/delete", { method: "POST", headers: { Cookie: cookie }, body: { tags: ["cards-test-latest"] } })).json();
+  assert.equal(rel.results[0].release, true);
+  assert.ok(st.deleted.includes("/releases/77") && st.deleted.includes("/git/refs/tags/cards-test-latest"));
+  const files = await (await req("/admin/artifacts", { headers: { Cookie: cookie } })).json();
+  assert.equal(files.artifacts.length, 1, "expired files are left out");
+  assert.equal((await (await req("/admin/artifacts/delete", { method: "POST", headers: { Cookie: cookie }, body: { ids: [1] } })).json()).deleted, 1);
+  const br = await (await req("/admin/branches", { headers: { Cookie: cookie } })).json();
+  assert.deepEqual(br.branches.map(b => [b.name, b.status]), [["editions", "merged"], ["synapse-android", "unmerged"]], "main and build branches aren't listed");
+  assert.equal(br.branches[1].ahead, 14);
+  assert.equal((await req("/admin/branches/delete", { method: "POST", headers: { Cookie: cookie }, body: { names: ["main"] } })).status, 400);
+  assert.equal((await req("/admin/branches/delete", { method: "POST", headers: { Cookie: cookie }, body: { names: ["../x"] } })).status, 400);
+  assert.equal((await (await req("/admin/branches/delete", { method: "POST", headers: { Cookie: cookie }, body: { names: ["editions"] } })).json()).deleted, 1);
+  assert.ok(st.deleted.includes("/git/refs/heads/editions"));
+  for (const p of ["/admin/artifacts", "/admin/branches", "/admin/activity", "/admin/licenses"]) assert.equal((await req(p)).status, 401, p + " is owner only");
+});
+
+test("activity shows repository visibility and flags GitHub refusing builds", async () => {
+  fakeRepo();
+  const cookie = await login();
+  const a = await (await req("/admin/activity", { headers: { Cookie: cookie } })).json();
+  assert.equal(a.repo.visibility, "public");
+  assert.equal(a.actions.blocked, true);
+  assert.match(a.builds[0].reason, /spending limit/);
+});
+
+test("licenses list sales, Play subscriptions and complimentary keys, and marks revoked ones", async () => {
+  fakeRepo();
+  env.LICENSES.list = async ({ prefix }) => ({ keys: [...env.LICENSES.m.keys()].filter(k => k.startsWith(prefix)).map(name => ({ name })) });
+  const cookie = await login();
+  const comp = await (await req("/admin/license", { method: "POST", headers: { Cookie: cookie }, body: { plan: "pro", days: 10, note: "Client A" } })).json();
+  await req("/admin/revoke", { method: "POST", headers: { Cookie: cookie }, body: { ref: comp.ref } });
+  const l = await (await req("/admin/licenses", { headers: { Cookie: cookie } })).json();
+  assert.equal(l.available, true);
+  assert.equal(l.complimentary[0].note, "Client A");
+  assert.equal(l.complimentary[0].revoked, true);
+  assert.equal(l.revoked[0].ref, comp.ref);
+});

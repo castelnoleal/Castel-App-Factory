@@ -29,7 +29,9 @@ The exact versions are centralized so the build template can be upgraded deliber
 - `android-template/` — clean Android WebView application template.
 - `scripts/` — validation utilities.
 - `.github/workflows/` — clean-build and release pipelines.
-- `docs/` — architecture and operating procedures.
+- `cloudflare-worker/` — the build service at api.instapped.com (builds, licenses, payments, master edition).
+- `presets/` — importable projects for the Google Play editions of instApped.
+- `tests/` — unit and browser tests run in CI.
 
 ## Signing
 

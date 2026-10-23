@@ -29,7 +29,7 @@ permissions:
 jobs:
   desktop-smoke:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -51,5 +51,5 @@ jobs:
         run: node tests/factory-back.mjs
       - name: Long text never widens the page on phones
         run: node tests/factory-mobile-width.mjs
-      - name: Owner tools build cleanup
+      - name: Owner tools (overview, builds and storage, licenses)
         run: node tests/factory-cleanup.mjs

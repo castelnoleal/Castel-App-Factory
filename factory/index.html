@@ -203,8 +203,14 @@ h2{font-size:24px}
 .planchip.master{background:#e0b050;border-color:#e0b050;color:#1a1405}
 body.ed-lite .buyonly,body.ed-play .pm,body:not(.ed-billing) .gp,body:not(.ed-master) .mo,body.ed-master .nomaster{display:none!important}
 .ostat{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:4px 0 2px}.ostat div{border:1px solid var(--b);border-radius:10px;padding:9px 11px;font-size:13.5px;display:flex;justify-content:space-between;gap:8px}.ostat b{font-weight:700}.ostat .y{color:var(--ok,#3fb27f)}.ostat .n{color:var(--err,#e06c75)}
+.oalert:empty{display:none}.oalert{display:grid;gap:8px;margin:8px 0}.oalert p{border-radius:10px;padding:10px 12px;font-size:13.5px;border:1px solid}.oalert .warn{border-color:#d8a23a;background:color-mix(in srgb,#d8a23a 12%,transparent)}.oalert .bad{border-color:var(--err,#d0473e);background:color-mix(in srgb,var(--err,#d0473e) 10%,transparent)}
+.orun{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--b);font-size:13.5px}.orun span{flex:1;min-width:0;overflow-wrap:anywhere}.orun small{color:var(--m)}.orun b.ok{color:var(--ok,#2e9e6b)}.orun b.no{color:var(--err,#d0473e)}.orun b.run{color:var(--a)}
+.stabs{margin:12px 0}.stabs button{flex:1}.spane[hidden]{display:none}
+.bprot{margin:6px 0 4px;padding:10px 0}
+.dellist{max-height:200px;overflow:auto;margin:10px 0;padding-left:18px;font-size:13.5px;overflow-wrap:anywhere}
+.ltab{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}.ltab th,.ltab td{text-align:left;padding:7px 6px;border-top:1px solid var(--b);vertical-align:top;overflow-wrap:anywhere}.ltab th{color:var(--m);font-weight:600}.ltab .rv{color:var(--err,#d0473e)}
 .bsel{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:14px 0 8px;font-size:13.5px;color:var(--m)}
-.bgrp{border:1px solid var(--b);border-radius:12px;margin:10px 0;overflow:hidden}.bgrp>label{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--s2);font-weight:700;font-size:14px}.bgrp>label small{font-weight:400;color:var(--m);overflow-wrap:anywhere}
+.bgrp{border:1px solid var(--b);border-radius:12px;margin:10px 0;overflow:hidden}.bgrp>.bhead{display:flex;gap:10px;align-items:center;padding:10px 12px;background:var(--s2);font-weight:700;font-size:14px}.bgrp>.bhead span{flex:1;min-width:0}.bgrp>.bhead small{font-weight:400;color:var(--m);overflow-wrap:anywhere}.brow input,.bhead input{width:20px;height:20px;flex:none}
 .brow{display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--b);font-size:13.5px}.brow span{flex:1;min-width:0;overflow-wrap:anywhere}.brow small{color:var(--m)}.brow i{font-style:normal;font-size:11px;font-weight:700;border:1px solid currentColor;border-radius:5px;padding:0 5px;margin-left:6px}.brow i.new{color:var(--a)}.brow i.bad{color:var(--err,#d0473e)}
 .bfoot{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:10px;position:sticky;bottom:0;background:var(--s);padding:8px 0}.bfoot p{font-size:13.5px;color:var(--m)}
 .okey{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;word-break:break-all}
@@ -491,8 +497,11 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
 <!-- OWNER (master edition only) -->
 <section class="view" id="v-owner">
   <h2>Owner tools</h2><p class="sub">Master edition. Only you can open this page. It mirrors the main factory, with every feature unlocked.</p>
-  <div class="card"><h3>Build service</h3><p class="h" id="oRev">Checking…</p><div class="ostat" id="oStat"></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="oRefresh">Refresh</button></div></div>
+  <div class="card"><h3>Overview</h3><p class="h" id="oRev">Checking…</p>
+    <div class="oalert" id="oAlerts"></div>
+    <div class="ostat" id="oStat"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn sm" id="oRefresh">Refresh</button><a class="btn sm" id="oRepo" href="https://github.com/" target="_blank" rel="noopener">Open repository</a></div></div>
+  <div class="card"><h3>Recent builds</h3><p class="h">The latest app builds on GitHub Actions, with the reason when one fails.</p><div id="oBuilds"><p class="h">Loading…</p></div></div>
   <div class="card"><h3>Complimentary license</h3><p class="h">Give a client, partner or tester a license key. It works on the public factory and in the Play apps.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
       <label class="f" style="margin:0">Plan<select class="inp" id="oPlan" style="margin:0"><option value="pro">Pro</option><option value="business">Business</option></select></label>
@@ -504,13 +513,39 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
     <label class="f">License key or reference<input class="inp" id="oRef" spellcheck="false" autocapitalize="none" placeholder="IAL1.… or reference"></label>
     <p style="font-size:13px;color:var(--m)" id="oInfo"></p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn sm" id="oLook">Look up</button><button class="btn sm dng" id="oRevoke">Revoke</button></div></div>
-  <div class="card" id="bCard"><h3>Builds and storage</h3><p class="h">Each build keeps its APK/AAB download, the uploaded source and a build copy on GitHub. Delete old builds you no longer need. Deleting can't be undone.</p>
-    <button class="btn" id="bLoad">Load builds</button>
-    <div id="bTools" hidden>
-      <p class="bsel">Select: <button class="btn sm" data-bsel="kodex">Old KodeX versions</button><button class="btn sm" data-bsel="old">Old versions of every app</button><button class="btn sm" data-bsel="none">Clear</button></p>
-      <div id="bList"></div>
-      <div class="bfoot"><p id="bSum" aria-live="polite">Nothing selected.</p><button class="btn dng" id="bDelete" disabled>Delete selected</button></div>
-    </div></div>
+  <div class="card" id="bCard"><h3>Builds and storage</h3><p class="h">Clean up what instApped keeps on GitHub. Because the repository is public, everything here can be seen and downloaded by anyone. Deleting can't be undone.</p>
+    <div class="seg stabs" id="sTabs" role="tablist"><button data-st="builds" class="on" role="tab">App builds</button><button data-st="releases" role="tab">Test apps</button><button data-st="files" role="tab">Stored files</button><button data-st="branches" role="tab">Branches</button></div>
+    <div class="spane" data-sp="builds">
+      <p class="h">Each build is its APK/AAB download, the uploaded source and a build copy. The newest build of each app is protected unless you turn protection off.</p>
+      <button class="btn" id="bLoad">Load builds</button>
+      <div id="bTools" hidden>
+        <p class="bsel">Select: <button class="btn sm" data-bsel="kodex">Old KodeX versions</button><button class="btn sm" data-bsel="old">Old versions of every app</button><button class="btn sm" data-bsel="failed">Failed builds</button><button class="btn sm" data-bsel="none">Clear</button></p>
+        <label class="row bprot"><span><b>Protect the newest build of each app</b><small>Turn off only if you really want to remove an app's current download.</small></span><input type="checkbox" class="sw" id="bProtect" checked></label>
+        <div id="bList"></div>
+        <div class="bfoot"><p id="bSum" aria-live="polite">Nothing selected.</p><button class="btn dng" id="bDelete" disabled>Delete selected</button></div>
+      </div>
+    </div>
+    <div class="spane" data-sp="releases" hidden>
+      <p class="h">Releases that aren't app builds, such as old test apps.</p>
+      <button class="btn" id="rLoad">Load test apps</button>
+      <div id="rList"></div>
+      <div class="bfoot" id="rFoot" hidden><p id="rSum">Nothing selected.</p><button class="btn dng" id="rDelete" disabled>Delete selected</button></div>
+    </div>
+    <div class="spane" data-sp="files" hidden>
+      <p class="h">Files GitHub keeps from test runs and builds (Actions artifacts). They expire on their own; delete them now to stop them being downloadable.</p>
+      <button class="btn" id="fLoad">Load stored files</button>
+      <div id="fList"></div>
+      <div class="bfoot" id="fFoot" hidden><p id="fSum">Nothing selected.</p><button class="btn dng" id="fDelete" disabled>Delete selected</button></div>
+    </div>
+    <div class="spane" data-sp="branches" hidden>
+      <p class="h">Branches other than main. "Merged" and "In main" branches only hold work that's already in main. "Unmerged" branches have work that exists nowhere else.</p>
+      <button class="btn" id="gLoad">Load branches</button>
+      <div id="gList"></div>
+      <div class="bfoot" id="gFoot" hidden><p id="gSum">Nothing selected.</p><button class="btn dng" id="gDelete" disabled>Delete selected</button></div>
+    </div>
+  </div>
+  <div class="card"><h3>Licenses</h3><p class="h">Every license on record: website sales, Google Play subscriptions and complimentary keys.</p>
+    <button class="btn" id="lLoad">Load licenses</button><div id="lList"></div></div>
   <div class="card"><h3>Your projects</h3><p class="h">The master edition keeps its own project list. To bring projects over from create.instapped.com, export them there (Settings → Backup) and import them here.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="https://create.instapped.com/" target="_blank" rel="noopener">Open the public factory</a><a class="btn sm" href="/master/logout">Sign out</a></div></div>
 </section>
@@ -574,6 +609,13 @@ CastelApp.checkForUpdate()          // check the update feed / Google Play now</
   </div>
   <p class="legal gp">Subscriptions are sold through Google Play, renew automatically and can be cancelled any time in the Play Store. By subscribing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
   <p class="legal pm">Prices are in Philippine pesos. Payments are processed securely by PayMongo (cards, GCash, Maya). Plans run for the period you buy and don't renew automatically; buy again before it ends to extend. By purchasing you agree to the <a href="https://instapped.com/terms.html" target="_blank" rel="noopener">Terms</a> and <a href="https://instapped.com/privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>. Questions? <a href="https://instapped.com/contact.html" target="_blank" rel="noopener">Contact us</a>.</p>
+</dialog>
+<dialog class="dlg" id="delDlg" aria-labelledby="delTitle">
+  <h3 id="delTitle">Delete?</h3>
+  <p class="h" id="delBody"></p>
+  <ul class="dellist" id="delList"></ul>
+  <label class="f" id="delWordBox" hidden>Type <b id="delWordShow">DELETE</b> to confirm<input class="inp" id="delWord" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+  <div class="dlgacts"><button class="btn" id="delCancel">Cancel</button><button class="btn dng" id="delOk">Delete</button></div>
 </dialog>
 <dialog class="dlg" id="upDlg" aria-labelledby="upTitle">
   <h3 id="upTitle">This is a Pro feature</h3>
@@ -1635,6 +1677,19 @@ async function ownerStatus(){
     $("#oRev").textContent="Revision "+d.revision+(c.paymongoMode?" · PayMongo "+c.paymongoMode+" mode":"")+" · Play packages: "+c.playPackages;
     $("#oStat").innerHTML=OSTAT.map(([k,l])=>`<div><span>${l}</span><b class="${c[k]?"y":"n"}">${c[k]?"Ready":"Not set"}</b></div>`).join("");
   }catch(e){$("#oRev").textContent=e.message}
+  ownerActivity();
+}
+const runLabel=b=>b.status!=="completed"?["run",b.status==="queued"?"Queued":"Building"]:b.conclusion==="success"?["ok","Built"]:["no",b.conclusion==="cancelled"?"Cancelled":"Failed"];
+async function ownerActivity(){
+  try{
+    const d=await ownerApi("/admin/activity");
+    $("#oRepo").href=d.repo.url;
+    const alerts=[];
+    if(d.actions.blocked)alerts.push(`<p class="bad"><b>GitHub isn't running builds.</b> ${esc(d.actions.message)} Fix it under GitHub Settings → Billing and plans.</p>`);
+    if(d.repo.visibility==="public")alerts.push(`<p class="warn"><b>The repository is public.</b> Uploaded app sources, build downloads and logs can be seen by anyone. Delete what you don't need under Builds and storage.</p>`);
+    $("#oAlerts").innerHTML=alerts.join("");
+    $("#oBuilds").innerHTML=d.builds.length?d.builds.map(b=>{const [c,t]=runLabel(b);return `<div class="orun"><b class="${c}">${t}</b><span>${esc(b.appName||"(source deleted)")} ${b.versionName?"v"+esc(b.versionName):""}<br><small>${esc(b.packageName||b.id.slice(0,8))} · ${new Date(b.createdAt).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}${b.reason?" · "+esc(b.reason):""}</small></span><a class="btn sm" href="${esc(b.url)}" target="_blank" rel="noopener">Log</a></div>`}).join(""):'<p class="h">No builds yet.</p>';
+  }catch(e){$("#oBuilds").innerHTML=`<p class="h">${esc(e.message)}</p>`}
 }
 function decodeKey(k){
   const parts=String(k).trim().split(".");if(parts.length!==3||parts[0]!=="IAL1")return null;
@@ -1656,31 +1711,52 @@ $("#oRevoke").onclick=async()=>{const ref=refOf($("#oRef").value);if(!ref)return
   if(!confirm("Revoke "+ref+"? Keys with this reference stop unlocking builds."))return;
   try{await ownerApi("/admin/revoke",{ref});$("#oInfo").textContent="Revoked "+ref+".";toast("License revoked")}catch(e){toast(e.message)}};
 
-/* --- Owner tools: builds and storage --- */
+/* --- Owner tools: delete confirmation --- */
+/** Shows what will be deleted; returns true only when the owner confirms (typing a word for risky deletes). */
+function confirmDelete({title,body,items,word="",okLabel="Delete"}){
+  return new Promise(res=>{
+    const d=$("#delDlg");
+    $("#delTitle").textContent=title;$("#delBody").textContent=body;
+    $("#delList").innerHTML=items.slice(0,60).map(t=>`<li>${esc(t)}</li>`).join("")+(items.length>60?`<li>…and ${items.length-60} more</li>`:"");
+    $("#delWordBox").hidden=!word;$("#delWord").value="";$("#delWordShow").textContent=word;
+    $("#delOk").textContent=okLabel;$("#delOk").disabled=!!word;
+    $("#delWord").oninput=()=>{$("#delOk").disabled=$("#delWord").value.trim().toUpperCase()!==word};
+    let answered=false;const done=v=>{if(answered)return;answered=true;d.close();res(v)};
+    $("#delOk").onclick=()=>done(true);$("#delCancel").onclick=()=>done(false);
+    d.addEventListener("close",()=>done(false),{once:true});
+    try{d.showModal()}catch{res(false)}
+    (word?$("#delWord"):$("#delCancel")).focus();
+  });
+}
+$$("#sTabs button").forEach(b=>b.onclick=()=>{$$("#sTabs button").forEach(x=>x.classList.toggle("on",x===b));$$("#bCard .spane").forEach(p=>p.hidden=p.dataset.sp!==b.dataset.st)});
+
+/* --- Owner tools: app builds --- */
 let BUILDS=[];
 const KODEX=/kodex/i;
 const mb=n=>(n/1048576).toFixed(1)+" MB";
+const bName=b=>(b.appName||b.packageName||"Unknown app")+(b.versionName?" v"+b.versionName+(b.versionCode?" ("+b.versionCode+")":""):"");
 function buildGroups(){
   const g=new Map();
-  for(const b of BUILDS){const k=b.special?"(other)":b.packageName||"(unknown app)";if(!g.has(k))g.set(k,[]);g.get(k).push(b)}
+  for(const b of BUILDS){if(b.special)continue;const k=b.packageName||"(unknown app)";if(!g.has(k))g.set(k,[]);g.get(k).push(b)}
   for(const list of g.values())list.sort((a,b)=>Date.parse(b.createdAt||0)-Date.parse(a.createdAt||0)||(b.versionCode-a.versionCode));
   return [...g.entries()].sort((a,b)=>Date.parse(b[1][0].createdAt||0)-Date.parse(a[1][0].createdAt||0));
 }
-/** The build kept by "old versions" presets: the newest one that has downloads. */
-const newestOf=list=>list.find(b=>b.hasRelease&&!b.special);
+/** The newest build with downloads: protected by default. */
+const newestOf=list=>list.find(b=>b.hasRelease);
+const isNewest=b=>{const list=buildGroups().find(([k])=>k===(b.packageName||"(unknown app)"));return !!list&&newestOf(list[1])===b};
 function renderBuilds(){
-  const box=$("#bList");
-  box.innerHTML=buildGroups().map(([pkg,list])=>{
+  const prot=$("#bProtect").checked;
+  $("#bList").innerHTML=buildGroups().map(([pkg,list])=>{
     const keep=newestOf(list),name=(list.find(b=>b.appName)||{}).appName||pkg;
-    return `<div class="bgrp" data-pkg="${esc(pkg)}"><label><input type="checkbox" data-bgrp="${esc(pkg)}"><span>${esc(name)} <small>${esc(pkg)} · ${list.length} build${list.length>1?"s":""} · ${mb(list.reduce((s,b)=>s+b.size,0))}</small></span></label>
-      ${list.map(b=>`<label class="brow"><input type="checkbox" data-bid="${esc(b.id)}" ${b.special?"disabled":""}><span>${b.special?esc(b.name):"v"+esc(b.versionName||"?")+" ("+esc(b.versionCode||"?")+")"}${b===keep?'<i class="new">Newest</i>':""}${!b.hasRelease?'<i class="bad">Failed or unfinished</i>':""}${b.testBuild?"<i>Test</i>":""}<br><small>${b.createdAt?fmtDate(b.createdAt):"date unknown"}${b.size?" · "+mb(b.size):""}${b.appName&&b.appName!==name?" · "+esc(b.appName):""}</small></span></label>`).join("")}</div>`;
-  }).join("")||'<p class="h">No builds found.</p>';
+    return `<div class="bgrp" data-pkg="${esc(pkg)}"><div class="bhead"><input type="checkbox" data-bgrp="${esc(pkg)}" aria-label="Select all builds of ${esc(name)}"><span>${esc(name)} <small>${esc(pkg)} · ${list.length} build${list.length>1?"s":""} · ${mb(list.reduce((s,b)=>s+b.size,0))}</small></span></div>
+      ${list.map(b=>`<div class="brow"><input type="checkbox" data-bid="${esc(b.id)}" aria-label="Select ${esc(bName(b))}" ${b===keep&&prot?"disabled":""}><span>${"v"+esc(b.versionName||"?")+" ("+esc(b.versionCode||"?")+")"}${b===keep?'<i class="new">Newest'+(prot?" · protected":"")+'</i>':""}${!b.hasRelease?'<i class="bad">Failed or unfinished</i>':""}${b.testBuild?"<i>Test</i>":""}<br><small>${b.createdAt?fmtDate(b.createdAt):"date unknown"}${b.size?" · "+mb(b.size):""}${b.appName&&b.appName!==name?" · "+esc(b.appName):""}</small></span></div>`).join("")}</div>`;
+  }).join("")||'<p class="h">No app builds on GitHub.</p>';
   updateBuildSum();
 }
 function selectedBuilds(){return $$("#bList [data-bid]:checked").map(c=>BUILDS.find(b=>b.id===c.dataset.bid)).filter(Boolean)}
 function updateBuildSum(){
+  $$("#bList [data-bgrp]").forEach(g=>{const rows=$$(`#bList .bgrp[data-pkg="${CSS.escape(g.dataset.bgrp)}"] [data-bid]:not(:disabled)`);const n=rows.filter(r=>r.checked).length;g.checked=rows.length>0&&n===rows.length;g.indeterminate=n>0&&n<rows.length;g.disabled=!rows.length});
   const sel=selectedBuilds();
-  $$("#bList [data-bgrp]").forEach(g=>{const rows=$$(`#bList .bgrp[data-pkg="${CSS.escape(g.dataset.bgrp)}"] [data-bid]:not(:disabled)`);const n=rows.filter(r=>r.checked).length;g.checked=rows.length>0&&n===rows.length;g.indeterminate=n>0&&n<rows.length});
   $("#bSum").textContent=sel.length?`${sel.length} build${sel.length>1?"s":""} selected · ${mb(sel.reduce((s,b)=>s+b.size,0))}`:"Nothing selected.";
   $("#bDelete").disabled=!sel.length;
 }
@@ -1689,16 +1765,16 @@ function presetBuilds(kind){
   if(kind!=="none")for(const [pkg,list] of buildGroups()){
     if(kind==="kodex"&&!list.some(b=>KODEX.test(pkg)||KODEX.test(b.appName||"")))continue;
     const keep=newestOf(list);
-    for(const b of list)if(!b.special&&b!==keep)pick.add(b.id);
+    for(const b of list){if(b===keep)continue;if(kind==="failed"&&b.hasRelease)continue;pick.add(b.id)}
   }
-  $$("#bList [data-bid]").forEach(c=>{c.checked=pick.has(c.dataset.bid)});
+  $$("#bList [data-bid]").forEach(c=>{c.checked=!c.disabled&&pick.has(c.dataset.bid)});
   updateBuildSum();
 }
 $("#bLoad").onclick=async()=>{
   const btn=$("#bLoad");btn.disabled=true;BUILDS=[];
   try{
-    let page=1,branchIds=[];
-    for(;page<=50;page++){btn.textContent="Loading builds… "+BUILDS.length;const d=await ownerApi("/admin/builds?page="+page);BUILDS.push(...d.builds);if(d.done){branchIds=d.branchIds||[];break}}
+    let branchIds=[];
+    for(let page=1;page<=50;page++){btn.textContent="Loading builds… "+BUILDS.length;const d=await ownerApi("/admin/builds?page="+page);BUILDS.push(...d.builds);if(d.done){branchIds=d.branchIds||[];break}}
     const known=new Set(BUILDS.map(b=>b.id)),orphans=branchIds.filter(id=>!known.has(id));
     for(let i=0;i<orphans.length;i+=20){btn.textContent="Loading builds… "+BUILDS.length;const d=await ownerApi("/admin/builds/describe",{ids:orphans.slice(i,i+20)});BUILDS.push(...d.builds)}
     $("#bTools").hidden=false;renderBuilds();btn.textContent="Reload builds";
@@ -1709,26 +1785,108 @@ $("#bList").addEventListener("change",e=>{
   if(g)$$(`#bList .bgrp[data-pkg="${CSS.escape(g.dataset.bgrp)}"] [data-bid]:not(:disabled)`).forEach(c=>{c.checked=g.checked});
   updateBuildSum();
 });
+$("#bProtect").onchange=()=>{const keep=new Set(selectedBuilds().map(b=>b.id));renderBuilds();$$("#bList [data-bid]").forEach(c=>{c.checked=!c.disabled&&keep.has(c.dataset.bid)});updateBuildSum()};
 $$("[data-bsel]").forEach(b=>b.onclick=()=>presetBuilds(b.dataset.bsel));
 $("#bDelete").onclick=async()=>{
   const sel=selectedBuilds();if(!sel.length)return;
-  const newest=sel.filter(b=>{const list=BUILDS.filter(x=>(x.packageName||"")===(b.packageName||""));return newestOf(list)===b});
-  const msg=`Delete ${sel.length} build${sel.length>1?"s":""} (${mb(sel.reduce((s,b)=>s+b.size,0))})?\n\nThis permanently removes their APK/AAB downloads, uploaded source and build copies on GitHub. It can't be undone.`+(newest.length?`\n\n${newest.length} of them ${newest.length>1?"are":"is"} the newest build of ${newest.length>1?"their apps":"its app"} (${newest.map(b=>b.appName||b.packageName).join(", ")}).`:"");
-  if(!confirm(msg))return;
-  const btn=$("#bDelete");btn.disabled=true;let removed=0,problems=[];
+  const newest=sel.filter(isNewest);
+  const ok=await confirmDelete({
+    title:`Delete ${sel.length} build${sel.length>1?"s":""}?`,
+    body:`This permanently removes ${sel.length>1?"their":"its"} APK/AAB download${sel.length>1?"s":""}, uploaded source and build copy (${mb(sel.reduce((s,b)=>s+b.size,0))}). It can't be undone.`+(newest.length?` ${newest.length} of these ${newest.length>1?"are the current builds":"is the current build"} of ${newest.map(b=>b.appName||b.packageName).join(", ")}; ${newest.length>1?"those apps":"that app"} will have no download until rebuilt.`:""),
+    items:sel.map(b=>bName(b)+" · "+(b.createdAt?fmtDate(b.createdAt):"failed build")+(isNewest(b)?" · CURRENT BUILD":"")),
+    word:newest.length||sel.length>20?"DELETE":"",okLabel:`Delete ${sel.length}`});
+  if(!ok)return;
+  const btn=$("#bDelete");btn.disabled=true;let removed=0;const problems=[];
   try{
     for(let i=0;i<sel.length;i+=6){
       btn.textContent=`Deleting… ${removed}/${sel.length}`;
       const d=await ownerApi("/admin/builds/delete",{ids:sel.slice(i,i+6).map(b=>b.id)});
-      for(const r of d.results){if(r.errors.length)problems.push(r.id.slice(0,8)+": "+r.errors[0]);else removed++;BUILDS=BUILDS.filter(b=>b.id!==r.id||r.errors.length)}
+      for(const r of d.results){if(r.errors.length)problems.push(r.id.slice(0,8)+": "+r.errors[0]);else removed++;if(!r.errors.length)BUILDS=BUILDS.filter(b=>b.id!==r.id)}
     }
-    // Projects on this device that pointed at a deleted build no longer have downloads.
     const dead=new Set(sel.map(b=>b.id));let touched=false;
     for(const p of P){if(dead.has(p.buildId)){p.buildId="";p.apkUrl="";p.aabUrl="";p.status="draft";touched=true}if(dead.has(p.pendingBuildId)){p.pendingBuildId="";touched=true}}
     if(touched){save(KEY.p,P);renderProjects()}
     toast(problems.length?`Deleted ${removed}; ${problems.length} had problems: ${problems[0]}`:`Deleted ${removed} build${removed===1?"":"s"}`);
   }catch(e){toast(e.message)}finally{btn.textContent="Delete selected";renderBuilds()}
 };
+
+/* --- Owner tools: shared list helper for test apps, stored files and branches --- */
+function pickList({box,foot,sum,del,rows,render,label,extra=""}){
+  $(box).innerHTML=rows.length?rows.map((r,i)=>`<div class="brow"><input type="checkbox" data-pi="${i}" aria-label="Select ${esc(label(r))}"><span>${render(r)}</span></div>`).join(""):'<p class="h">Nothing here.</p>';
+  $(foot).hidden=!rows.length;
+  const upd=()=>{const n=$$(box+" [data-pi]:checked").length;$(sum).textContent=(n?`${n} selected`:"Nothing selected.")+extra;$(del).disabled=!n};
+  $(box).onchange=upd;upd();
+  return ()=>$$(box+" [data-pi]:checked").map(c=>rows[+c.dataset.pi]);
+}
+function withBusy(btn,text,fn){return async()=>{const old=btn.textContent;btn.disabled=true;btn.textContent=text;try{await fn()}catch(e){toast(e.message)}finally{btn.disabled=false;btn.textContent=old}}}
+
+/* test apps (releases that aren't builds) */
+let relPicked=()=>[];
+async function loadReleases(){
+  const rows=[];
+  for(let page=1;page<=50;page++){const d=await ownerApi("/admin/builds?page="+page);rows.push(...d.builds.filter(b=>b.special));if(d.done)break}
+  relPicked=pickList({box:"#rList",foot:"#rFoot",sum:"#rSum",del:"#rDelete",rows,label:r=>r.tag,render:r=>`${esc(r.name||r.tag)}<br><small>${esc(r.tag)} · ${r.createdAt?fmtDate(r.createdAt):""} · ${mb(r.size||0)}</small>`});
+  $$("#rList [data-pi]").forEach(c=>{c.checked=true});$("#rList").onchange();
+}
+$("#rLoad").onclick=withBusy($("#rLoad"),"Loading…",loadReleases);
+$("#rDelete").onclick=withBusy($("#rDelete"),"Deleting…",async()=>{
+  const sel=relPicked();if(!sel.length)return;
+  if(!await confirmDelete({title:`Delete ${sel.length} test app${sel.length>1?"s":""}?`,body:"This permanently removes these releases and their downloads.",items:sel.map(r=>r.name+" ("+r.tag+")")}))return;
+  const d=await ownerApi("/admin/releases/delete",{tags:sel.map(r=>r.tag)});
+  const bad=d.results.filter(r=>r.errors.length);toast(bad.length?`Some couldn't be deleted: ${bad[0].errors[0]}`:`Deleted ${d.results.length} test app${d.results.length>1?"s":""}`);
+  await loadReleases();
+});
+
+/* stored files (Actions artifacts) */
+let filePicked=()=>[];
+async function loadFiles(){
+  const d=await ownerApi("/admin/artifacts");
+  filePicked=pickList({box:"#fList",foot:"#fFoot",sum:"#fSum",del:"#fDelete",rows:d.artifacts,label:a=>a.name,extra:` · ${d.artifacts.length} files, ${mb(d.total)} in total`,render:a=>`${esc(a.name)}<br><small>${mb(a.size)} · ${fmtDate(a.createdAt)} · expires ${fmtDate(a.expiresAt)}${a.branch?" · "+esc(a.branch):""}</small>`});
+  $$("#fList [data-pi]").forEach(c=>{c.checked=true});$("#fList").onchange();
+}
+$("#fLoad").onclick=withBusy($("#fLoad"),"Loading…",loadFiles);
+$("#fDelete").onclick=withBusy($("#fDelete"),"Deleting…",async()=>{
+  const sel=filePicked();if(!sel.length)return;
+  if(!await confirmDelete({title:`Delete ${sel.length} stored file${sel.length>1?"s":""}?`,body:`These are copies kept from test runs and builds (${mb(sel.reduce((s,a)=>s+a.size,0))}). App downloads aren't affected.`,items:sel.map(a=>a.name+" · "+mb(a.size))}))return;
+  let n=0;const errs=[];
+  for(let i=0;i<sel.length;i+=40){$("#fDelete").textContent=`Deleting… ${n}/${sel.length}`;const d=await ownerApi("/admin/artifacts/delete",{ids:sel.slice(i,i+40).map(a=>a.id)});n+=d.deleted;errs.push(...d.errors)}
+  toast(errs.length?`Deleted ${n}; ${errs.length} failed: ${errs[0]}`:`Deleted ${n} stored file${n===1?"":"s"}`);
+  await loadFiles();
+});
+
+/* branches */
+let branchPicked=()=>[];
+const BSTAT={merged:"Merged",["in-main"]:"In main",unmerged:"Unmerged work"};
+async function loadBranches(){
+  const d=await ownerApi("/admin/branches");
+  const rows=d.branches.sort((a,b)=>(a.status==="unmerged")-(b.status==="unmerged")||a.name.localeCompare(b.name));
+  branchPicked=pickList({box:"#gList",foot:"#gFoot",sum:"#gSum",del:"#gDelete",rows,label:b=>b.name,render:b=>`${esc(b.name)}<i class="${b.status==="unmerged"?"bad":"new"}">${BSTAT[b.status]}</i><br><small>${b.pr?"pull request #"+b.pr+" · ":""}${b.status==="unmerged"?b.ahead+" commit"+(b.ahead===1?"":"s")+" not in main · ":""}${b.lastCommit?"last change "+fmtDate(b.lastCommit):""}</small>`});
+  $$("#gList [data-pi]").forEach(c=>{c.checked=rows[+c.dataset.pi].status!=="unmerged"});$("#gList").onchange();
+}
+$("#gLoad").onclick=withBusy($("#gLoad"),"Loading…",loadBranches);
+$("#gDelete").onclick=withBusy($("#gDelete"),"Deleting…",async()=>{
+  const sel=branchPicked();if(!sel.length)return;
+  const unmerged=sel.filter(b=>b.status==="unmerged");
+  if(!await confirmDelete({title:`Delete ${sel.length} branch${sel.length>1?"es":""}?`,body:unmerged.length?`${unmerged.length} of them ${unmerged.length>1?"have":"has"} work that isn't in main and will be lost.`:"Their work is already in main.",items:sel.map(b=>b.name+" · "+BSTAT[b.status]),word:unmerged.length?"DELETE":""}))return;
+  const d=await ownerApi("/admin/branches/delete",{names:sel.map(b=>b.name)});
+  toast(d.errors.length?`Deleted ${d.deleted}; ${d.errors[0]}`:`Deleted ${d.deleted} branch${d.deleted===1?"":"es"}`);
+  await loadBranches();
+});
+
+/* --- Owner tools: licenses --- */
+$("#lLoad").onclick=withBusy($("#lLoad"),"Loading…",async()=>{
+  const d=await ownerApi("/admin/licenses");
+  if(!d.available){$("#lList").innerHTML='<p class="h">Licenses are recorded once the LICENSES KV namespace is connected (see wrangler.toml).</p>';return}
+  const rows=[...d.sales,...d.play,...d.complimentary];
+  const src={website:"Website",["google-play"]:"Google Play",complimentary:"Complimentary"};
+  const active=rows.filter(r=>!r.revoked&&r.exp>Date.now()).length;
+  $("#lList").innerHTML=`<p class="h" style="margin-top:10px">${active} active · ${rows.length} on record · ${d.revoked.length} revoked</p>`+(rows.length?`<table class="ltab"><tr><th>Plan</th><th>Source</th><th>Until</th><th>Reference</th><th></th></tr>${rows.map(r=>`<tr class="${r.revoked?"rv":""}"><td>${esc(({pro:"Pro",business:"Business"})[r.plan]||r.plan)}</td><td>${esc(src[r.source])}${r.note?"<br><small>"+esc(r.note)+"</small>":""}</td><td>${r.exp?fmtDate(r.exp):"—"}${r.revoked?"<br>revoked":r.exp&&r.exp<Date.now()?"<br>expired":""}</td><td>${esc(r.ref)}</td><td>${r.revoked||!r.ref?"":`<button class="btn sm dng" data-lrev="${esc(r.ref)}">Revoke</button>`}</td></tr>`).join("")}</table>`:'<p class="h">No licenses yet.</p>');
+});
+$("#lList").addEventListener("click",async e=>{
+  const b=e.target.closest("[data-lrev]");if(!b)return;
+  if(!await confirmDelete({title:"Revoke this license?",body:"The key stops unlocking paid features everywhere. This doesn't refund the customer.",items:[b.dataset.lrev],okLabel:"Revoke"}))return;
+  try{await ownerApi("/admin/revoke",{ref:b.dataset.lrev});toast("License revoked");$("#lLoad").click()}catch(err){toast(err.message)}
+});
 
 /* ============ PUBLISHING KIT (Business) ============ */
 const CRC_TABLE=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
@@ -1866,7 +2024,7 @@ $("#status").addEventListener("click",()=>{const st=$("#status");if(st.scrollWid
 // it closes the open pop-up or panel first, then returns to the previous step or page,
 // and only leaves the factory from the first screen.
 let curView="create",navReady=false,navApplying=false,navQueued=false;
-const NAV_LAYERS=["okDlg","plansDlg","upDlg","pv"]; // top-most first
+const NAV_LAYERS=["delDlg","okDlg","plansDlg","upDlg","pv"]; // top-most first
 const layerOpen=id=>id==="pv"?pvOpen:!!$("#"+id)?.open;
 const navTop=()=>NAV_LAYERS.find(layerOpen)||"";
 const navNow=()=>({ia:1,v:curView,s:step,o:navTop()});
@@ -1902,7 +2060,7 @@ addEventListener("popstate",e=>{
 });
 // Dialogs opened or closed anywhere (including Escape and taps outside) keep history in step.
 const navObserver=new MutationObserver(navSync);
-["okDlg","plansDlg","upDlg"].forEach(id=>navObserver.observe($("#"+id),{attributes:true,attributeFilter:["open"]}));
+["delDlg","okDlg","plansDlg","upDlg"].forEach(id=>navObserver.observe($("#"+id),{attributes:true,attributeFilter:["open"]}));
 function navStart(){
   history.replaceState({ia:1,v:curView,s:step,o:""},"",navUrl());
   navReady=true;
