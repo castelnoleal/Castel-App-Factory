@@ -1,1 +1,7 @@
-{"buildId":"4012709b-c9bb-4f11-8ff2-3649c89e68f1","status":"queued","testBuild":false,"aiSupervisor":{"enabled":false,"reason":"OPENAI_API_KEY is not configured"},"updatedAt":"2026-10-24T12:58:37.193Z"}
+{
+  "buildId": "4012709b-c9bb-4f11-8ff2-3649c89e68f1",
+  "status": "running",
+  "runId": 40096164949,
+  "runUrl": "https://github.com/castelnoleal/instApped/actions/runs/40096164949",
+  "updatedAt": "2026-10-24T12:59:22Z"
+}
