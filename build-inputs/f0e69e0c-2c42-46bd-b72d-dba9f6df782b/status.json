@@ -1,9 +1,9 @@
 {
   "buildId": "f0e69e0c-2c42-46bd-b72d-dba9f6df782b",
   "status": "running",
-  "message": "Generating Android project",
-  "progress": 20,
+  "message": "Compiling APK and AAB",
+  "progress": 45,
   "runId": 40084341765,
   "runUrl": "https://github.com/castelnoleal/instApped/actions/runs/40084341765",
-  "updatedAt": "2026-10-24T10:03:24Z"
+  "updatedAt": "2026-10-24T10:03:40Z"
 }
