@@ -1,0 +1,113 @@
+name: Camera Acceptance
+# Builds an app with the Camera permission and checks on an Android emulator that
+# a web page can open the camera with getUserMedia and actually receive frames:
+# the <video> plays, frames can be drawn to a canvas, and ImageCapture works.
+# The page mirrors how a camera scanner (like KodeX's card scanner) uses the camera.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/camera-test.yml'
+      - 'android-template/**'
+      - 'scripts/generate-app.py'
+      - 'scripts/ci/camera-emulator.sh'
+  pull_request:
+    paths:
+      - '.github/workflows/camera-test.yml'
+      - 'android-template/**'
+      - 'scripts/generate-app.py'
+      - 'scripts/ci/camera-emulator.sh'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  camera:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools emulator'
+      - name: Install Android API 36
+        run: |
+          set -euo pipefail
+          sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+      - name: Create camera test page
+        run: |
+          set -euo pipefail
+          mkdir -p camtest
+          cat > camtest/index.html <<'HTML'
+          <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; media-src 'self' blob: mediastream:; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src https: data: blob: 'self'; connect-src 'self' https://cdn.jsdelivr.net">
+          <title>CAMERA_TEST</title>
+          <style>body{margin:0;background:#000}.layer{position:fixed;inset:0;display:flex}.dlg{position:relative;width:100%;height:100%;overflow:hidden}video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}</style>
+          </head><body><div class="layer"><div class="dlg"><video id="v" playsinline muted autoplay></video></div></div>
+          <script>
+          const log=(k,ok,d)=>console.log('CAMERA:'+k+':'+(ok?'OK':'FAIL')+(d!==undefined?':'+d:''));
+          const wait=ms=>new Promise(r=>setTimeout(r,ms));
+          const timeout=(p,ms)=>Promise.race([p,wait(ms).then(()=>{throw new Error('timeout '+ms+'ms')})]);
+          (async()=>{
+            let all=true;const step=(k,ok,d)=>{log(k,ok,d);if(!ok)all=false};
+            step('SECURE_CONTEXT',window.isSecureContext===true);
+            step('MEDIA_DEVICES',!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia));
+            let stream;
+            try{stream=await timeout(navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}}}),20000);step('GET_USER_MEDIA',true,stream.getVideoTracks().length+' track')}
+            catch(e){step('GET_USER_MEDIA',false,e.name+' '+e.message);console.log('CAMERA:SOME_FAILED');return}
+            const track=stream.getVideoTracks()[0];
+            step('TRACK_LIVE',track.readyState==='live',track.readyState+' muted='+track.muted+' '+JSON.stringify(track.getSettings()));
+            const v=document.getElementById('v');v.srcObject=stream;
+            try{await timeout(v.play(),8000);step('VIDEO_PLAY',true)}catch(e){step('VIDEO_PLAY',false,e.name+' '+e.message)}
+            for(let i=0;i<40&&!(v.readyState>=2&&v.videoWidth>0);i++)await wait(250);
+            step('VIDEO_FRAMES',v.readyState>=2&&v.videoWidth>0,'readyState='+v.readyState+' size='+v.videoWidth+'x'+v.videoHeight+' paused='+v.paused);
+            await wait(1500);
+            try{const c=document.createElement('canvas');c.width=160;c.height=120;const x=c.getContext('2d');x.drawImage(v,0,0,160,120);const d=x.getImageData(0,0,160,120).data;let mn=255,mx=0,sum=0;for(let i=0;i<d.length;i+=4){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;sum+=l;if(l<mn)mn=l;if(l>mx)mx=l}
+              step('CANVAS_FRAME',mx-mn>8,'min='+Math.round(mn)+' max='+Math.round(mx)+' mean='+Math.round(sum/(d.length/4)))}catch(e){step('CANVAS_FRAME',false,String(e))}
+            if('ImageCapture' in window){try{const bmp=await timeout(new ImageCapture(track).grabFrame(),8000);step('IMAGE_CAPTURE',bmp.width>0,bmp.width+'x'+bmp.height)}catch(e){step('IMAGE_CAPTURE',false,e.name+' '+e.message)}}else log('IMAGE_CAPTURE',false,'not supported');
+            stream.getTracks().forEach(t=>t.stop());
+            console.log('CAMERA:'+(all?'ALL_PASS':'SOME_FAILED'));
+          })();
+          </script></body></html>
+          HTML
+          cat > camtest/manifest.json <<'JSON'
+          {"appName":"Camera Test","packageName":"com.castel.cameratest","versionName":"1.0.0","versionCode":1,
+           "sourceType":"Uploaded HTML","sourceMode":"html","sourceFileName":"index.html","orientation":"portrait",
+           "allowCamera":true,"backNavigation":true}
+          JSON
+      - name: Generate and build test APK
+        env:
+          BUILD_MANIFEST: camtest/manifest.json
+          BUILD_OUTPUT: generated-app
+          SOURCE_FILE: camtest/index.html
+          ICON_FILE: ''
+          SPLASH_FILE: ''
+        run: |
+          set -euo pipefail
+          python3 scripts/generate-app.py
+          grep -q 'android.permission.CAMERA' generated-app/app/src/main/AndroidManifest.xml
+          gradle -p generated-app assembleDebug --no-daemon --stacktrace
+      - name: Enable KVM for the Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          force-avd-creation: true
+          emulator-options: '-no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot-save -camera-back emulated -camera-front emulated'
+          emulator-boot-timeout: 900
+          script: bash scripts/ci/camera-emulator.sh
